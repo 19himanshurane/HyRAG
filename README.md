@@ -15,7 +15,8 @@ I built it to learn how a RAG pipeline works end to end, and tested it against a
 Work in progress, built one step at a time.
 
 - [x] Multi-format loader (Markdown, text, HTML, PDF) with heading and page metadata
-- [ ] Chunking: fixed-size, heading-aware, semantic
+- [x] Chunking: fixed-size and heading-aware (recursive)
+- [ ] Chunking: semantic
 - [ ] Embeddings + ChromaDB, BM25 index kept in sync
 - [ ] Near-duplicate detection
 - [ ] Hybrid retrieval with RRF and reranking
