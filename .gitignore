@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# secrets
+.env
+
+# generated at runtime (rebuilt from sample_docs / uploads)
+data/
+
+# old draft kept locally for reference only
+_draft/
+
+# editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
