@@ -8,11 +8,11 @@ Every question runs through two searches: an embedding search that finds passage
 
 Most of the work goes into what happens after the answer is written. A second model call checks each citation to see whether the cited passage actually supports the sentence it's attached to, and flags the ones that don't hold up. Each answer also gets a confidence score based on how relevant the retrieved passages were, how many claims have a verified citation, and whether the whole question was covered. When that score is too low, HyRAG says it couldn't find the answer and points you to the documents that came closest, which is more useful than a confident guess.
 
-I built it to learn how a RAG pipeline works end to end, and tested it against a hand-written set of 50+ questions (including multi-hop ones and ones with no answer in the docs) to compare three chunking strategies: fixed-size, heading-aware and semantic.
+I'm building it to learn how a RAG pipeline works end to end. The plan is to test it against a hand-written set of 50+ questions (including multi-hop ones and ones with no answer in the docs) and use that to compare three chunking strategies: fixed-size, heading-aware and semantic.
 
 ## Status
 
-Work in progress, built one step at a time.
+Work in progress, built one step at a time. The description above is the target design; this list shows what exists today.
 
 - [x] Multi-format loader (Markdown, text, HTML, PDF) with heading and page metadata
 - [x] Chunking: fixed-size and heading-aware (recursive)

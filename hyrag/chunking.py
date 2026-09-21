@@ -90,6 +90,8 @@ def _merge(pieces: list[str], size: int, overlap: int) -> list[str]:
 
 
 def split_recursive(text: str, size: int, overlap: int, separators: list[str] = SEPARATORS) -> list[str]:
+    if overlap >= size:
+        raise ValueError("overlap must be smaller than size, or the window never moves forward")
     if len(text) <= size:
         return [text]
     if not separators:
