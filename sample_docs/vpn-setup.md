@@ -20,6 +20,11 @@ go to `Settings > Certificates`, and click **Renew**.
 nimbus-vpn --renew-cert
 ```
 
+### Error ERR_TUNNEL_4013
+
+The gateway rejected your region. Open `Settings > Gateway` and pick the
+gateway for the country you are working from.
+
 ### Slow connection
 
 Switch the gateway to the region closest to you, for example `eu-west-gw`.
