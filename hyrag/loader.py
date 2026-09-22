@@ -63,9 +63,53 @@ def strip_markdown_inline(line: str) -> str:
     return line
 
 
+def split_front_matter(text: str) -> tuple[str | None, str]:
+    """Static-site markdown often starts with a YAML block between '---' lines. Return (title, rest)."""
+    match = re.match(r"---\n(.*?)\n---\n", text, re.S)
+    if not match:
+        return None, text
+    title = re.search(r"^title:\s*[\"']?(.+?)[\"']?\s*$", match.group(1), re.M)
+    return (title.group(1) if title else None), text[match.end():]
+
+
+_SHORTCODE = re.compile(r"\{\{[<%]\s*(/?)([\w-]+)(.*?)\s*[>%]\}\}", re.S)
+_ALERTS = {"note": "Note:", "caution": "Caution:", "warning": "Warning:"}
+_HEADING_KEYS = {"whatsnext": "What's next", "prerequisites": "Before you begin", "objectives": "Objectives"}
+
+
+def _shortcode_to_text(m: re.Match) -> str:
+    """Hugo shortcodes ({{< name key="value" >}}) render to text on the website; keep that text."""
+    closing, name, args = m.group(1), m.group(2), m.group(3)
+    attrs = dict(re.findall(r'([\w-]+)="([^"]*)"', args))
+    if closing:
+        return ""
+    if name == "glossary_tooltip":
+        return attrs.get("text") or attrs.get("term_id", "").replace("-", " ").replace("_", " ")
+    if name in _ALERTS:
+        return _ALERTS[name]
+    if name == "feature-state":
+        if "feature_gate_name" in attrs:
+            return f"Feature gate: {attrs['feature_gate_name']}"
+        return f"Feature state: {attrs.get('state', '')} {attrs.get('for_k8s_version', '')}".strip()
+    if name == "code_sample" and "file" in attrs:
+        return f"(example file: {attrs['file']})"
+    if name == "heading":
+        key = args.strip().strip('"')
+        return _HEADING_KEYS.get(key, key)
+    if name == "figure":
+        return attrs.get("caption", "")
+    return attrs.get("text", "")  # param, skew, ...: site variables with no recoverable text
+
+
 def parse_markdown(text: str, title: str) -> list[Section]:
+    front_title, text = split_front_matter(text)
+    text = _SHORTCODE.sub(_shortcode_to_text, text)
+    # Empty HTML anchors used as link targets: <a id="x" />, <a name="x"></a>. (Placeholders like
+    # <name-of-pod> in commands look similar but have no id=/name= attribute, so they survive.)
+    text = re.sub(r"<a\s+(?:id|name)=\"[^\"]*\"\s*/?>(?:</a>)?", "", text)
     sections: list[Section] = []
-    heading_path: list[tuple[int, str]] = []  # e.g. [(1, "VPN Setup"), (2, "Troubleshooting")]
+    # e.g. [(0, "Secrets"), (2, "Types of Secret")]; the front-matter title sits at level 0 so it is never popped
+    heading_path: list[tuple[int, str]] = [(0, front_title)] if front_title else []
     lines_in_section: list[str] = []
     inside_code_block = False
 
@@ -87,6 +131,9 @@ def parse_markdown(text: str, title: str) -> list[Section]:
         if match:
             close_section()
             level, heading_text = len(match.group(1)), strip_markdown_inline(match.group(2).strip())
+            heading_text = re.sub(r"\s*\{#[^}]*\}\s*$", "", heading_text)  # "Pod phase {#pod-phase}" -> "Pod phase"
+            if front_title and level == 1 and heading_text == front_title:
+                continue  # the H1 repeats the front-matter title; don't nest "Secrets > Secrets"
             while heading_path and heading_path[-1][0] >= level:
                 heading_path.pop()
             heading_path.append((level, heading_text))
@@ -102,16 +149,37 @@ HTML_BLOCKS = {
     "p", "div", "li", "ul", "ol", "table", "tr", "td", "th", "blockquote", "section",
     "article", "main", "dd", "dt", "dl", "figure", "figcaption", "br", "hr",
 }
+# Site-specific page furniture that isn't marked up as nav/aside/footer.
+HTML_JUNK_SELECTORS = ", ".join([
+    "#docComments",  # postgresql.org: "Submit correction" feedback box under every page
+])
+PERMALINK_MARKS = {"#", "¶", "§", "🔗", ""}
+
+
+def _cell_text(cell) -> str:
+    # Space only where a block (list item, paragraph) ends, so "<code>x</code>)" stays "x)" but
+    # "<li>a</li><li>b</li>" becomes "a b" rather than "ab".
+    for block in cell.find_all(list(HTML_BLOCKS)):
+        block.insert_after(" ")
+    return " ".join(cell.get_text().split())
 
 
 def parse_html(html: str, title: str) -> list[Section]:
     from bs4 import BeautifulSoup, Comment, Doctype, NavigableString
 
     soup = BeautifulSoup(html, "html.parser")
-    for junk in soup(["script", "style", "nav", "footer", "header", "noscript"]):
-        junk.decompose()
     if soup.title:
         title = soup.title.get_text(strip=True)
+    # <aside> holds sidebars (GitLab's maintainer list and "On this page" box). Some sites use it for
+    # inline notes instead; none of our corpus does inside the main content, so we drop it.
+    for junk in soup(["script", "style", "nav", "footer", "header", "noscript", "aside", "form"]):
+        junk.decompose()
+    for junk in soup.select(HTML_JUNK_SELECTORS):
+        junk.decompose()
+    for a in soup.find_all("a", href=True):
+        # Permalink markers next to headings: <a href="#section">#</a> (also ¶ in Sphinx/MkDocs).
+        if a["href"].startswith("#") and a.get_text(strip=True) in PERMALINK_MARKS:
+            a.decompose()
 
     sections: list[Section] = []
     heading_path: list[tuple[int, str]] = []
@@ -150,6 +218,13 @@ def parse_html(html: str, title: str) -> list[Section]:
             elif child.name == "pre":
                 end_line()
                 lines_in_section.append(child.get_text().strip("\n"))  # keep code exactly
+            elif child.name == "tr":
+                # One line per row, so "23505 | unique_violation" can never be split across two chunks.
+                end_line()
+                cells = [_cell_text(c) for c in child.find_all(["td", "th"], recursive=False)]
+                row = " | ".join(c for c in cells if c)
+                if row:
+                    lines_in_section.append(row)
             elif child.name in HTML_BLOCKS:
                 end_line()
                 walk(child)
