@@ -15,7 +15,8 @@ I'm building it to learn how a RAG pipeline works end to end. The plan is to tes
 Work in progress, built one step at a time. The description above is the target design; this list shows what exists today.
 
 - [x] Multi-format loader (Markdown, text, HTML, PDF) with heading and page metadata. PDFs: layout-aware heading detection for single-column documents; two-column layouts and scanned PDFs are not supported yet
-- [x] Chunking: fixed-size and heading-aware (recursive)
+- [x] Chunking: fixed-size and heading-aware (recursive), with content-based chunk ids
+- [x] Production audit of Phase 1 so far ([docs/phase1-audit.md](docs/phase1-audit.md)): 19 findings fixed with before/after measurements, 75 offline tests (`python -m pytest -q`)
 - [ ] Chunking: semantic
 - [ ] Embeddings + ChromaDB, BM25 index kept in sync
 - [ ] Near-duplicate detection
