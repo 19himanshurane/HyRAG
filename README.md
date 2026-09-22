@@ -14,7 +14,7 @@ I'm building it to learn how a RAG pipeline works end to end. The plan is to tes
 
 Work in progress, built one step at a time. The description above is the target design; this list shows what exists today.
 
-- [x] Multi-format loader (Markdown, text, HTML, PDF) with heading and page metadata
+- [x] Multi-format loader (Markdown, text, HTML, PDF) with heading and page metadata. PDFs: layout-aware heading detection for single-column documents; two-column layouts and scanned PDFs are not supported yet
 - [x] Chunking: fixed-size and heading-aware (recursive)
 - [ ] Chunking: semantic
 - [ ] Embeddings + ChromaDB, BM25 index kept in sync

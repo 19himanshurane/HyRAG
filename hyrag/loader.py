@@ -237,52 +237,197 @@ def parse_html(html: str, title: str) -> list[Section]:
     return sections
 
 
-def _remove_repeated_edges(pages: list[list[str]], edge: int = 3) -> list[list[str]]:
-    """Drop running headers/footers: lines in the top or bottom `edge` lines that recur on at
-    least half the pages. Digits are masked so "Page 1" and "Page 2" count as the same line."""
-    if len(pages) < 2:
-        return pages
+@dataclass
+class PdfLine:
+    page: int
+    page_height: float
+    top: float
+    bottom: float
+    x1: float  # right end of the line
+    text: str
+    size: float  # most common font size on the line
+    bold: bool   # True only if EVERY character is bold ("Note: some text" is not)
+    segments: list[str]  # the line split wherever characters are > 3 font-sizes apart (table columns, tabs)
 
-    def mask(line: str) -> str:
-        return re.sub(r"\d+", "#", line.strip())
 
-    counts: Counter[str] = Counter()
-    for lines in pages:
-        counts.update({mask(l) for l in lines[:edge] + lines[-edge:] if l.strip()})
-    repeated = {l for l, c in counts.items() if c >= max(2, len(pages) / 2)}
+_NUMBERED_HEADING = re.compile(r"^(?:Appendix\s+[A-Z]\b\.?|(\d+(?:\.\d+)*)\.?)\s+\S")
+_DOT_LEADERS = re.compile(r"(?:\.\s?){5,}")                     # table of contents: "Intro ......... 3"
+_TABLE_CONTINUED = re.compile(r"^\(?continued (?:on next|from previous) page\)?$", re.I)
+_CAPTION = re.compile(r"^(?:Fig\.|Figure|Table)\s*\d", re.I)
+_BULLET_ONLY = re.compile(r"^[o•◦▪▫‣∙·]$")  # a bullet symbol on its own line ("-" is NOT here: in tables it means "n/a")
+_SECTION_NUMBER = re.compile(r"(?:\d+(?:\.\d+)*\.?|Appendix\s+[A-Z]\.?)")
+_ROMAN_PAGE = re.compile(r"\b[ivxlc]+\b$", re.I)                # front-matter page numbers: ii, iv, xii
+# Standard document parts: always top-level, never children of the section before them.
+_DOC_PARTS = {
+    "abstract", "executive summary", "keywords", "audience", "preface", "foreword", "acknowledgments",
+    "acknowledgements", "table of contents", "list of tables", "list of figures", "introduction",
+    "references", "bibliography", "glossary", "index",
+}
+# Parts made of entries (terms, acronyms): the bold entries below them are their children.
+_ENTRY_LISTS = {"glossary", "index", "acronyms", "abbreviations", "definitions", "terms and definitions"}
 
-    def keep(i: int, line: str, n: int) -> bool:
-        at_edge = i < edge or i >= n - edge
-        return not (at_edge and mask(line) in repeated)
 
-    return [[l for i, l in enumerate(lines) if keep(i, l, len(lines))] for lines in pages]
+def _read_pdf_lines(pdf) -> list[PdfLine]:
+    lines = []
+    for page_number, page in enumerate(pdf.pages, start=1):
+        for ln in page.extract_text_lines(return_chars=True):
+            chars = [c for c in ln["chars"] if c["text"].strip()]
+            if not chars or _BULLET_ONLY.match(ln["text"].strip()):
+                continue
+            segments, last = [[]], None
+            for c in ln["chars"]:
+                if c["text"].strip():
+                    if last is not None and c["x0"] - last["x1"] > 3 * c["size"]:
+                        segments.append([])
+                    last = c
+                segments[-1].append(c["text"])
+            lines.append(PdfLine(
+                page=page_number, page_height=page.height, top=ln["top"], bottom=ln["bottom"], x1=ln["x1"],
+                text=ln["text"].strip(),
+                size=Counter(round(c["size"], 1) for c in chars).most_common(1)[0][0],
+                bold=all("bold" in c["fontname"].lower() for c in chars),
+                segments=[s for s in ("".join(seg).strip() for seg in segments) if s],
+            ))
+    return lines
+
+
+def _drop_running_headers(lines: list[PdfLine], page_count: int) -> list[PdfLine]:
+    """A running header/footer is text in the top or bottom 10% of the page that recurs on at least
+    half the pages. Digits are masked so "Page 7" and "Page 8" count as the same line."""
+    if page_count < 2:
+        return lines
+
+    def in_margin(l: PdfLine) -> bool:
+        return l.top < 0.1 * l.page_height or l.bottom > 0.9 * l.page_height
+
+    def mask(text: str) -> str:
+        return _ROMAN_PAGE.sub("#", re.sub(r"\d+", "#", text))  # "Page 7", "7" and "vii" all -> "#"
+
+    pages_with = Counter()
+    for page in {l.page for l in lines}:
+        pages_with.update({mask(l.text) for l in lines if l.page == page and in_margin(l)})
+    repeated = {t for t, n in pages_with.items() if n >= max(2, page_count / 2)}
+    return [l for l in lines if not (in_margin(l) and mask(l.text) in repeated)]
+
+
+def _heading_level(line: PdfLine, body_size: float, section_depth: int) -> int | None:
+    """Return the heading level for this line, or None if it's body text.
+    Rules come from studying the NIST PDFs: headings are fully bold and at least body size;
+    many are the SAME size as body text, so boldness + numbering matter more than size."""
+    if not line.bold or line.size < body_size - 0.5:
+        return None  # smaller bold text is table headers, captions, footnotes
+    if _DOT_LEADERS.search(line.text) or _TABLE_CONTINUED.match(line.text) or _CAPTION.match(line.text):
+        return None
+    if len(line.segments) > 1:
+        # "Type of Secret      Purpose      Reference" is a bold table header row, not a title. The one
+        # exception: "3.1<tab>Passwords", a number and a title separated by a tab stop.
+        tabbed_number = len(line.segments) == 2 and _SECTION_NUMBER.fullmatch(line.segments[0])
+        if not tabbed_number:
+            return None
+    words = len(line.text.split())
+    numbered = _NUMBERED_HEADING.match(line.text)
+    if numbered:
+        if words > 20:
+            return None
+        return numbered.group(1).count(".") + 1 if numbered.group(1) else 1  # "3.1.2" -> 3, "Appendix B" -> 1
+    if words > 8 or line.text.endswith((".", ",", ";")):
+        return None  # a bold sentence for emphasis, not a title
+    if line.size > body_size * 1.15 or line.text.lower() in _DOC_PARTS:
+        return 1  # visibly larger, or a standard part like "References": top-level
+    return section_depth + 1  # e.g. a glossary term or "Note" title inside the current numbered section
+
+
+def _usable_pdf_title(meta_title: str | None) -> str | None:
+    """PDF metadata titles are often junk ("Microsoft Word - draft3.docx", "untitled")."""
+    t = (meta_title or "").strip()
+    if not t or t.lower() in {"untitled", "title"} or re.search(r"\.(docx?|pdf|pptx?|indd)$|^microsoft ", t, re.I):
+        return None
+    return t
 
 
 def parse_pdf(data: bytes, title: str) -> list[Section]:
     import io
+    import statistics
 
-    from pypdf import PdfReader
+    import pdfplumber
 
-    pages = [clean(p.extract_text() or "").split("\n") for p in PdfReader(io.BytesIO(data)).pages]
-    pages = _remove_repeated_edges(pages)
+    with pdfplumber.open(io.BytesIO(data)) as pdf:
+        lines = _read_pdf_lines(pdf)
+        page_count = len(pdf.pages)
+        title = _usable_pdf_title((pdf.metadata or {}).get("Title")) or title
+    lines = [l for l in _drop_running_headers(lines, page_count) if not _TABLE_CONTINUED.match(l.text)]
+    if not lines:
+        return []
 
-    sections = []
-    heading = title
-    for page_number, lines in enumerate(pages, start=1):
-        text = clean("\n".join(lines))
-        if not text:
+    # Body text size = the size used by the most characters in the document.
+    size_weight = Counter()
+    for l in lines:
+        size_weight[l.size] += len(l.text)
+    body_size = size_weight.most_common(1)[0][0]
+    # Where full lines of text end; a heading line reaching it probably wrapped onto the next line.
+    right_edge = statistics.quantiles([l.x1 for l in lines], n=10)[-1] if len(lines) > 1 else lines[0].x1
+    # The document's normal gap between two lines of the same paragraph. A paragraph break is a gap
+    # clearly bigger than THIS document's normal spacing (fixed thresholds break on loosely spaced PDFs).
+    gaps = [b.top - a.bottom for a, b in zip(lines, lines[1:])
+            if a.page == b.page and 0 <= b.top - a.bottom < 2 * body_size]
+    normal_gap = statistics.median(gaps) if gaps else 0.0
+    paragraph_gap = max(1.5 * normal_gap, normal_gap + 0.3 * body_size)
+
+    sections: list[Section] = []
+    heading_path: list[tuple[int, str]] = [(0, title)]
+    section_depth = 0  # level of the last numbered/large heading; unnumbered bold titles nest under it
+    buffer: list[str] = []
+    buffer_page: int | None = None
+    prev: PdfLine | None = None
+    prev_was_heading = False
+
+    def close_section():
+        body = clean("\n".join(buffer))
+        if body:
+            sections.append(Section(text=body, heading=" > ".join(h for _, h in heading_path), page=buffer_page))
+        buffer.clear()
+
+    for line in lines:
+        new_page = prev is not None and line.page != prev.page
+        level = _heading_level(line, body_size, section_depth)
+        if level is not None:
+            continues_prev_heading = (
+                prev_was_heading and prev.page == line.page and abs(prev.size - line.size) < 0.2
+                and not _NUMBERED_HEADING.match(line.text) and line.top - prev.bottom < line.size
+                # ...and the previous line actually ran out of room, or this one starts mid-sentence.
+                # Without this, "Appendix C. Acronyms" swallowed the first acronym "AAL" below it.
+                and (prev.x1 >= 0.9 * right_edge or line.text[:1].islower())
+            )
+            if continues_prev_heading:  # a long title wrapped onto a second line
+                lvl, text = heading_path[-1]
+                heading_path[-1] = (lvl, f"{text} {line.text}")
+            else:
+                close_section()
+                while heading_path[-1][0] >= level:
+                    heading_path.pop()
+                heading_path.append((level, line.text))
+                if _NUMBERED_HEADING.match(line.text):
+                    section_depth = level
+                elif level == 1:
+                    # After "Glossary", the bold terms are its children. After "Preface" or
+                    # "List of Figures", what follows is not.
+                    section_depth = 1 if line.text.lower() in _ENTRY_LISTS else 0
+            prev, prev_was_heading = line, True
             continue
-        first_line = text.split("\n", 1)[0].strip()
-        # A short line not ending in a full stop looks like a title; otherwise the page probably
-        # continues the previous page's topic, so we keep the previous heading.
-        looks_like_title = (
-            len(first_line) <= 80
-            and not first_line[:1].islower()  # "days of the month" is a sentence carrying over
-            and not first_line.endswith((".", ",", ";", ":"))
-        )
-        if looks_like_title:
-            heading = first_line
-        sections.append(Section(text=text, heading=heading, page=page_number))
+
+        if new_page and buffer and buffer[-1].rstrip().endswith((".", "!", "?", ":")):
+            # A new page usually starts a new section (so each section has one page number)...
+            close_section()
+        # ...but a sentence cut off by the page break stays in one piece. Its section keeps the page
+        # where the passage STARTS, which is where a reader following the citation should look.
+        if not buffer:
+            buffer_page = line.page
+        elif line.page == prev.page and line.top - prev.bottom > paragraph_gap:
+            buffer.append("")  # blank line = paragraph break, which the chunker prefers to split on
+        buffer.append(line.text)
+        prev, prev_was_heading = line, False
+
+    close_section()
     return sections
 
 
