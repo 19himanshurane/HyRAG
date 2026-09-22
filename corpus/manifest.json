@@ -1,0 +1,86 @@
+[
+  {
+    "path": "handbook/gitlab-time-off-and-absence.html",
+    "url": "https://handbook.gitlab.com/handbook/people-group/time-off-and-absence/",
+    "publisher": "GitLab Handbook",
+    "license": "CC BY-SA 4.0",
+    "retrieved": "2026-09-22"
+  },
+  {
+    "path": "handbook/gitlab-time-off-types.html",
+    "url": "https://handbook.gitlab.com/handbook/people-group/time-off-and-absence/time-off-types/",
+    "publisher": "GitLab Handbook",
+    "license": "CC BY-SA 4.0",
+    "retrieved": "2026-09-22"
+  },
+  {
+    "path": "handbook/gitlab-security.html",
+    "url": "https://handbook.gitlab.com/handbook/security/",
+    "publisher": "GitLab Handbook",
+    "license": "CC BY-SA 4.0",
+    "retrieved": "2026-09-22"
+  },
+  {
+    "path": "handbook/gitlab-incident-management.html",
+    "url": "https://handbook.gitlab.com/handbook/engineering/infrastructure-platforms/incident-management/",
+    "publisher": "GitLab Handbook",
+    "license": "CC BY-SA 4.0",
+    "retrieved": "2026-09-22"
+  },
+  {
+    "path": "security/nist-sp-800-63b-4-authentication.pdf",
+    "url": "https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-63B-4.pdf",
+    "publisher": "NIST",
+    "license": "Public domain in the US (17 U.S.C. 105); credit NIST",
+    "retrieved": "2026-09-22"
+  },
+  {
+    "path": "security/nist-sp-800-61r3-incident-response.pdf",
+    "url": "https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-61r3.pdf",
+    "publisher": "NIST",
+    "license": "Public domain in the US (17 U.S.C. 105); credit NIST",
+    "retrieved": "2026-09-22"
+  },
+  {
+    "path": "engineering/postgres-config-resource.html",
+    "url": "https://www.postgresql.org/docs/current/runtime-config-resource.html",
+    "publisher": "PostgreSQL Documentation",
+    "license": "PostgreSQL License",
+    "retrieved": "2026-09-22"
+  },
+  {
+    "path": "engineering/postgres-config-connection.html",
+    "url": "https://www.postgresql.org/docs/current/runtime-config-connection.html",
+    "publisher": "PostgreSQL Documentation",
+    "license": "PostgreSQL License",
+    "retrieved": "2026-09-22"
+  },
+  {
+    "path": "engineering/postgres-error-codes.html",
+    "url": "https://www.postgresql.org/docs/current/errcodes-appendix.html",
+    "publisher": "PostgreSQL Documentation",
+    "license": "PostgreSQL License",
+    "retrieved": "2026-09-22"
+  },
+  {
+    "path": "engineering/k8s-pod-lifecycle.md",
+    "url": "https://raw.githubusercontent.com/kubernetes/website/main/content/en/docs/concepts/workloads/pods/pod-lifecycle.md",
+    "publisher": "Kubernetes Documentation",
+    "license": "CC BY 4.0",
+    "retrieved": "2026-09-22"
+  },
+  {
+    "path": "engineering/k8s-debug-pods.md",
+    "url": "https://raw.githubusercontent.com/kubernetes/website/main/content/en/docs/tasks/debug/debug-application/debug-pods.md",
+    "publisher": "Kubernetes Documentation",
+    "license": "CC BY 4.0",
+    "retrieved": "2026-09-22"
+  },
+  {
+    "path": "engineering/k8s-secrets.md",
+    "url": "https://raw.githubusercontent.com/kubernetes/website/main/content/en/docs/concepts/configuration/secret.md",
+    "publisher": "Kubernetes Documentation",
+    "license": "CC BY 4.0",
+    "retrieved": "2026-09-22"
+  }
+]
