@@ -1,12 +1,21 @@
 import hashlib
 import json
+import logging
+import os
 import re
-import shutil
+import time
 from collections import Counter
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
+log = logging.getLogger(__name__)
+
 SUPPORTED = {".md", ".txt", ".html", ".htm", ".pdf"}
+# Bump whenever parsing output changes: stored documents parsed by an older version get re-parsed.
+PARSER_VERSION = "2026-09-22.1"
+# Refuse inputs that would take minutes and gigabytes (measured: ~90 ms and ~0.1 MB per PDF page).
+MAX_FILE_BYTES = 50 * 1024 * 1024
+MAX_PDF_PAGES = 2000
 
 
 @dataclass
@@ -34,10 +43,13 @@ def clean(text: str) -> str:
 
 def decode_text(data: bytes) -> str:
     try:
-        return data.decode("utf-8-sig")  # "-sig" also removes the invisible BOM Windows editors add
+        text = data.decode("utf-8-sig")  # "-sig" also removes the invisible BOM Windows editors add
     except UnicodeDecodeError:
         # Not valid UTF-8: most likely an older Windows/Word export. Best-effort guess.
-        return data.decode("cp1252", errors="replace")
+        text = data.decode("cp1252", errors="replace")
+    # Windows (\r\n) and old Mac (\r) line endings -> \n, so every parser's patterns see one kind.
+    # Git on Windows checks files out with \r\n by default.
+    return text.replace("\r\n", "\n").replace("\r", "\n")
 
 
 def make_doc_id(source: str) -> str:
@@ -111,7 +123,7 @@ def parse_markdown(text: str, title: str) -> list[Section]:
     # e.g. [(0, "Secrets"), (2, "Types of Secret")]; the front-matter title sits at level 0 so it is never popped
     heading_path: list[tuple[int, str]] = [(0, front_title)] if front_title else []
     lines_in_section: list[str] = []
-    inside_code_block = False
+    open_fence: str | None = None  # "```" or "~~~" (or longer) while inside a code block
 
     def close_section():
         body = clean("\n".join(lines_in_section))
@@ -121,11 +133,18 @@ def parse_markdown(text: str, title: str) -> list[Section]:
         lines_in_section.clear()
 
     for line in text.splitlines():
-        if line.strip().startswith("```"):
-            inside_code_block = not inside_code_block
-            continue  # drop the fence line itself, keep the code inside it
-        if inside_code_block:
-            lines_in_section.append(line)  # code is kept exactly as written
+        fence = re.match(r"^\s*(`{3,}|~{3,})", line)
+        if fence and open_fence is None:
+            open_fence = fence.group(1)
+            continue  # drop the fence line itself (and its language tag), keep the code inside it
+        if open_fence is not None:
+            # CommonMark: only a line of the SAME fence character, at least as long, closes the block.
+            closes = fence and fence.group(1)[0] == open_fence[0] and len(fence.group(1)) >= len(open_fence) \
+                and line.strip() == fence.group(1)
+            if closes:
+                open_fence = None
+            else:
+                lines_in_section.append(line)  # code is kept exactly as written
             continue
         match = re.match(r"^(#{1,6})\s+(.+)$", line)
         if match:
@@ -201,40 +220,69 @@ def parse_html(html: str, title: str) -> list[Section]:
             sections.append(Section(text=body, heading=heading))
         lines_in_section.clear()
 
-    def walk(node):
-        # Visit every node exactly once, so text nested like <li><p>x</p></li> is never read twice,
-        # and text sitting directly inside a <div> is never skipped.
-        for child in node.children:
-            if isinstance(child, (Comment, Doctype)):
-                continue
-            if isinstance(child, NavigableString):
-                current_line.append(str(child))
-            elif child.name in HTML_HEADINGS:
-                close_section()
-                level = int(child.name[1])
-                while heading_path and heading_path[-1][0] >= level:
-                    heading_path.pop()
-                heading_path.append((level, " ".join(child.get_text().split())))
-            elif child.name == "pre":
-                end_line()
-                lines_in_section.append(child.get_text().strip("\n"))  # keep code exactly
-            elif child.name == "tr":
-                # One line per row, so "23505 | unique_violation" can never be split across two chunks.
-                end_line()
-                cells = [_cell_text(c) for c in child.find_all(["td", "th"], recursive=False)]
-                row = " | ".join(c for c in cells if c)
-                if row:
-                    lines_in_section.append(row)
-            elif child.name in HTML_BLOCKS:
-                end_line()
-                walk(child)
-                end_line()
-            else:
-                walk(child)
-
-    walk(soup.body or soup)
+    # Visit every node exactly once, so text nested like <li><p>x</p></li> is never read twice, and
+    # text sitting directly inside a <div> is never skipped. An explicit stack instead of recursion:
+    # Python stops recursing at ~1,000 levels, and generated or hostile pages can nest deeper.
+    end_of_block = object()  # stack marker: "the block element we entered is finished"
+    stack: list = [iter((soup.body or soup).children)]
+    while stack:
+        top = stack[-1]
+        if top is end_of_block:
+            stack.pop()
+            end_line()
+            continue
+        child = next(top, None)
+        if child is None:
+            stack.pop()
+            continue
+        if isinstance(child, (Comment, Doctype)):
+            continue
+        if isinstance(child, NavigableString):
+            current_line.append(str(child))
+        elif child.name in HTML_HEADINGS:
+            close_section()
+            level = int(child.name[1])
+            while heading_path and heading_path[-1][0] >= level:
+                heading_path.pop()
+            heading_path.append((level, " ".join(child.get_text().split())))
+        elif child.name == "pre":
+            end_line()
+            lines_in_section.append(child.get_text().strip("\n"))  # keep code exactly
+        elif child.name == "tr":
+            # One line per row, so "23505 | unique_violation" can never be split across two chunks.
+            end_line()
+            cells = [_cell_text(c) for c in child.find_all(["td", "th"], recursive=False)]
+            row = " | ".join(c for c in cells if c)
+            if row:
+                lines_in_section.append(row)
+        elif child.name in HTML_BLOCKS:
+            end_line()
+            stack.append(end_of_block)
+            stack.append(iter(child.children))
+        else:
+            stack.append(iter(child.children))
     close_section()
     return sections
+
+
+@dataclass(frozen=True)
+class PdfTuning:
+    """Every threshold the PDF parser uses, in one place. Tuned on NIST SP 800-63B-4 and 800-61r3;
+    change them here (and re-run tests/test_pdf.py) rather than editing numbers inside the logic."""
+
+    margin_band: float = 0.10            # running headers/footers live in the top/bottom 10% of a page...
+    repeat_share: float = 0.5            # ...and recur on at least half of the pages
+    column_gap_sizes: float = 3.0        # a gap wider than 3 font sizes splits a line into columns (tables, tabs)
+    heading_size_slack: float = 0.5      # a heading may be up to 0.5pt smaller than body text
+    big_title_ratio: float = 1.15        # text 15% larger than body is a top-level title
+    max_heading_words: int = 8           # an unnumbered bold line longer than this is emphasis, not a title
+    max_numbered_heading_words: int = 20
+    wrap_edge_share: float = 0.9         # a heading line reaching 90% of the text's right edge wrapped
+    paragraph_gap_factor: float = 1.5    # a paragraph break is a gap 1.5x the normal line gap...
+    paragraph_gap_extra: float = 0.3     # ...or normal + 0.3 font sizes, whichever is larger
+
+
+PDF_TUNING = PdfTuning()
 
 
 @dataclass
@@ -269,7 +317,8 @@ _ENTRY_LISTS = {"glossary", "index", "acronyms", "abbreviations", "definitions",
 
 def _read_pdf_lines(pdf) -> list[PdfLine]:
     lines = []
-    for page_number, page in enumerate(pdf.pages, start=1):
+    for page in pdf.pages:
+        page_number = page.page_number  # the real 1-based number, also when only a page range is open
         for ln in page.extract_text_lines(return_chars=True):
             chars = [c for c in ln["chars"] if c["text"].strip()]
             if not chars or _BULLET_ONLY.match(ln["text"].strip()):
@@ -277,7 +326,7 @@ def _read_pdf_lines(pdf) -> list[PdfLine]:
             segments, last = [[]], None
             for c in ln["chars"]:
                 if c["text"].strip():
-                    if last is not None and c["x0"] - last["x1"] > 3 * c["size"]:
+                    if last is not None and c["x0"] - last["x1"] > PDF_TUNING.column_gap_sizes * c["size"]:
                         segments.append([])
                     last = c
                 segments[-1].append(c["text"])
@@ -288,6 +337,9 @@ def _read_pdf_lines(pdf) -> list[PdfLine]:
                 bold=all("bold" in c["fontname"].lower() for c in chars),
                 segments=[s for s in ("".join(seg).strip() for seg in segments) if s],
             ))
+        # pdfplumber caches every character object of a page until the PDF is closed (~4 MB/page on
+        # NIST docs). We've copied what we need into PdfLine, so free the page now.
+        page.close()
     return lines
 
 
@@ -297,8 +349,10 @@ def _drop_running_headers(lines: list[PdfLine], page_count: int) -> list[PdfLine
     if page_count < 2:
         return lines
 
+    band = PDF_TUNING.margin_band
+
     def in_margin(l: PdfLine) -> bool:
-        return l.top < 0.1 * l.page_height or l.bottom > 0.9 * l.page_height
+        return l.top < band * l.page_height or l.bottom > (1 - band) * l.page_height
 
     def mask(text: str) -> str:
         return _ROMAN_PAGE.sub("#", re.sub(r"\d+", "#", text))  # "Page 7", "7" and "vii" all -> "#"
@@ -306,7 +360,7 @@ def _drop_running_headers(lines: list[PdfLine], page_count: int) -> list[PdfLine
     pages_with = Counter()
     for page in {l.page for l in lines}:
         pages_with.update({mask(l.text) for l in lines if l.page == page and in_margin(l)})
-    repeated = {t for t, n in pages_with.items() if n >= max(2, page_count / 2)}
+    repeated = {t for t, n in pages_with.items() if n >= max(2, page_count * PDF_TUNING.repeat_share)}
     return [l for l in lines if not (in_margin(l) and mask(l.text) in repeated)]
 
 
@@ -314,7 +368,8 @@ def _heading_level(line: PdfLine, body_size: float, section_depth: int) -> int |
     """Return the heading level for this line, or None if it's body text.
     Rules come from studying the NIST PDFs: headings are fully bold and at least body size;
     many are the SAME size as body text, so boldness + numbering matter more than size."""
-    if not line.bold or line.size < body_size - 0.5:
+    t = PDF_TUNING
+    if not line.bold or line.size < body_size - t.heading_size_slack:
         return None  # smaller bold text is table headers, captions, footnotes
     if _DOT_LEADERS.search(line.text) or _TABLE_CONTINUED.match(line.text) or _CAPTION.match(line.text):
         return None
@@ -327,12 +382,12 @@ def _heading_level(line: PdfLine, body_size: float, section_depth: int) -> int |
     words = len(line.text.split())
     numbered = _NUMBERED_HEADING.match(line.text)
     if numbered:
-        if words > 20:
+        if words > t.max_numbered_heading_words:
             return None
         return numbered.group(1).count(".") + 1 if numbered.group(1) else 1  # "3.1.2" -> 3, "Appendix B" -> 1
-    if words > 8 or line.text.endswith((".", ",", ";")):
+    if words > t.max_heading_words or line.text.endswith((".", ",", ";")):
         return None  # a bold sentence for emphasis, not a title
-    if line.size > body_size * 1.15 or line.text.lower() in _DOC_PARTS:
+    if line.size > body_size * t.big_title_ratio or line.text.lower() in _DOC_PARTS:
         return 1  # visibly larger, or a standard part like "References": top-level
     return section_depth + 1  # e.g. a glossary term or "Note" title inside the current numbered section
 
@@ -345,16 +400,51 @@ def _usable_pdf_title(meta_title: str | None) -> str | None:
     return t
 
 
-def parse_pdf(data: bytes, title: str) -> list[Section]:
+def pdf_info(data: bytes) -> tuple[int, str | None]:
+    """(page count, usable metadata title). Cheap: characters are only extracted when a page is read."""
     import io
-    import statistics
 
     import pdfplumber
 
     with pdfplumber.open(io.BytesIO(data)) as pdf:
+        _check_page_count(len(pdf.pages))
+        return len(pdf.pages), _usable_pdf_title((pdf.metadata or {}).get("Title"))
+
+
+def _check_page_count(pages: int) -> None:
+    if pages > MAX_PDF_PAGES:
+        raise ValueError(f"PDF has {pages} pages; the limit is {MAX_PDF_PAGES}")
+
+
+def read_pdf_page_range(data: bytes, first: int, last: int) -> list[PdfLine]:
+    """Lines of pages first..last (1-based, inclusive). Top-level so worker processes can run it:
+    reading pages is ~97% of PDF time and pages are independent, so they can be read in parallel."""
+    import io
+
+    import pdfplumber
+
+    with pdfplumber.open(io.BytesIO(data), pages=list(range(first, last + 1))) as pdf:
+        return _read_pdf_lines(pdf)
+
+
+def parse_pdf(data: bytes, title: str) -> list[Section]:
+    import io
+
+    import pdfplumber
+
+    with pdfplumber.open(io.BytesIO(data)) as pdf:
+        _check_page_count(len(pdf.pages))
         lines = _read_pdf_lines(pdf)
         page_count = len(pdf.pages)
         title = _usable_pdf_title((pdf.metadata or {}).get("Title")) or title
+    return pdf_sections_from_lines(lines, page_count, title)
+
+
+def pdf_sections_from_lines(lines: list[PdfLine], page_count: int, title: str) -> list[Section]:
+    """Everything after reading: needs ALL lines of the document (running headers are found by
+    comparing pages; body size and line spacing are document-wide statistics)."""
+    import statistics
+
     lines = [l for l in _drop_running_headers(lines, page_count) if not _TABLE_CONTINUED.match(l.text)]
     if not lines:
         return []
@@ -371,7 +461,8 @@ def parse_pdf(data: bytes, title: str) -> list[Section]:
     gaps = [b.top - a.bottom for a, b in zip(lines, lines[1:])
             if a.page == b.page and 0 <= b.top - a.bottom < 2 * body_size]
     normal_gap = statistics.median(gaps) if gaps else 0.0
-    paragraph_gap = max(1.5 * normal_gap, normal_gap + 0.3 * body_size)
+    paragraph_gap = max(PDF_TUNING.paragraph_gap_factor * normal_gap,
+                        normal_gap + PDF_TUNING.paragraph_gap_extra * body_size)
 
     sections: list[Section] = []
     heading_path: list[tuple[int, str]] = [(0, title)]
@@ -396,7 +487,7 @@ def parse_pdf(data: bytes, title: str) -> list[Section]:
                 and not _NUMBERED_HEADING.match(line.text) and line.top - prev.bottom < line.size
                 # ...and the previous line actually ran out of room, or this one starts mid-sentence.
                 # Without this, "Appendix C. Acronyms" swallowed the first acronym "AAL" below it.
-                and (prev.x1 >= 0.9 * right_edge or line.text[:1].islower())
+                and (prev.x1 >= PDF_TUNING.wrap_edge_share * right_edge or line.text[:1].islower())
             )
             if continues_prev_heading:  # a long title wrapped onto a second line
                 lvl, text = heading_path[-1]
@@ -438,6 +529,8 @@ def load_document(filename: str, data: bytes) -> Document:
     ext = Path(filename).suffix.lower()
     if ext not in SUPPORTED:
         raise ValueError(f"Unsupported file type {ext!r}; supported: {sorted(SUPPORTED)}")
+    if len(data) > MAX_FILE_BYTES:
+        raise ValueError(f"{filename!r} is {len(data):,} bytes; the limit is {MAX_FILE_BYTES:,}")
     title = Path(filename).stem
 
     if ext == ".pdf":
@@ -450,10 +543,31 @@ def load_document(filename: str, data: bytes) -> Document:
             sections = parse_html(text, title)
         else:
             sections = parse_txt(text, title)
+    return _make_document(filename, ext, sections)
 
+
+def _make_document(filename: str, ext: str, sections: list[Section]) -> Document:
     if not sections:
         raise ValueError(f"No text could be extracted from {filename!r}")
     return Document(doc_id=make_doc_id(filename), source=filename, file_type=ext, sections=sections)
+
+
+def list_corpus_files(root: Path) -> list[Path]:
+    """The documents in a corpus folder. If root/manifest.json exists it is the source of truth, so
+    notes that live next to the documents (licence README, manifest itself) are never ingested as
+    content. Without a manifest, every supported file under root counts."""
+    manifest = root / "manifest.json"
+    if manifest.exists():
+        entries = json.loads(manifest.read_text(encoding="utf-8"))
+        missing = [e["path"] for e in entries if not (root / e["path"]).is_file()]
+        if missing:
+            raise FileNotFoundError(f"manifest lists files that don't exist: {missing}")
+        files = [root / e["path"] for e in entries]
+    else:
+        files = [p for p in root.rglob("*") if p.is_file() and p.suffix.lower() in SUPPORTED]
+    # Sort by the POSIX string: sorting Path objects is case-insensitive on Windows but not on
+    # Linux, which would give the same corpus a different order on each machine.
+    return sorted(files, key=lambda p: p.as_posix())
 
 
 # ---------- storage: keep raw originals + processed JSON side by side ----------
@@ -462,28 +576,151 @@ class DocumentStore:
     def __init__(self, data_dir: Path = Path("data")):
         self.raw_dir = data_dir / "raw"
         self.processed_dir = data_dir / "processed"
+        self.index_path = data_dir / "index.json"  # source -> {sha256, parser_version}
         self.raw_dir.mkdir(parents=True, exist_ok=True)
         self.processed_dir.mkdir(parents=True, exist_ok=True)
+        self.failures: dict[str, str] = {}  # source -> error, from the last reprocess_all()
+        self._index: dict[str, dict] = (
+            json.loads(self.index_path.read_text(encoding="utf-8")) if self.index_path.exists() else {}
+        )
 
-    def ingest_file(self, path: Path, root: Path | None = None) -> Document:
-        """`root` is the folder the corpus lives in; the file's path inside it becomes its identity."""
-        source = path.relative_to(root).as_posix() if root else path.name
-        doc = load_document(source, path.read_bytes())  # parse first: a broken file is never stored
-        raw_copy = self.raw_dir / source
+    def ingest_file(self, path: Path, *, root: Path) -> Document:
+        """`root` is the folder the corpus lives in; the file's path inside it is its identity, so
+        hr/policy.md and it/policy.md stay two documents. (Required: using only the file name let
+        same-named files in different folders silently overwrite each other.)
+
+        A file whose bytes and parser version match what's already stored is not parsed again."""
+        source = path.relative_to(root).as_posix()
+        data = path.read_bytes()
+        t0 = time.perf_counter()
+        cached = self._cached(source, data)
+        doc = cached or load_document(source, data)  # parse before storing anything
+        raw_copy = self._raw_path(source)
         raw_copy.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copyfile(path, raw_copy)
-        self._save_processed(doc)
+        if not raw_copy.exists() or raw_copy.read_bytes() != data:
+            raw_copy.write_bytes(data)
+        self._save_processed(doc, data)
+        self._write_index()
+        log.info("ingested %s: %d sections, %s in %.2fs", source, len(doc.sections),
+                 "unchanged (reused)" if cached else "parsed", time.perf_counter() - t0)
         return doc
 
-    def _save_processed(self, doc: Document) -> None:
+    PDF_PAGES_PER_TASK = 8
+
+    def ingest_many(self, paths: list[Path], *, root: Path, workers: int | None = None) -> list[Document]:
+        """Ingest many files, parsing the ones that changed in parallel processes. PDFs are split into
+        page ranges, so one big PDF also uses every core (reading pages is ~97% of PDF time).
+        Files that fail are skipped and recorded in `self.failures`. Scripts calling this on Windows
+        need an `if __name__ == "__main__":` guard: worker processes re-import the caller."""
+        from concurrent.futures import ProcessPoolExecutor
+
+        self.failures = {}
+        t0 = time.perf_counter()
+        items = [(p.relative_to(root).as_posix(), p.read_bytes()) for p in paths]
+        docs: dict[str, Document] = {s: d for s, data in items if (d := self._cached(s, data))}
+        reused = len(docs)
+        todo = [(s, data) for s, data in items if s not in docs]
+        pdf_meta: dict[str, tuple[int, str]] = {}
+        for s, data in todo:
+            if Path(s).suffix.lower() == ".pdf":
+                try:
+                    count, meta_title = pdf_info(data)
+                    pdf_meta[s] = (count, meta_title or Path(s).stem)
+                except Exception as e:
+                    self.failures[s] = f"{type(e).__name__}: {e}"
+        if todo:
+            with ProcessPoolExecutor(max_workers=workers or os.cpu_count() or 1) as pool:
+                futures: dict[str, list] = {}
+                for s, data in todo:
+                    if s in pdf_meta:
+                        count, step = pdf_meta[s][0], self.PDF_PAGES_PER_TASK
+                        futures[s] = [pool.submit(read_pdf_page_range, data, a, min(a + step - 1, count))
+                                      for a in range(1, count + 1, step)]
+                    elif s not in self.failures:
+                        futures[s] = [pool.submit(load_document, s, data)]
+            for s, parts in futures.items():
+                try:
+                    if s in pdf_meta:
+                        lines = [line for part in parts for line in part.result()]
+                        count, title = pdf_meta[s]
+                        docs[s] = _make_document(s, ".pdf", pdf_sections_from_lines(lines, count, title))
+                    else:
+                        docs[s] = parts[0].result()
+                except Exception as e:
+                    self.failures[s] = f"{type(e).__name__}: {e}"
+        for source, data in items:
+            if source in docs:
+                raw_copy = self._raw_path(source)
+                raw_copy.parent.mkdir(parents=True, exist_ok=True)
+                if not raw_copy.exists() or raw_copy.read_bytes() != data:
+                    raw_copy.write_bytes(data)
+                self._save_processed(docs[source], data)
+        self._write_index()
+        for source, error in self.failures.items():
+            log.warning("skipped %s: %s", source, error)
+        log.info("ingest_many: %d files, %d parsed, %d unchanged (reused), %d failed in %.1fs",
+                 len(items), len(docs) - reused, reused, len(self.failures), time.perf_counter() - t0)
+        return [docs[s] for s, _ in items if s in docs]
+
+    def _raw_path(self, source: str) -> Path:
+        """Where a document's raw copy lives. `source` may one day come from an uploaded filename, so
+        "../../etc/x" must never resolve to a path outside raw_dir."""
+        path = (self.raw_dir / source).resolve()
+        if not path.is_relative_to(self.raw_dir.resolve()) or path == self.raw_dir.resolve():
+            raise ValueError(f"unsafe document path: {source!r}")
+        return path
+
+    def delete(self, source: str) -> None:
+        """Remove a document everywhere, so it can never be retrieved or cited again."""
+        self._raw_path(source).unlink(missing_ok=True)
+        (self.processed_dir / f"{make_doc_id(source)}.json").unlink(missing_ok=True)
+        if self._index.pop(source, None) is not None:
+            self._write_index()
+
+    def reprocess_all(self, force: bool = False) -> list[Document]:
+        """Rebuild every processed file from the saved raw originals, with no re-upload needed.
+        Unchanged files (same bytes, same PARSER_VERSION) are reused unless `force=True`.
+
+        A file that fails to parse is skipped and recorded in `self.failures`; its last good processed
+        version is kept. Processed files whose raw original no longer exists are removed."""
+        docs = []
+        self.failures = {}
+        sources = sorted(p.relative_to(self.raw_dir).as_posix() for p in self.raw_dir.rglob("*") if p.is_file())
+        for source in sources:
+            data = (self.raw_dir / source).read_bytes()
+            try:
+                doc = (None if force else self._cached(source, data)) or load_document(source, data)
+            except Exception as e:  # one corrupt upload must not stop the whole library from re-indexing
+                self.failures[source] = f"{type(e).__name__}: {e}"
+                log.warning("skipped %s: %s (kept its last good version, if any)", source, self.failures[source])
+                continue
+            self._save_processed(doc, data)
+            docs.append(doc)
+        live_ids = {make_doc_id(s) for s in sources}
+        for processed in self.processed_dir.glob("*.json"):
+            if processed.stem not in live_ids:
+                processed.unlink()  # its raw file was deleted or renamed: don't serve a ghost document
+                log.info("removed orphaned processed file %s (raw original is gone)", processed.name)
+        live_sources = set(sources)
+        self._index = {s: v for s, v in self._index.items() if s in live_sources}
+        self._write_index()
+        return docs
+
+    def _cached(self, source: str, data: bytes) -> Document | None:
+        entry = self._index.get(source)
+        processed = self.processed_dir / f"{make_doc_id(source)}.json"
+        if (not entry or entry["sha256"] != hashlib.sha256(data).hexdigest()
+                or entry["parser_version"] != PARSER_VERSION or not processed.exists()):
+            return None
+        d = json.loads(processed.read_text(encoding="utf-8"))
+        return Document(**{**d, "sections": [Section(**s) for s in d["sections"]]})
+
+    def _save_processed(self, doc: Document, data: bytes) -> None:
         out = self.processed_dir / f"{doc.doc_id}.json"
         out.write_text(json.dumps(asdict(doc), indent=2, ensure_ascii=False), encoding="utf-8")
+        self._index[doc.source] = {"sha256": hashlib.sha256(data).hexdigest(), "parser_version": PARSER_VERSION}
 
-    def reprocess_all(self) -> list[Document]:
-        """Rebuild every processed file from the saved raw originals, with no re-upload needed."""
-        docs = []
-        for raw in sorted(p for p in self.raw_dir.rglob("*") if p.is_file()):
-            doc = load_document(raw.relative_to(self.raw_dir).as_posix(), raw.read_bytes())
-            self._save_processed(doc)
-            docs.append(doc)
-        return docs
+    def _write_index(self) -> None:
+        tmp = self.index_path.with_suffix(".tmp")  # write-then-rename: a crash never leaves half a file
+        tmp.write_text(json.dumps(self._index, indent=1, sort_keys=True), encoding="utf-8")
+        tmp.replace(self.index_path)

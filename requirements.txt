@@ -5,5 +5,9 @@ numpy>=1.26
 httpx>=0.27
 python-dotenv>=1.0
 
-# dev: generates the sample PDF
+# dev: generates the sample PDF and test PDFs; runs the test suite
 fpdf2>=2.7
+pytest>=8
+
+# For exact, reproducible versions (parsing output and eval numbers depend on them):
+#   pip install -r requirements-lock.txt

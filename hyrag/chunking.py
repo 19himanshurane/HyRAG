@@ -1,7 +1,19 @@
+import hashlib
 import re
+from collections import Counter
 from dataclasses import dataclass
 
 from hyrag.loader import Document
+
+
+def _content_id(doc_id: str, strategy: str, heading: str, text: str, seen: Counter) -> str:
+    """Chunk ids come from content, not position: hash of what gets embedded (heading + text).
+    An edit elsewhere in the document leaves this chunk's id untouched, so the vector store only
+    re-embeds chunks that really changed. Identical repeats get a -2, -3 suffix to stay unique."""
+    digest = hashlib.sha1(f"{heading}\n\n{text}".encode()).hexdigest()[:12]
+    seen[digest] += 1
+    suffix = f"-{seen[digest]}" if seen[digest] > 1 else ""
+    return f"{doc_id}:{strategy}:{digest}{suffix}"
 
 
 @dataclass
@@ -37,6 +49,7 @@ def chunk_fixed(doc: Document, size: int = 800, overlap: int = 120) -> list[Chun
 
     # 2. Slide a window across the string. Each step moves forward by (size - overlap).
     chunks = []
+    seen: Counter = Counter()
     step = size - overlap
     for start in range(0, len(full_text), step):
         text = full_text[start : start + size].strip()
@@ -48,7 +61,7 @@ def chunk_fixed(doc: Document, size: int = 800, overlap: int = 120) -> list[Chun
 
         chunks.append(
             Chunk(
-                chunk_id=f"{doc.doc_id}:fixed:{len(chunks)}",
+                chunk_id=_content_id(doc.doc_id, "fixed", heading, text, seen),
                 doc_id=doc.doc_id,
                 source=doc.source,
                 text=text,
@@ -117,6 +130,7 @@ def split_recursive(text: str, size: int, overlap: int, separators: list[str] = 
 
 def chunk_structure(doc: Document, size: int = 800, overlap: int = 120) -> list[Chunk]:
     chunks = []
+    seen: Counter = Counter()
     for section in doc.sections:  # each section separately, so a chunk never crosses a heading
         for piece in split_recursive(section.text, size, overlap):
             text = piece.strip()
@@ -124,7 +138,7 @@ def chunk_structure(doc: Document, size: int = 800, overlap: int = 120) -> list[
                 continue
             chunks.append(
                 Chunk(
-                    chunk_id=f"{doc.doc_id}:structure:{len(chunks)}",
+                    chunk_id=_content_id(doc.doc_id, "structure", section.heading, text, seen),
                     doc_id=doc.doc_id,
                     source=doc.source,
                     text=text,

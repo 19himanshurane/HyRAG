@@ -8,7 +8,7 @@ import time
 from collections import Counter
 from pathlib import Path
 
-from hyrag.loader import SUPPORTED, load_document
+from hyrag.loader import list_corpus_files, load_document
 
 ROOT = Path("corpus")
 filter_ = sys.argv[1] if len(sys.argv) > 1 else ""
@@ -21,7 +21,7 @@ SIGNALS = {
     "dot_leaders": re.compile(r"\.{5,}"),                          # table-of-contents "......... 12"
 }
 
-for path in sorted(p for p in ROOT.rglob("*") if p.suffix.lower() in SUPPORTED):
+for path in list_corpus_files(ROOT):
     rel = path.relative_to(ROOT).as_posix()
     if filter_ not in rel:
         continue
