@@ -2,6 +2,9 @@ import hashlib
 import re
 from collections import Counter
 from dataclasses import dataclass
+from typing import Protocol
+
+import numpy as np
 
 from hyrag.loader import Document
 
@@ -149,4 +152,115 @@ def chunk_structure(doc: Document, size: int = 800, overlap: int = 120) -> list[
                     char_count=len(text),
                 )
             )
+    return chunks
+
+
+# ---------------------------------------------------------------------------
+# Semantic: inside each section, cut where the topic changes between neighbouring units.
+# ---------------------------------------------------------------------------
+
+
+class Embedder(Protocol):
+    def embed(self, texts: list[str]) -> np.ndarray: ...  # rows scaled to length 1
+
+
+def _join_wrapped_lines(lines: list[str]) -> str:
+    """PDF lines break wherever the page ran out of width, not where meaning changes: re-join them.
+    A line ending in "-" before a lowercase letter is a compound split by wrapping ("hardware-" +
+    "protected"), so it joins without a space."""
+    out = ""
+    for line in (l.strip() for l in lines):
+        if not line:
+            continue
+        if not out:
+            out = line
+        elif out.endswith("-") and line[:1].islower():
+            out += line
+        else:
+            out += " " + line
+    return out
+
+
+def semantic_units(text: str, file_type: str, size: int, min_unit: int = 150) -> list[str]:
+    """Split one section into the pieces that get compared. What a "paragraph" is depends on the format:
+    PDF = blank-line paragraphs with wrapped lines re-joined; HTML = one line per block (<p>, <li>, row);
+    Markdown/text = blank-line paragraphs. Pieces longer than `size` are split at sentence/word boundaries;
+    consecutive tiny pieces (table rows, list items) are grouped, because very short text embeds noisily."""
+    if file_type == ".pdf":
+        raw = [_join_wrapped_lines(p.split("\n")) for p in re.split(r"\n\s*\n", text)]
+    elif file_type in (".html", ".htm"):
+        raw = text.split("\n")
+    else:
+        raw = re.split(r"\n\s*\n", text)
+    pieces: list[str] = []
+    for p in (p.strip() for p in raw):
+        if p:
+            pieces.extend(s.strip() for s in split_recursive(p, size, 0) if s.strip())
+
+    joiner = "\n" if file_type in (".html", ".htm") else "\n\n"
+    units: list[str] = []
+    for p in pieces:
+        if units and len(units[-1]) < min_unit and len(units[-1]) + len(joiner) + len(p) <= size:
+            units[-1] = units[-1] + joiner + p  # grow the tiny group
+        else:
+            units.append(p)
+    return units
+
+
+def chunk_semantic(
+    doc: Document,
+    embedder: Embedder,
+    size: int = 800,
+    breakpoint_percentile: float = 25,
+    min_chunk: int = 250,
+) -> list[Chunk]:
+    """Within each section, a new chunk starts where the similarity between two neighbouring units is in
+    the lowest `breakpoint_percentile` % for THIS document (a relative threshold: mistral-embed rates even
+    unrelated text ~0.65, so no fixed number would mean "different topic"), or when `size` would be exceeded.
+    No overlap: a cut here marks a topic change, and repeating text across it would blend the two topics.
+    A chunk shorter than `min_chunk` is never closed by a topic break, only by the size cap."""
+    joiner = "\n" if doc.file_type in (".html", ".htm") else "\n\n"
+    per_section = [semantic_units(s.text, doc.file_type, size) for s in doc.sections]
+    flat = [u for units in per_section for u in units]
+    if not flat:
+        return []
+    vectors = embedder.embed(flat)
+
+    # Similarity between each unit and the next one IN THE SAME SECTION (sections never merge).
+    sims_per_section, i = [], 0
+    for units in per_section:
+        v = vectors[i : i + len(units)]
+        sims_per_section.append([float(a @ b) for a, b in zip(v, v[1:])])
+        i += len(units)
+    all_sims = [s for sims in sims_per_section for s in sims]
+    threshold = float(np.percentile(all_sims, breakpoint_percentile)) if len(all_sims) >= 4 else None
+
+    chunks: list[Chunk] = []
+    seen: Counter = Counter()
+
+    def emit(section, parts: list[str]) -> None:
+        text = joiner.join(parts)
+        chunks.append(Chunk(
+            chunk_id=_content_id(doc.doc_id, "semantic", section.heading, text, seen),
+            doc_id=doc.doc_id, source=doc.source, text=text, chunk_index=len(chunks),
+            heading=section.heading, page=section.page, strategy="semantic", char_count=len(text),
+        ))
+
+    for section, units, sims in zip(doc.sections, per_section, sims_per_section):
+        # Characters from each unit to the end of the section: a topic cut must leave a tail that can
+        # stand alone. Otherwise a closing label ("Request Process") that looks unlike the paragraph
+        # before it becomes a 15-character chunk of its own.
+        tail = [len(joiner.join(units[i:])) for i in range(len(units))]
+        current = [units[0]] if units else []
+        for i, (unit, sim) in enumerate(zip(units[1:], sims), start=1):
+            length = len(joiner.join(current))
+            too_big = length + len(joiner) + len(unit) > size
+            topic_break = (threshold is not None and sim < threshold
+                           and length >= min_chunk and tail[i] >= min_chunk)
+            if too_big or topic_break:
+                emit(section, current)
+                current = []
+            current.append(unit)
+        if current:
+            emit(section, current)
     return chunks
