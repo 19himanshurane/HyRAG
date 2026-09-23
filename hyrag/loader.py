@@ -12,7 +12,7 @@ log = logging.getLogger(__name__)
 
 SUPPORTED = {".md", ".txt", ".html", ".htm", ".pdf"}
 # Bump whenever parsing output changes: stored documents parsed by an older version get re-parsed.
-PARSER_VERSION = "2026-09-23.2"
+PARSER_VERSION = "2026-09-23.3"
 # Refuse inputs that would take minutes and gigabytes (measured: ~90 ms and ~0.1 MB per PDF page).
 MAX_FILE_BYTES = 50 * 1024 * 1024
 MAX_PDF_PAGES = 2000
@@ -204,6 +204,7 @@ HTML_BLOCKS = {
 # Site-specific page furniture that isn't marked up as nav/aside/footer.
 HTML_JUNK_SELECTORS = ", ".join([
     "#docComments",  # postgresql.org: "Submit correction" feedback box under every page
+    ".pg-shout-box",  # postgresql.org: "August 13, 2026: PostgreSQL 18.6 ... Released!" banner on every page
 ])
 PERMALINK_MARKS = {"#", "¶", "§", "🔗", ""}
 

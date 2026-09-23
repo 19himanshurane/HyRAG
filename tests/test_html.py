@@ -65,3 +65,4 @@ def test_real_postgres_error_table_rows():
     doc = load_document("e.html", (CORPUS / "engineering" / "postgres-error-codes.html").read_bytes())
     assert "23505 | unique_violation" in text_of(doc).split("\n")
     assert not any("Submit correction" in s.heading for s in doc.sections)
+    assert "Released!" not in text_of(doc)  # site-wide release banner (.pg-shout-box) is furniture
