@@ -1,6 +1,91 @@
 # HyRAG Phase 1 audit
 
-Two rounds. **Round 2** (2026-09-23, below) audits everything added after round 1: semantic chunking, the embedding cache, parallel `ingest_many`, size and path limits, and markdown comment stripping. **Round 1** (2026-09-22, further down) is the original audit and its fixes.
+Three rounds. **Round 3** (2026-09-23, below) audits the whole of Phase 1 now that it is complete, with the new index (ChromaDB + BM25 + sync, Step 3) and near-duplicate detection (Step 4) as its focus; Step 4 was audited as uncommitted working-tree code. **Round 2** audits code added after round 1. **Round 1** (2026-09-22) is the original audit.
+
+---
+
+# Round 3 (2026-09-23): the whole of Phase 1
+
+**Method:** same brief. Every in-scope file read in full; every claim measured; **0 real API calls** (fake embedder and throwaway directories, cached embeddings for the rebuild timing).
+
+```bash
+python scripts/audit/probe_round3.py       # index + dedup probes (offline)
+python scripts/audit/probe_round2.py       # regression
+python scripts/audit/probe_robustness.py   # regression
+python -m pytest -q
+```
+
+## Results after fixes (round 3)
+
+All seven fixed. The new tests fail on the previous `index.py` and pass now; every probe in all three rounds passes (round 2's open question G8 aside).
+
+| ID | Before | After | How it's verified |
+|---|---|---|---|
+| H1 | `DocumentStore.delete` left the document searchable; nothing linked store and index | `hyrag/pipeline.py`: ingest → store → chunk → index; `delete` removes from both; `reprocess` drops documents the store lost, and keeps a document whose re-parse failed (its last good version still answers). `try_index.py` now goes through it: 1,266 chunks, 9 duplicates, 17.6 s, 0 API calls, in sync | 6 pipeline tests; probe 6 |
+| H2 | `KeyError: 'ghost'` from dense search | results missing from the table are skipped, with a warning pointing to `check_sync()` / `repair()` | test + probe 1 |
+| H3 | `ProgrammingError` from any other thread | one re-entrant lock around every public method; SQLite opened for multi-thread use | 20 parallel searches of each kind in a test; probe 3 |
+| H4 | second object missed new data and crashed after a deletion | `PRAGMA data_version` (changes only on OTHER connections' commits, verified) invalidates the BM25 and duplicate snapshots | test + probe 4 |
+| H5 | a different model's vectors accepted silently | the model is stored in the collection metadata; a different one raises `EmbeddingModelMismatch` with "rebuild it" instructions; an old index without the record adopts the current model once, with a warning | test + probe 5 |
+| H6 | dedup after a restart untested | tested: a reopened index still skips the copy and embeds nothing | 1 test |
+| H7 | README "96 offline tests" (stale twice) | no hard-coded count; the probe now fails if one reappears | probe 8 |
+
+## Regression check: rounds 1-2 still hold
+
+| Check | Result |
+|---|---|
+| Test suite | 119 passed |
+| Round-1 probes | 13/13 OK |
+| Round-2 probes | 7/7 OK (plus the open question G8, unchanged) |
+| Peak memory, NIST PDFs | 13.5 MB / 16.1 MB |
+| Full-corpus ingest | 21.4 s sequential, 5.7 s parallel (3.7×); 0.82 s when nothing changed |
+| Full index rebuild from cached embeddings | 1,266 chunks + 9 duplicates in 26.9 s, 0 API requests |
+
+## Ranked findings
+
+| ID | Sev | Area | Finding | Evidence (measured) | Effort |
+|---|---|---|---|---|---|
+| H1 | P1 | Correctness | **A document deleted from the store stays searchable**: nothing connects ingestion (`DocumentStore`) to the index (`ChunkIndex`) | After `DocumentStore.delete("vpn-setup.md")`, keyword search still returns `vpn-setup.md`. `grep`: no file uses both classes | M |
+| H2 | P2 | Robustness | **Dense search crashes** when ChromaDB returns an id the chunk table doesn't have: the crash state `check_sync()` exists to detect, or a concurrent writer mid-update | `KeyError: 'ghost'` | S |
+| H3 | P2 | Concurrency (latent, blocks Phase 5) | **The index can't be used from another thread** (same SQLite rule as round-2 G2, not carried over to `index.py`) | `ProgrammingError: SQLite objects created in a thread can only be used in that same thread` | S |
+| H4 | P2 | Consistency | **A second `ChunkIndex` on the same folder goes stale**: its BM25 and duplicate lookups are in-memory snapshots | It didn't see the other object's new document, and crashed (`KeyError`) after the other deleted one | S |
+| H5 | P2 | Correctness | **The embedding model isn't recorded**, so vectors from two models can be mixed silently | Collection metadata `None`; reopening with a different model of the same dimension: accepted | S |
+| H6 | P3 | Test gap | Dedup after a restart (duplicate lookup rebuilt from the database) is never exercised | Coverage `index.py` 98%, `dedup.py` 97%; the only meaningful miss is that rebuild (index.py L200) | S |
+| H7 | P3 | Docs (recurring) | README test count stale for the **second audit in a row** | README "96 offline tests"; the suite has 115 test functions (119 runs) | S |
+
+### Checked and fine
+
+- **Dedup scales roughly linearly:** 0.71 ms per chunk at 1,275 chunks, 0.87 ms at 10,200.
+- **Search copes with ChromaDB *missing* chunks** (it returns what exists).
+- **Stored text can't drift silently:** my probe tried to change a stored text in ChromaDB and was refused ("You must provide an embedding function…"), because with `embedding_function=None` a text change requires a new vector, and only our code supplies vectors. The probe was invalid, not the index.
+
+### Carried forward (open questions, unchanged)
+
+F20 heading length and tiny chunks; G8 semantic-chunking cost vs benefit; BM25 "SQLSTATE 23505" (filler words vs one rare code); a table-of-contents chunk ranking #1 on dense search. All four need the Phase 4 evaluation set.
+
+## Details
+
+### H1 (P1): deletions don't reach the index
+**In plain words:** ingestion and indexing are two islands. `try_index.py` reads corpus files directly and never goes through `DocumentStore`, so nothing tells the index when a document is deleted, renamed or removed as an orphan. In production that means answers cited from a policy that was withdrawn.
+**Fix:** one pipeline module (`hyrag/pipeline.py`) as the single entry point: ingest → store → chunk → index; delete → store *and* index; reprocessing removes orphaned documents from the index too. The demos use it.
+
+### H2 (P2): search crashes on drift
+**In plain words:** search asks ChromaDB for the nearest ids, then looks each one up in the table. If one is missing (after a crash, or while another writer is mid-update), the lookup raises instead of skipping it.
+**Fix:** skip ids the table doesn't have, and log a warning that points to `check_sync()` / `repair()`.
+
+### H3 (P2, latent): not thread-safe
+**Fix:** as round-2 G2: `check_same_thread=False` plus one lock around database work and the two in-memory lookups (BM25, duplicates).
+
+### H4 (P2): stale snapshots across objects
+**Fix:** before using a cached BM25 or duplicate lookup, check SQLite's `PRAGMA data_version`, which changes when *another connection* commits, and rebuild if it did. Combined with H2, a second object then sees new data and never crashes on deleted data.
+
+### H5 (P2): embedding model not recorded
+**Fix:** store the model name (and dimension) in the collection's metadata when it's created, and refuse to add or search with a different model, with a clear error saying to rebuild.
+
+### H6 (P3): test gap
+**Fix:** a test that reopens an index and confirms a duplicate is still detected (and not embedded).
+
+### H7 (P3, recurring): stale README count
+**Fix:** stop hard-coding the count in the README (it has gone stale twice); state how to run the suite instead.
 
 ---
 

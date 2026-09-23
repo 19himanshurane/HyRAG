@@ -73,16 +73,16 @@ def test_both_indexes_hold_the_same_chunks(index):
     doc, chunks = vpn_doc()
     result = index.index_document(doc, chunks)
     assert result.added == len(chunks) == index.count()
-    assert index.check_sync() == {"missing_in_chroma": [], "extra_in_chroma": []}
+    assert not any(index.check_sync().values())
 
 
 def test_keyword_search_ranks_the_exact_error_code_first(index):
     index.index_document(*vpn_doc())
     hits = index.search_sparse("How do I fix ERR_TUNNEL_4012?", k=3)
     assert hits[0].chunk.heading.endswith("Error ERR_TUNNEL_4012")
-    # The near-miss code may appear lower, or not at all: in a 4-chunk corpus "err" and "tunnel" occur in
-    # exactly half the chunks, and BM25's weight log((N - n + .5) / (n + .5)) is then 0.
-    assert all(h.score < hits[0].score for h in hits[1:])
+    # The near-miss code shares "err" and "tunnel", so it ranks second, clearly lower. (With rank_bm25's
+    # original Okapi weight those words, present in exactly half of these 4 chunks, weighed 0 and 4013 vanished.)
+    assert hits[1].chunk.heading.endswith("Error ERR_TUNNEL_4013") and hits[1].score < hits[0].score
 
 
 def test_dense_search_returns_similarities(index):
@@ -128,9 +128,9 @@ def test_crash_between_writes_is_detected_and_repaired(index):
     lost = chunks[1].chunk_id
     index.collection.delete(ids=[lost])  # as if the process died after the table write, before Chroma's
     index.collection.add(ids=["ghost"], embeddings=[[1.0] * 256], documents=["stale"])
-    assert index.check_sync() == {"missing_in_chroma": [lost], "extra_in_chroma": ["ghost"]}
+    assert index.check_sync() == {"missing_in_chroma": [lost], "extra_in_chroma": ["ghost"], "duplicates_of_missing_chunks": []}
     index.repair()
-    assert index.check_sync() == {"missing_in_chroma": [], "extra_in_chroma": []}
+    assert not any(index.check_sync().values())
 
 
 def test_failed_embedding_changes_nothing(index):
@@ -144,6 +144,49 @@ def test_failed_embedding_changes_nothing(index):
     with pytest.raises(RuntimeError):
         index.index_document(doc, chunks)
     assert index.count() == 0 and index.collection.count() == 0
+
+
+def test_search_skips_results_missing_from_the_table(index, caplog):  # audit H2
+    index.index_document(*vpn_doc())
+    index.collection.add(ids=["ghost"], embeddings=[[1.0] * 256], documents=["stale"])  # crash-state drift
+    hits = index.search_dense("certificate expired renew", k=10)
+    assert hits and all(h.chunk.chunk_id != "ghost" for h in hits)
+    assert any("check_sync" in r.getMessage() for r in caplog.records)
+
+
+def test_index_is_safe_to_use_from_many_threads(index):  # audit H3
+    from concurrent.futures import ThreadPoolExecutor
+    index.index_document(*vpn_doc())
+    queries = ["ERR_TUNNEL_4012", "gateway region", "employees remotely", "certificate"] * 5
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        sparse = list(pool.map(index.search_sparse, queries))
+        dense = list(pool.map(index.search_dense, queries))
+    assert all(sparse[:4]) and all(dense)
+
+
+def test_a_second_index_object_sees_the_other_ones_writes(tmp_path):  # audit H4
+    a = ChunkIndex(CountingEmbedder(), data_dir=tmp_path / "shared")
+    doc, chunks = vpn_doc()
+    a.index_document(doc, chunks)
+    b = ChunkIndex(CountingEmbedder(), data_dir=tmp_path / "shared")
+    assert b.search_sparse("ERR_TUNNEL_4012")  # b builds its BM25 snapshot now
+    extra = load_document("extra.md", b"# Extra\n\nThe quarterly zebrafish audit happens every March.")
+    a.index_document(extra, chunk_structure(extra))
+    assert [h.chunk.source for h in b.search_sparse("zebrafish audit")] == ["extra.md"]
+    a.remove_document(doc.doc_id)
+    assert b.search_sparse("ERR_TUNNEL_4012") == []  # no stale hit, no crash
+
+
+def test_an_index_refuses_a_different_embedding_model(tmp_path):  # audit H5
+    from hyrag.index import EmbeddingModelMismatch
+
+    class Other(CountingEmbedder):
+        model = "some-other-model"
+
+    ChunkIndex(CountingEmbedder(), data_dir=tmp_path / "i").index_document(*vpn_doc())
+    with pytest.raises(EmbeddingModelMismatch, match="rebuild"):
+        ChunkIndex(Other(), data_dir=tmp_path / "i")
+    assert ChunkIndex(CountingEmbedder(), data_dir=tmp_path / "i").count() > 0  # the right model still opens it
 
 
 def test_pages_round_trip_through_chroma_metadata(index):
