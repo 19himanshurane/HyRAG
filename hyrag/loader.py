@@ -12,7 +12,7 @@ log = logging.getLogger(__name__)
 
 SUPPORTED = {".md", ".txt", ".html", ".htm", ".pdf"}
 # Bump whenever parsing output changes: stored documents parsed by an older version get re-parsed.
-PARSER_VERSION = "2026-09-22.1"
+PARSER_VERSION = "2026-09-23.1"
 # Refuse inputs that would take minutes and gigabytes (measured: ~90 ms and ~0.1 MB per PDF page).
 MAX_FILE_BYTES = 50 * 1024 * 1024
 MAX_PDF_PAGES = 2000
@@ -113,6 +113,24 @@ def _shortcode_to_text(m: re.Match) -> str:
     return attrs.get("text", "")  # param, skew, ...: site variables with no recoverable text
 
 
+def _strip_html_comments(line: str, in_comment: bool) -> tuple[str, bool]:
+    """Remove <!-- ... --> from one line, carrying "still inside a comment" across lines. Comments are
+    notes for editors ("<!-- TODO: ... -->", "<!-- body -->"), never content a reader should get."""
+    out = ""
+    while line:
+        if in_comment:
+            end = line.find("-->")
+            if end == -1:
+                return out, True
+            line, in_comment = line[end + 3 :], False
+        else:
+            start = line.find("<!--")
+            if start == -1:
+                return out + line, False
+            out, line, in_comment = out + line[:start], line[start + 4 :], True
+    return out, in_comment
+
+
 def parse_markdown(text: str, title: str) -> list[Section]:
     front_title, text = split_front_matter(text)
     text = _SHORTCODE.sub(_shortcode_to_text, text)
@@ -124,6 +142,7 @@ def parse_markdown(text: str, title: str) -> list[Section]:
     heading_path: list[tuple[int, str]] = [(0, front_title)] if front_title else []
     lines_in_section: list[str] = []
     open_fence: str | None = None  # "```" or "~~~" (or longer) while inside a code block
+    in_comment = False
 
     def close_section():
         body = clean("\n".join(lines_in_section))
@@ -133,6 +152,11 @@ def parse_markdown(text: str, title: str) -> list[Section]:
         lines_in_section.clear()
 
     for line in text.splitlines():
+        if open_fence is None:  # inside a code block, "<!--" is code (e.g. an HTML example): keep it
+            original = line
+            line, in_comment = _strip_html_comments(line, in_comment)
+            if original.strip() and not line.strip():
+                continue  # the whole line was a comment: drop it rather than leave a blank line
         fence = re.match(r"^\s*(`{3,}|~{3,})", line)
         if fence and open_fence is None:
             open_fence = fence.group(1)

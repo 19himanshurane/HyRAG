@@ -87,9 +87,18 @@ def test_windows_line_endings_parse_like_unix():
     assert lf == crlf == cr
 
 
+def test_html_comments_are_removed_but_not_inside_code():
+    doc = md("# T\n\n<!-- body -->\nKeep this.\nAlso <!-- TODO: fix -->this.\n<!-- a\nmulti-line\nnote -->\n"
+             "After.\n\n```html\n<!-- example comment -->\n<p>x</p>\n```\n")
+    text = doc.sections[0].text
+    assert "body" not in text and "TODO" not in text and "multi-line" not in text
+    assert "Keep this.\nAlso this.\nAfter." in text
+    assert "<!-- example comment -->" in text
+
+
 def test_real_kubernetes_doc_has_no_markup_leftovers():
     doc = load_document("k8s-secrets.md", (CORPUS / "engineering" / "k8s-secrets.md").read_bytes())
     text = "\n".join(s.text for s in doc.sections)
     assert doc.sections[0].heading == "Secrets"
-    assert "{{" not in text and "content_type:" not in text
+    assert "{{" not in text and "content_type:" not in text and "<!--" not in text
     assert not any("{#" in s.heading for s in doc.sections)
