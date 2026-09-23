@@ -16,7 +16,7 @@ Work in progress, built one step at a time. The description above is the target 
 
 - [x] Multi-format loader (Markdown, text, HTML, PDF) with heading and page metadata. PDFs: layout-aware heading detection for single-column documents; two-column layouts and scanned PDFs are not supported yet
 - [x] Chunking: fixed-size and heading-aware (recursive), with content-based chunk ids
-- [x] Production audit of Phase 1 so far ([docs/phase1-audit.md](docs/phase1-audit.md)): 19 findings fixed with before/after measurements, 75 offline tests (`python -m pytest -q`)
+- [x] Production audit of Phase 1, two rounds ([docs/phase1-audit.md](docs/phase1-audit.md)): 25 findings fixed with before/after measurements, 96 offline tests (`python -m pytest -q`)
 - [x] Chunking: semantic (topic cuts from neighbour-embedding similarity, relative per-document threshold; whether it beats structure-aware is measured in the eval phase)
 - [ ] Embeddings + ChromaDB, BM25 index kept in sync
 - [ ] Near-duplicate detection

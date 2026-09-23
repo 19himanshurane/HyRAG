@@ -1,5 +1,100 @@
 # HyRAG Phase 1 audit
 
+Two rounds. **Round 2** (2026-09-23, below) audits everything added after round 1: semantic chunking, the embedding cache, parallel `ingest_many`, size and path limits, and markdown comment stripping. **Round 1** (2026-09-22, further down) is the original audit and its fixes.
+
+---
+
+# Round 2 (2026-09-23)
+
+**Method:** same brief as round 1: read every in-scope file in full, measure before claiming, one real Mistral call at most. This round made **0 real API calls**, because semantic-chunking checks ran on cached embeddings or a deterministic fake embedder.
+
+```bash
+python scripts/audit/probe_round2.py        # new probes (offline)
+python scripts/audit/probe_robustness.py    # round-1 probes, as a regression check
+python scripts/audit/profile_ingest.py --memory
+python scripts/audit/bench_ingest.py
+python -m pytest -q
+```
+
+## Results after fixes (round 2)
+
+G1–G6 are fixed. G7 and G8 are carried forward on purpose: G7 is a requirement for Step 3's BM25 tokenizer, and changing stored text would make citations quote words that aren't in the source; G8 can only be answered by Phase 4's evaluation. Every fix was diffed against a golden snapshot of all corpus output taken before any change: **0 of 16 files changed**.
+
+| ID | Before | After | How it's verified |
+|---|---|---|---|
+| G1 | 17 tasks × 1.0 MB = **17 MB** pickled to workers for a 1 MB PDF; main-process peak 29.9 MB | **2.0 kB** in total for the same 17 tasks (workers get the path and read the file); main-process peak **20.4 MB**; output identical; parallel speedup still ~4× | `probe_round2.py` now records what `submit()` actually sends; `ingest_many` equality test; new reuse test |
+| G2 | `ProgrammingError` from any thread but the creator | 8 threads embed in parallel, and everything they wrote is readable afterwards | `test_cache_is_safe_to_share_between_threads` (fails on the old code with the same error) |
+| G3 | rejecting a 73 MB file peaked at 73 MB | **0.0 MB**: the size is checked with `stat()` before reading, in all three ingest paths | test replaces `read_bytes` with a failure for the big file; probe |
+| G4 | ``Write `<!-- note -->` …`` → ``Write `` …`` | inline code spans are opaque to comment stripping, and the markup stripper now handles multi-backtick spans (``` ``a `x` b`` ```); `PARSER_VERSION` bumped | 2 tests; snapshot unchanged |
+| G5 | heading-wrap merge, bold-sentence rule, numbered-word limit and embedder failure paths untested by fast tests | all covered: loader **98%**, chunking **98%**, embeddings **100%** (path-keyed tracer, NIST tests excluded) | 4 new tests; the tracer re-run also caught a new untested branch from the G1 rewrite (reuse in `ingest_many`), now tested |
+| G6 | README said 75 tests | README says 96 (round-1 numbers in this report stay as history) | — |
+
+## Regression check: round-1 fixes still hold
+
+| Check | Result |
+|---|---|
+| Test suite | 87 passed, ~22 s |
+| Round-1 probes | 13/13 OK |
+| Peak memory, NIST PDFs | 13.4 MB / 16.1 MB (was 562 / 230 before round 1) |
+| Full-corpus ingest | 18.3 s sequential, 4.8 s parallel (3.8×); 0.63 s when nothing changed |
+| NIST content loss (fair, line-level) | 0/3,507 and 2/1,672 (the known empty cover-title line) |
+
+## Ranked findings
+
+| ID | Sev | Area | Finding | Evidence (measured) | Effort |
+|---|---|---|---|---|---|
+| G1 | P1 | Memory / IPC | `ingest_many` sends the **whole file** to every PDF page-range task and holds every file's bytes in memory at once | NIST 800-63B: 17 tasks × 1.0 MB = **17 MB copied for a 1.0 MB file**; at the configured limits (50 MB, 2,000 pages) 250 × 52 MB ≈ **13.1 GB** *[projection]* | M |
+| G2 | P2 | Concurrency (latent, blocks Phase 5) | The SQLite embedding cache crashes when used from another thread | `ProgrammingError: SQLite objects created in a thread can only be used in that same thread`. FastAPI runs sync endpoints in a thread pool. | S |
+| G3 | P2 | Memory | The file-size limit is checked only **after** the whole file is read | Rejecting a 73 MB file peaked at **73 MB**; a 5 GB file would be read fully before being refused | S |
+| G4 | P3 | Correctness | HTML-comment stripping also removes comments written **inside inline code** | ``Write `<!-- note -->` to add…`` becomes ``Write `` to add…`` | S |
+| G5 | P3 | Test gaps | Two PDF heading rules are protected only by the slow real-NIST tests; embedder failure paths are untested | Path-keyed coverage without the NIST tests: loader 97%, chunking 98%, embeddings 97%. Missed: heading-wrap merge (L517–518, the `AAL` fix), bold-sentence rule (L413), numbered-word limit (L410), network-error retry (embeddings L81), all-retries-failed (L95) | S |
+| G6 | P3 | Docs | Test counts in README and this report are stale | Both say 75 tests; there are 87 | S |
+| G7 | — | Input to Step 3 | Typography that a typed query won't match exactly | Curly apostrophes 265, curly quotes 136, en dashes 59, no-break spaces 4. **No** ligatures (`ﬁ`), soft hyphens or zero-width characters. Keep the text faithful for citations; fold these in the BM25 tokenizer. | — |
+| G8 | — | Open question | Semantic chunking mostly cuts on size, and costs ~1.9× the embedding | Within-section cuts that are topic cuts: 17/51 (Kubernetes), 5/13 (GitLab), 18/122 (NIST). Embedded chars: 47,924 for units + 54,998 for chunks = 1.9× (k8s-pod-lifecycle). Measure in Phase 4 before choosing a default. | — |
+
+### Checked and fine
+
+- **My hypothesis that semantic chunking was quadratic was wrong.** The per-unit "tail length" looks quadratic, but a 2,000-paragraph section chunks in **0.06 s**.
+- **Semantic chunking reruns are free.** Cached embeddings: 0 API requests on re-runs.
+- **Rate limiting works in practice.** A real HTTP 429 from Mistral was retried and logged (seen during this round's demo runs).
+
+### Measurement pitfall (worth remembering)
+
+The first coverage run reported **0% for `loader.py`**. The standard-library `trace` module caches its "ignore this module" decision by *module name*, so our `hyrag/loader.py` inherited the ignore decision for an unrelated installed module also called `loader`. It then wrote no report for the file at all (it also can't read the non-ASCII source with Windows' default encoding). The numbers above come from a small tracer keyed by full file path instead. An implausible number is a bug in the measurement until proven otherwise.
+
+## Details
+
+### G1 (P1): whole-file copies in `ingest_many`
+**In plain words:** to read a big PDF on many cores, we split it into 8-page tasks. But each task is sent the *entire* file, so a 1 MB PDF becomes 17 MB of copying between processes, and a large manual at our own limits would be gigabytes. `ingest_many` also loads every file into memory before starting.
+**Fix:** send each worker the file's **path**, not its bytes, and read files one at a time when checking the cache. The `ingest_many` equality test, the benchmark and the snapshot diff verify it.
+
+### G2 (P2, latent): cache not thread-safe
+**In plain words:** Python's SQLite connections refuse to be used from a thread other than the one that created them. Phase 5's API will call the embedder from worker threads, and it would crash on the first request.
+**Fix:** open the connection with `check_same_thread=False` and guard reads and writes with a lock. Add a test that embeds from several threads.
+
+### G3 (P2): limit checked after reading
+**In plain words:** the 50 MB limit protects memory only if it's checked *before* reading. Today we read the file, then refuse it.
+**Fix:** check `path.stat().st_size` first in `ingest_file`, `ingest_many` and `reprocess_all`; keep the in-memory check for bytes passed to `load_document` directly.
+
+### G4 (P3): comments in inline code
+**Fix:** don't strip `<!-- … -->` inside backtick spans on the same line.
+
+### G5 (P3): test gaps
+**Fix:** synthetic PDF tests for the heading-wrap merge and the bold-sentence rule; embedder tests for a network error followed by success, and for all retries failing.
+
+### G6 (P3): stale test counts
+**Fix:** update README and this report to the real count.
+
+### G7 (input to Step 3)
+Not a parser defect. Changing `’` to `'` in stored text would alter what citations quote. The right place is the BM25 tokenizer: fold curly quotes, dashes and no-break spaces (NFKC plus a small quote map) for both documents and queries.
+
+### G8 (open question)
+Semantic chunking finds some real topic starts (for example the GitLab pseudo-heading "Coordination with other Leaves"), but only 15–38% of its within-section cuts are topic cuts, and it roughly doubles embedding cost. Leave all three strategies in; decide the default from Phase 4's evaluation.
+
+---
+
+# Round 1 (2026-09-22)
+
 **Scope:** ingestion (`hyrag/loader.py`), chunking (`hyrag/chunking.py`), embeddings (`hyrag/embeddings.py`), `scripts/`, `try_*.py`.
 **Date:** 2026-09-22. **Corpus:** 17 files (12 real public docs, 4 synthetic samples, 1 attribution README).
 **Method:** every finding below comes from a command you can re-run from the repo root. Numbers marked *[projection]* are extrapolated from a measurement, not measured directly.
