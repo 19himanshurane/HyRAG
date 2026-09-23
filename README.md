@@ -18,7 +18,7 @@ Work in progress, built one step at a time. The description above is the target 
 - [x] Chunking: fixed-size and heading-aware (recursive), with content-based chunk ids
 - [x] Production audit of Phase 1, two rounds ([docs/phase1-audit.md](docs/phase1-audit.md)): 25 findings fixed with before/after measurements, 96 offline tests (`python -m pytest -q`)
 - [x] Chunking: semantic (topic cuts from neighbour-embedding similarity, relative per-document threshold; whether it beats structure-aware is measured in the eval phase)
-- [ ] Embeddings + ChromaDB, BM25 index kept in sync
+- [x] Embeddings + ChromaDB, BM25 index kept in sync (one SQLite chunk table is the source of truth; Chroma is reconciled against it, BM25 is rebuilt from it; `check_sync()` / `repair()`)
 - [ ] Near-duplicate detection
 - [ ] Hybrid retrieval with RRF and reranking
 - [ ] Grounded generation with citation verification and confidence scoring
