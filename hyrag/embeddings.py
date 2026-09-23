@@ -2,6 +2,7 @@ import hashlib
 import logging
 import os
 import sqlite3
+import threading
 import time
 from pathlib import Path
 
@@ -22,8 +23,12 @@ class EmbeddingCache:
 
     def __init__(self, path: Path):
         path.parent.mkdir(parents=True, exist_ok=True)
-        self.db = sqlite3.connect(path)
-        self.db.execute("CREATE TABLE IF NOT EXISTS vectors (key TEXT PRIMARY KEY, vector BLOB NOT NULL)")
+        # A web server calls the embedder from a pool of worker threads. SQLite connections refuse other
+        # threads by default, so allow them and let one lock serialise every read and write.
+        self.db = sqlite3.connect(path, check_same_thread=False)
+        self.lock = threading.Lock()
+        with self.lock:
+            self.db.execute("CREATE TABLE IF NOT EXISTS vectors (key TEXT PRIMARY KEY, vector BLOB NOT NULL)")
 
     @staticmethod
     def key(model: str, text: str) -> str:
@@ -31,19 +36,23 @@ class EmbeddingCache:
 
     def get_many(self, keys: list[str]) -> dict[str, np.ndarray]:
         found = {}
-        for i in range(0, len(keys), 500):  # SQLite limits how many "?" one query may have
-            part = keys[i : i + 500]
-            rows = self.db.execute(f"SELECT key, vector FROM vectors WHERE key IN ({','.join('?' * len(part))})", part)
-            found.update({k: np.frombuffer(v, dtype=np.float32) for k, v in rows})
+        with self.lock:
+            for i in range(0, len(keys), 500):  # SQLite limits how many "?" one query may have
+                part = keys[i : i + 500]
+                rows = self.db.execute(
+                    f"SELECT key, vector FROM vectors WHERE key IN ({','.join('?' * len(part))})", part)
+                found.update({k: np.frombuffer(v, dtype=np.float32) for k, v in rows})
         return found
 
     def put_many(self, items: list[tuple[str, np.ndarray]]) -> None:
-        self.db.executemany("INSERT OR REPLACE INTO vectors VALUES (?, ?)",
-                            [(k, v.astype(np.float32).tobytes()) for k, v in items])
-        self.db.commit()
+        with self.lock:
+            self.db.executemany("INSERT OR REPLACE INTO vectors VALUES (?, ?)",
+                                [(k, v.astype(np.float32).tobytes()) for k, v in items])
+            self.db.commit()
 
     def close(self) -> None:
-        self.db.close()
+        with self.lock:
+            self.db.close()
 
 
 class MistralEmbedder:

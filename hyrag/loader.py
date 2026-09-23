@@ -12,7 +12,7 @@ log = logging.getLogger(__name__)
 
 SUPPORTED = {".md", ".txt", ".html", ".htm", ".pdf"}
 # Bump whenever parsing output changes: stored documents parsed by an older version get re-parsed.
-PARSER_VERSION = "2026-09-23.1"
+PARSER_VERSION = "2026-09-23.2"
 # Refuse inputs that would take minutes and gigabytes (measured: ~90 ms and ~0.1 MB per PDF page).
 MAX_FILE_BYTES = 50 * 1024 * 1024
 MAX_PDF_PAGES = 2000
@@ -67,7 +67,9 @@ def parse_txt(text: str, title: str) -> list[Section]:
 def strip_markdown_inline(line: str) -> str:
     line = re.sub(r"!\[([^\]]*)\]\([^)]*\)", r"\1", line)   # ![alt](img.png)  -> alt
     line = re.sub(r"\[([^\]]+)\]\([^)]*\)", r"\1", line)    # [text](url)      -> text
-    line = re.sub(r"`([^`]+)`", r"\1", line)                # `code`           -> code
+    # `code` -> code, and ``code with a ` inside`` -> code with a ` inside (a span closes on the same
+    # number of backticks; Markdown trims one space just inside double-backtick spans).
+    line = re.sub(r"(?<!`)(`+)(?!`)(.+?)(?<!`)\1(?!`)", lambda m: m.group(2).strip(), line)
     line = re.sub(r"\*\*(.+?)\*\*", r"\1", line)            # **bold**         -> bold
     line = re.sub(r"(?<!\*)\*(?!\s)(.+?)(?<!\s)\*(?!\*)", r"\1", line)  # *italic* -> italic
     line = re.sub(r"^\s*>\s?", "", line)                    # > blockquote
@@ -123,11 +125,18 @@ def _strip_html_comments(line: str, in_comment: bool) -> tuple[str, bool]:
             if end == -1:
                 return out, True
             line, in_comment = line[end + 3 :], False
+            continue
+        # Outside a comment: copy text verbatim up to the next comment, but treat inline code spans
+        # (`...`, ``...``) as opaque, so "Write `<!-- note -->` to comment" keeps its example.
+        m = re.search(r"(`+)|<!--", line)
+        if m is None:
+            return out + line, False
+        if m.group(1):  # a backtick run: skip to the matching run of the same length, if any
+            close = line.find(m.group(1), m.end())
+            stop = close + len(m.group(1)) if close != -1 else m.end()
+            out, line = out + line[:stop], line[stop:]
         else:
-            start = line.find("<!--")
-            if start == -1:
-                return out + line, False
-            out, line, in_comment = out + line[:start], line[start + 4 :], True
+            out, line, in_comment = out + line[: m.start()], line[m.end() :], True
     return out, in_comment
 
 
@@ -424,13 +433,19 @@ def _usable_pdf_title(meta_title: str | None) -> str | None:
     return t
 
 
-def pdf_info(data: bytes) -> tuple[int, str | None]:
-    """(page count, usable metadata title). Cheap: characters are only extracted when a page is read."""
+def _open_pdf(source: bytes | str | Path, **kwargs):
+    """Open a PDF from bytes or from a path. Worker processes get a path: sending the bytes to every
+    page-range task copied a 1 MB PDF 17 times (and a 50 MB one 250 times)."""
     import io
 
     import pdfplumber
 
-    with pdfplumber.open(io.BytesIO(data)) as pdf:
+    return pdfplumber.open(io.BytesIO(source) if isinstance(source, bytes) else source, **kwargs)
+
+
+def pdf_info(source: bytes | str | Path) -> tuple[int, str | None]:
+    """(page count, usable metadata title). Cheap: characters are only extracted when a page is read."""
+    with _open_pdf(source) as pdf:
         _check_page_count(len(pdf.pages))
         return len(pdf.pages), _usable_pdf_title((pdf.metadata or {}).get("Title"))
 
@@ -440,23 +455,20 @@ def _check_page_count(pages: int) -> None:
         raise ValueError(f"PDF has {pages} pages; the limit is {MAX_PDF_PAGES}")
 
 
-def read_pdf_page_range(data: bytes, first: int, last: int) -> list[PdfLine]:
+def read_pdf_page_range(source: bytes | str | Path, first: int, last: int) -> list[PdfLine]:
     """Lines of pages first..last (1-based, inclusive). Top-level so worker processes can run it:
     reading pages is ~97% of PDF time and pages are independent, so they can be read in parallel."""
-    import io
-
-    import pdfplumber
-
-    with pdfplumber.open(io.BytesIO(data), pages=list(range(first, last + 1))) as pdf:
+    with _open_pdf(source, pages=list(range(first, last + 1))) as pdf:
         return _read_pdf_lines(pdf)
 
 
+def load_document_from_path(source: str, path: str | Path) -> Document:
+    """Worker-process entry point: read the file here instead of receiving its bytes through a pipe."""
+    return load_document(source, Path(path).read_bytes())
+
+
 def parse_pdf(data: bytes, title: str) -> list[Section]:
-    import io
-
-    import pdfplumber
-
-    with pdfplumber.open(io.BytesIO(data)) as pdf:
+    with _open_pdf(data) as pdf:
         _check_page_count(len(pdf.pages))
         lines = _read_pdf_lines(pdf)
         page_count = len(pdf.pages)
@@ -570,6 +582,14 @@ def load_document(filename: str, data: bytes) -> Document:
     return _make_document(filename, ext, sections)
 
 
+def _check_file_size(path: Path) -> None:
+    """Refuse an oversized file BEFORE reading it: checking len(bytes) afterwards means a 5 GB file
+    is already in memory by the time we say no."""
+    size = path.stat().st_size
+    if size > MAX_FILE_BYTES:
+        raise ValueError(f"{path.name!r} is {size:,} bytes; the limit is {MAX_FILE_BYTES:,}")
+
+
 def _make_document(filename: str, ext: str, sections: list[Section]) -> Document:
     if not sections:
         raise ValueError(f"No text could be extracted from {filename!r}")
@@ -615,6 +635,7 @@ class DocumentStore:
 
         A file whose bytes and parser version match what's already stored is not parsed again."""
         source = path.relative_to(root).as_posix()
+        _check_file_size(path)
         data = path.read_bytes()
         t0 = time.perf_counter()
         cached = self._cached(source, data)
@@ -640,28 +661,40 @@ class DocumentStore:
 
         self.failures = {}
         t0 = time.perf_counter()
-        items = [(p.relative_to(root).as_posix(), p.read_bytes()) for p in paths]
-        docs: dict[str, Document] = {s: d for s, data in items if (d := self._cached(s, data))}
+        sources = {p.relative_to(root).as_posix(): p for p in paths}
+        docs: dict[str, Document] = {}
+        todo: list[str] = []
+        for s, p in sources.items():  # one file's bytes in memory at a time, never the whole corpus
+            try:
+                _check_file_size(p)
+            except ValueError as e:
+                self.failures[s] = f"{type(e).__name__}: {e}"
+                continue
+            cached = self._cached(s, p.read_bytes())
+            if cached:
+                docs[s] = cached
+            else:
+                todo.append(s)
         reused = len(docs)
-        todo = [(s, data) for s, data in items if s not in docs]
         pdf_meta: dict[str, tuple[int, str]] = {}
-        for s, data in todo:
+        for s in todo:
             if Path(s).suffix.lower() == ".pdf":
                 try:
-                    count, meta_title = pdf_info(data)
+                    count, meta_title = pdf_info(sources[s])
                     pdf_meta[s] = (count, meta_title or Path(s).stem)
                 except Exception as e:
                     self.failures[s] = f"{type(e).__name__}: {e}"
         if todo:
             with ProcessPoolExecutor(max_workers=workers or os.cpu_count() or 1) as pool:
                 futures: dict[str, list] = {}
-                for s, data in todo:
+                for s in todo:
+                    path = str(sources[s])  # workers read the file themselves
                     if s in pdf_meta:
                         count, step = pdf_meta[s][0], self.PDF_PAGES_PER_TASK
-                        futures[s] = [pool.submit(read_pdf_page_range, data, a, min(a + step - 1, count))
+                        futures[s] = [pool.submit(read_pdf_page_range, path, a, min(a + step - 1, count))
                                       for a in range(1, count + 1, step)]
                     elif s not in self.failures:
-                        futures[s] = [pool.submit(load_document, s, data)]
+                        futures[s] = [pool.submit(load_document_from_path, s, path)]
             for s, parts in futures.items():
                 try:
                     if s in pdf_meta:
@@ -672,8 +705,9 @@ class DocumentStore:
                         docs[s] = parts[0].result()
                 except Exception as e:
                     self.failures[s] = f"{type(e).__name__}: {e}"
-        for source, data in items:
+        for source, path in sources.items():
             if source in docs:
+                data = path.read_bytes()
                 raw_copy = self._raw_path(source)
                 raw_copy.parent.mkdir(parents=True, exist_ok=True)
                 if not raw_copy.exists() or raw_copy.read_bytes() != data:
@@ -683,8 +717,8 @@ class DocumentStore:
         for source, error in self.failures.items():
             log.warning("skipped %s: %s", source, error)
         log.info("ingest_many: %d files, %d parsed, %d unchanged (reused), %d failed in %.1fs",
-                 len(items), len(docs) - reused, reused, len(self.failures), time.perf_counter() - t0)
-        return [docs[s] for s, _ in items if s in docs]
+                 len(sources), len(docs) - reused, reused, len(self.failures), time.perf_counter() - t0)
+        return [docs[s] for s in sources if s in docs]
 
     def _raw_path(self, source: str) -> Path:
         """Where a document's raw copy lives. `source` may one day come from an uploaded filename, so
@@ -711,8 +745,9 @@ class DocumentStore:
         self.failures = {}
         sources = sorted(p.relative_to(self.raw_dir).as_posix() for p in self.raw_dir.rglob("*") if p.is_file())
         for source in sources:
-            data = (self.raw_dir / source).read_bytes()
             try:
+                _check_file_size(self.raw_dir / source)
+                data = (self.raw_dir / source).read_bytes()
                 doc = (None if force else self._cached(source, data)) or load_document(source, data)
             except Exception as e:  # one corrupt upload must not stop the whole library from re-indexing
                 self.failures[source] = f"{type(e).__name__}: {e}"

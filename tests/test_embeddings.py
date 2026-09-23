@@ -62,6 +62,31 @@ def test_retries_on_429_and_5xx_then_succeeds(embedder):
     assert len(seen) == 3
 
 
+def test_network_error_is_retried(embedder, monkeypatch):
+    calls = []
+
+    def flaky(request):
+        calls.append(1)
+        if len(calls) == 1:
+            raise httpx.ConnectError("connection reset", request=request)
+        body = json.loads(request.content)
+        return httpx.Response(200, json={"data": [{"index": i, "embedding": [1.0, 0.0, 0.0]}
+                                                  for i in range(len(body["input"]))]})
+
+    e = embedder()
+    e.client = httpx.Client(transport=httpx.MockTransport(flaky))
+    assert e.embed(["x"]).shape == (1, 3)
+    assert len(calls) == 2
+
+
+def test_gives_up_after_all_attempts_with_backoff(embedder, sleeps):
+    seen = []
+    e = embedder(responses=[(503, {})] * 5, seen=seen)
+    with pytest.raises(RuntimeError, match="failed after 5 attempts"):
+        e.embed(["x"])
+    assert len(seen) == 5 and sleeps == [1.0, 2.0, 4.0, 8.0]  # no pointless sleep after the last attempt
+
+
 def test_client_errors_fail_fast(embedder):
     seen = []
     e = embedder(responses=[(401, {})], seen=seen)
@@ -104,6 +129,18 @@ def test_cache_is_per_model(embedder, tmp_path):
     embedder(seen=seen, cache_path=tmp_path / "c.sqlite").embed(["a"])
     embedder(seen=seen, cache_path=tmp_path / "c.sqlite", model="other-model").embed(["a"])
     assert len(seen) == 2
+
+
+def test_cache_is_safe_to_share_between_threads(embedder, tmp_path):
+    from concurrent.futures import ThreadPoolExecutor
+    e = embedder(cache_path=tmp_path / "c.sqlite")
+    texts = [[f"doc {t} line {i}" for i in range(20)] for t in range(8)]
+    with ThreadPoolExecutor(max_workers=8) as pool:  # how a web server calls it
+        results = list(pool.map(e.embed, texts))
+    assert all(r.shape == (20, 3) for r in results)
+    again = e.embed([t for batch in texts for t in batch])  # everything written by the threads is cached
+    assert np.allclose(again, np.vstack(results))
+    e.close()
 
 
 def test_embedder_closes_its_connection(embedder):

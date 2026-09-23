@@ -37,6 +37,31 @@ def test_bold_table_header_row_and_caption_are_not_headings():
     assert headings(load_document("tb.pdf", make_pdf([page]))) == ["tb > 2. Section"]
 
 
+LONG = "Body text that runs across the whole width of the page so the right edge is known xx."
+
+
+def test_wrapped_heading_is_merged_but_a_short_heading_does_not_swallow_the_next_line():
+    page = [(15, 20, "4. Authenticator Lifecycle Management And Other Very Long Words", "B", 14),
+            (15, 27, "Continued Title Line", "B", 14),                   # the title wrapped here
+            *[(15, 40 + i * 6, LONG, "", 11) for i in range(4)],
+            (15, 70, "Appendix C. Acronyms", "B", 11),                  # short: it did NOT wrap...
+            (15, 76, "AAL", "B", 11),                                    # ...so this is a separate entry
+            (15, 82, "Authentication Assurance Level", "", 11),
+            *[(15, 90 + i * 6, LONG, "", 11) for i in range(4)]]
+    hs = headings(load_document("w.pdf", make_pdf([page])))
+    assert "w > 4. Authenticator Lifecycle Management And Other Very Long Words Continued Title Line" in hs
+    assert "w > Appendix C. Acronyms > AAL" in hs
+
+
+def test_bold_sentences_and_overlong_numbered_lines_are_not_headings():
+    page = [(15, 20, "1. Scope", "B", 11),
+            (15, 30, "This sentence is bold only for emphasis.", "B", 11),
+            (15, 38, "A bold line with far too many words to ever be a real title here", "B", 11),
+            (15, 46, "2. " + " ".join(["word"] * 22), "B", 11),
+            *[(15, 56 + i * 6, LONG, "", 11) for i in range(6)]]
+    assert headings(load_document("b.pdf", make_pdf([page]))) == ["b > 1. Scope"]
+
+
 def test_standalone_glossary_nests_its_terms():
     page = [(15, 20, "Glossary", "B", 11), (15, 30, "authenticator", "B", 11), *body_lines(38, 1),
             (15, 48, "verifier", "B", 11), *body_lines(56, 6)]

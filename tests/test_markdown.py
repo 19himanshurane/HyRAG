@@ -96,6 +96,15 @@ def test_html_comments_are_removed_but_not_inside_code():
     assert "<!-- example comment -->" in text
 
 
+def test_comment_syntax_inside_inline_code_is_kept():
+    doc = md("# T\n\nWrite `<!-- note -->` or ``a `<!--` b`` to comment. <!-- real comment -->Done.\n"
+             "Unclosed ` tick <!-- gone -->ok.\n")
+    text = doc.sections[0].text
+    assert "Write <!-- note --> or a `<!--` b to comment. Done." in text  # backticks then stripped as markup
+    assert "real comment" not in text and "gone" not in text
+    assert "Unclosed ` tick ok." in text
+
+
 def test_real_kubernetes_doc_has_no_markup_leftovers():
     doc = load_document("k8s-secrets.md", (CORPUS / "engineering" / "k8s-secrets.md").read_bytes())
     text = "\n".join(s.text for s in doc.sections)

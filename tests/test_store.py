@@ -145,6 +145,17 @@ def test_ingest_many_matches_one_by_one_and_isolates_failures(tmp_path):
     assert [s.page for s in got[1].sections][-1] == 11
 
 
+def test_ingest_many_reuses_unchanged_files(tmp_path, caplog):
+    import logging
+    src = tmp_path / "src"
+    files = [write(src / "a.md", "# A\n\nx"), write(src / "b.txt", "y")]
+    store = DocumentStore(tmp_path / "d")
+    first = store.ingest_many(files, root=src, workers=1)
+    caplog.set_level(logging.INFO, logger="hyrag")
+    assert store.ingest_many(files, root=src, workers=1) == first
+    assert any("2 files, 0 parsed, 2 unchanged (reused)" in r.getMessage() for r in caplog.records)
+
+
 def test_paths_cannot_escape_the_data_folder(store, tmp_path):
     victim = write(tmp_path / "outside.txt", "must survive")
     for bad in ("../../outside.txt", str(victim), ""):
@@ -178,6 +189,29 @@ def test_ingestion_is_logged(store, tmp_path, caplog):
     assert any(m.startswith("ingested a.md: 1 sections, parsed") for m in messages)
     assert any(m.startswith("ingested a.md: 1 sections, unchanged (reused)") for m in messages)
     assert any(m.startswith("skipped broken.pdf: PdfminerException") for m in messages)
+
+
+def test_oversized_files_are_refused_without_being_read(store, tmp_path, monkeypatch):
+    import hyrag.loader as loader
+    src = tmp_path / "src"
+    big = write(src / "big.md", "# Big\n\n" + "x" * 500)
+    ok = write(src / "ok.md", "# Ok\n\nfine")
+    monkeypatch.setattr(loader, "MAX_FILE_BYTES", 100)
+    real_read = Path.read_bytes
+    monkeypatch.setattr(Path, "read_bytes", lambda self: pytest.fail(f"read {self.name}") if self.name == "big.md"
+                        else real_read(self))
+    with pytest.raises(ValueError, match="limit"):
+        store.ingest_file(big, root=src)
+    docs = store.ingest_many([big, ok], root=src, workers=1)
+    assert [d.source for d in docs] == ["ok.md"] and "big.md" in store.failures
+
+
+def test_pdf_page_range_reads_the_same_from_path_or_bytes(tmp_path):
+    from hyrag.loader import read_pdf_page_range
+    from .conftest import body_lines, make_pdf
+    pdf = write(tmp_path / "m.pdf", make_pdf([body_lines(20, 3) for _ in range(4)]))
+    assert read_pdf_page_range(str(pdf), 2, 3) == read_pdf_page_range(pdf.read_bytes(), 2, 3)
+    assert {l.page for l in read_pdf_page_range(str(pdf), 2, 3)} == {2, 3}
 
 
 def test_delete_removes_raw_and_processed(store, tmp_path):
