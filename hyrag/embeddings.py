@@ -69,6 +69,7 @@ class MistralEmbedder:
         self.client = httpx.Client(headers={"Authorization": f"Bearer {self.api_key}"}, timeout=60)
         self.cache = EmbeddingCache(cache_path) if cache_path else None
         self.requests_made = 0
+        self._count_lock = threading.Lock()  # `+= 1` is not atomic: concurrent searches would lose counts
 
     def close(self) -> None:
         self.client.close()
@@ -84,7 +85,8 @@ class MistralEmbedder:
     def _request(self, batch: list[str], attempts: int = 5) -> list[list[float]]:
         for attempt in range(attempts):
             try:
-                self.requests_made += 1
+                with self._count_lock:
+                    self.requests_made += 1
                 resp = self.client.post(MISTRAL_EMBEDDINGS_URL, json={"model": self.model, "input": batch})
             except httpx.TransportError as e:  # timeout, dropped connection, DNS hiccup
                 resp, reason = None, type(e).__name__

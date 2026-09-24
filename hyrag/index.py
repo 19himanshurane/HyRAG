@@ -94,12 +94,27 @@ class EmbeddingModelMismatch(RuntimeError):
 
 
 def _locked(method):
-    """Run the method under the index's lock: a web server calls one index from many threads, and SQLite,
-    BM25 and the duplicate lookup are not safe to use concurrently."""
+    """Run the method under the index's state lock: a web server calls one index from many threads, and
+    SQLite, BM25 and the duplicate lookup are not safe to use concurrently. Hold it only for local work,
+    never across a network call (an embedding request can take seconds with retries, and every search
+    would queue behind it)."""
 
     @functools.wraps(method)
     def wrapper(self, *args, **kwargs):
         with self._lock:
+            return method(self, *args, **kwargs)
+
+    return wrapper
+
+
+def _writer(method):
+    """Run a write under the writer lock, so two writes can't interleave between planning a change and
+    applying it. Searches don't take this lock, so they keep running while a write waits on the embedding API.
+    Lock order: writer lock, then state lock; never the reverse."""
+
+    @functools.wraps(method)
+    def wrapper(self, *args, **kwargs):
+        with self._write_lock:
             return method(self, *args, **kwargs)
 
     return wrapper
@@ -120,7 +135,8 @@ class ChunkIndex:
         self.embedder = embedder
         self.strategy = strategy
         self.dedup = dedup
-        self._lock = threading.RLock()
+        self._lock = threading.RLock()        # state: SQLite, BM25, duplicate lookup, Chroma calls
+        self._write_lock = threading.RLock()  # whole writes, including their embedding calls
         data_dir.mkdir(parents=True, exist_ok=True)
         self.db = sqlite3.connect(data_dir / f"chunks-{strategy}.sqlite", check_same_thread=False)
         self.db.execute(f"CREATE TABLE IF NOT EXISTS chunks ({_CHUNK_TABLE})")
@@ -169,7 +185,7 @@ class ChunkIndex:
 
     # ----- writing -----
 
-    @_locked
+    @_writer
     def index_document(self, doc: Document, chunks: list[Chunk]) -> IndexResult:
         """Make the index hold exactly `chunks` for this document. Chunk ids come from content, so only
         chunks whose text changed are embedded; removed ones disappear from BOTH indexes. A new chunk whose
@@ -179,7 +195,7 @@ class ChunkIndex:
                  doc.source, result.added, result.duplicates, result.removed, result.kept)
         return result
 
-    @_locked
+    @_writer
     def remove_document(self, doc_id: str) -> int:
         return self._sync(doc_id, []).removed
 
@@ -201,6 +217,22 @@ class ChunkIndex:
         return self.db.execute("SELECT COUNT(*) FROM duplicates").fetchone()[0]
 
     def _sync(self, doc_id: str, chunks: list[Chunk]) -> IndexResult:
+        """Plan under the state lock, embed with no state lock held, apply under the state lock. The caller
+        holds the writer lock, so no other write in this process can change the plan in between."""
+        with self._lock:
+            plan = self._plan(doc_id, chunks)
+        to_add = plan[1]
+        try:
+            # Embed before writing anything: if the API fails, nothing has changed.
+            vectors = self.embedder.embed([c.text_for_search() for c in to_add]) if to_add else None
+        except Exception:
+            with self._lock:
+                self._near = None  # the in-memory lookup was edited for writes that never happened
+            raise
+        with self._lock:
+            return self._apply(doc_id, *plan, vectors)
+
+    def _plan(self, doc_id: str, chunks: list[Chunk]):
         self._drop_stale_caches()
         existing = set(self._ids_for(doc_id))
         new = {c.chunk_id: c for c in chunks}
@@ -224,12 +256,12 @@ class ChunkIndex:
                 else:
                     to_add.append(c)
                     near.add(c.chunk_id, c.text)
-            # Embed before writing anything: if the API fails, nothing has changed.
-            vectors = self.embedder.embed([c.text_for_search() for c in to_add]) if to_add else None
         except Exception:
-            self._near = None  # the in-memory lookup was edited for writes that never happened
+            self._near = None
             raise
+        return to_remove, to_add, kept, skipped, orphans
 
+    def _apply(self, doc_id, to_remove, to_add, kept, skipped, orphans, vectors) -> IndexResult:
         with self.db:  # one transaction: all of it or none of it
             if to_remove:
                 self.db.executemany("DELETE FROM chunks WHERE chunk_id = ?", [(i,) for i in to_remove])
@@ -268,11 +300,16 @@ class ChunkIndex:
 
     # ----- searching -----
 
-    @_locked
     def search_dense(self, query: str, k: int = 10) -> list[Hit]:
-        if self.count() == 0:
+        if not query.strip() or self.count() == 0:  # a blank query would still embed and "match" something
             return []
-        qv = self.embedder.embed([query])[0]
+        qv = self.embedder.embed([query])[0]  # network call: deliberately outside the state lock
+        with self._lock:
+            return self._nearest(qv, k)
+
+    def _nearest(self, qv: np.ndarray, k: int) -> list[Hit]:
+        if self.count() == 0:  # emptied while we were embedding
+            return []
         res = self.collection.query(query_embeddings=[qv.tolist()], n_results=min(k, self.count()),
                                     include=["distances"])
         ids, distances = res["ids"][0], res["distances"][0]
@@ -313,28 +350,35 @@ class ChunkIndex:
         return {"missing_in_chroma": sorted(table - chroma), "extra_in_chroma": sorted(chroma - table),
                 "duplicates_of_missing_chunks": sorted(originals - table)}
 
-    @_locked
+    @_writer
     def repair(self) -> dict[str, list[str]]:
         """Bring Chroma back in line with the table (after a crash between the two writes), and promote
         skipped duplicates whose original is gone. BM25 needs no repair: it is always rebuilt from the table.
         Re-embedding is cheap because vectors are cached."""
         problems = self.check_sync()
-        for doc_id, in self.db.execute(
-                "SELECT DISTINCT doc_id FROM duplicates WHERE duplicate_of NOT IN (SELECT chunk_id FROM chunks)"
-        ).fetchall():
+        with self._lock:
+            orphaned_docs = [r[0] for r in self.db.execute(
+                "SELECT DISTINCT doc_id FROM duplicates WHERE duplicate_of NOT IN (SELECT chunk_id FROM chunks)")]
+        for doc_id in orphaned_docs:
             # Re-syncing the document with its current chunks re-checks its skipped copies from scratch.
-            current = self._chunks(self._ids_for(doc_id))
-            rows = self.db.execute(f"SELECT {','.join(_COLUMNS)} FROM duplicates WHERE doc_id = ?", (doc_id,))
-            skipped = [self._chunk(r) for r in rows]
+            with self._lock:
+                current = self._chunks(self._ids_for(doc_id))
+                rows = self.db.execute(f"SELECT {','.join(_COLUMNS)} FROM duplicates WHERE doc_id = ?", (doc_id,))
+                skipped = [self._chunk(r) for r in rows]
             self._sync(doc_id, list(current.values()) + skipped)
         if problems["extra_in_chroma"]:
-            self.collection.delete(ids=problems["extra_in_chroma"])
+            with self._lock:
+                self.collection.delete(ids=problems["extra_in_chroma"])
         if problems["missing_in_chroma"]:
-            chunks = self._chunks(problems["missing_in_chroma"])
-            ordered = [chunks[i] for i in problems["missing_in_chroma"]]
-            vectors = self.embedder.embed([c.text_for_search() for c in ordered])
-            self.collection.add(ids=[c.chunk_id for c in ordered], embeddings=vectors.tolist(),
-                                documents=[c.text for c in ordered], metadatas=[self._meta(c) for c in ordered])
+            with self._lock:
+                chunks = self._chunks(problems["missing_in_chroma"])
+            ordered = [chunks[i] for i in problems["missing_in_chroma"] if i in chunks]  # may have changed since
+            if ordered:
+                vectors = self.embedder.embed([c.text_for_search() for c in ordered])  # no state lock held
+                with self._lock:
+                    self.collection.add(ids=[c.chunk_id for c in ordered], embeddings=vectors.tolist(),
+                                        documents=[c.text for c in ordered],
+                                        metadatas=[self._meta(c) for c in ordered])
         if any(problems.values()):
             log.warning("repaired index: %s", {k: len(v) for k, v in problems.items()})
         return problems

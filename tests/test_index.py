@@ -1,3 +1,5 @@
+import threading
+
 import pytest
 
 from hyrag.chunking import chunk_structure
@@ -195,3 +197,56 @@ def test_pages_round_trip_through_chroma_metadata(index):
     meta = index.collection.get(ids=[chunks[0].chunk_id], include=["metadatas"])["metadatas"][0]
     assert meta["page"] == -1 and meta["strategy"] == "structure"  # Chroma can't store None
     assert index.search_sparse("employees remotely", k=1)[0].chunk.page is None  # read back from the table
+
+
+# ----- Phase 2 audit R1: no lock is held across the embedding network call -----
+
+class BlockingEmbedder(BagOfWordsEmbedder):
+    """embed() waits until released, standing in for a slow Mistral request (or a 429 retry)."""
+
+    def __init__(self):
+        super().__init__()
+        self.block = False
+        self.entered, self.release = threading.Event(), threading.Event()
+
+    def embed(self, texts):
+        if self.block:
+            self.entered.set()
+            assert self.release.wait(10), "test never released the embedder"
+        return super().embed(texts)
+
+
+def _stuck_in_embed(index: ChunkIndex, call) -> threading.Thread:
+    index.embedder.block = True
+    t = threading.Thread(target=call)
+    t.start()
+    assert index.embedder.entered.wait(5)
+    return t
+
+
+def test_search_is_not_blocked_by_another_querys_embedding(tmp_path):
+    index = ChunkIndex(BlockingEmbedder(), data_dir=tmp_path / "i")
+    index.index_document(*vpn_doc())
+    t = _stuck_in_embed(index, lambda: index.search_dense("vpn certificate"))
+    done = threading.Event()
+    threading.Thread(target=lambda: (index.search_sparse("ERR_TUNNEL_4012"), index.count(), done.set())).start()
+    try:
+        assert done.wait(2), "keyword search waited behind a dense query's embedding call"
+    finally:
+        index.embedder.release.set()
+        t.join()
+
+
+def test_search_is_not_blocked_while_a_document_is_being_embedded(tmp_path):
+    index = ChunkIndex(BlockingEmbedder(), data_dir=tmp_path / "i")
+    index.index_document(*vpn_doc())
+    extra = load_document("extra.md", b"# Extra\n\nThe quarterly zebrafish audit happens every March.")
+    t = _stuck_in_embed(index, lambda: index.index_document(extra, chunk_structure(extra)))
+    done = threading.Event()
+    threading.Thread(target=lambda: (index.search_sparse("ERR_TUNNEL_4012"), done.set())).start()
+    try:
+        assert done.wait(2), "search waited behind an ingest's embedding call"
+    finally:
+        index.embedder.release.set()
+        t.join()
+    assert [h.chunk.source for h in index.search_sparse("zebrafish")] == ["extra.md"]  # the write still landed
