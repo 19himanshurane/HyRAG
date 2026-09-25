@@ -50,3 +50,8 @@ def nist_63b():
 def nist_61r3():
     path = CORPUS / "security" / "nist-sp-800-61r3-incident-response.pdf"
     return load_document("security/nist-sp-800-61r3-incident-response.pdf", path.read_bytes())
+
+
+def pytest_configure(config):
+    # Tests that load the real reranker model (~20 s: PyTorch import + load). Skip with: pytest -m "not model"
+    config.addinivalue_line("markers", "model: loads a real ML model from the local cache")

@@ -1,5 +1,6 @@
 import threading
 
+import numpy as np
 import pytest
 
 from hyrag.chunking import chunk_structure
@@ -250,3 +251,63 @@ def test_search_is_not_blocked_while_a_document_is_being_embedded(tmp_path):
         index.embedder.release.set()
         t.join()
     assert [h.chunk.source for h in index.search_sparse("zebrafish")] == ["extra.md"]  # the write still landed
+
+
+# ----- Phase 2 audit S6: meaning search is exact, not approximate -----
+
+def _brute_force(index: ChunkIndex, query: str, k: int) -> list[str]:
+    got = index.collection.get(include=["embeddings"])
+    m = np.asarray(got["embeddings"], dtype=np.float32)
+    m /= np.linalg.norm(m, axis=1, keepdims=True)
+    qv = index.embedder.embed([query])[0]
+    sims = m @ (qv / np.linalg.norm(qv))
+    return [got["ids"][i] for i in np.argsort(-sims, kind="stable")[:k]]
+
+
+def test_dense_search_matches_exact_cosine(tmp_path):
+    index = ChunkIndex(CountingEmbedder(), data_dir=tmp_path / "i")
+    index.index_document(*vpn_doc())
+    for q in ("certificate expired renew", "gateway unreachable network", "slow connection"):
+        hits = index.search_dense(q, k=4)
+        assert {h.chunk.chunk_id for h in hits} == set(_brute_force(index, q, 4))
+        assert [h.score for h in hits] == sorted((h.score for h in hits), reverse=True)
+
+
+def test_dense_snapshot_refreshes_after_writes(tmp_path):
+    index = ChunkIndex(CountingEmbedder(), data_dir=tmp_path / "i")
+    index.index_document(*vpn_doc())
+    index.search_dense("vpn setup guide", k=3)  # builds the in-memory snapshot
+    extra = load_document("extra.md", b"# Zebrafish\n\nThe quarterly zebrafish audit happens every March.")
+    index.index_document(extra, chunk_structure(extra))
+    assert index.search_dense("zebrafish audit march", k=1)[0].chunk.source == "extra.md"
+    index.remove_document(extra.doc_id)
+    assert all(h.chunk.source != "extra.md" for h in index.search_dense("zebrafish audit march", k=10))
+
+
+def test_dense_snapshot_sees_another_objects_writes(tmp_path):
+    a = ChunkIndex(CountingEmbedder(), data_dir=tmp_path / "i")
+    a.index_document(*vpn_doc())
+    b = ChunkIndex(CountingEmbedder(), data_dir=tmp_path / "i")
+    b.search_dense("vpn setup guide", k=3)  # b's snapshot predates a's next write
+    extra = load_document("extra.md", b"# Zebrafish\n\nThe quarterly zebrafish audit happens every March.")
+    a.index_document(extra, chunk_structure(extra))
+    assert b.search_dense("zebrafish audit march", k=1)[0].chunk.source == "extra.md"
+
+
+def test_unusable_query_vector_returns_nothing(tmp_path, caplog):
+    index = ChunkIndex(CountingEmbedder(), data_dir=tmp_path / "i")
+    index.index_document(*vpn_doc())
+    assert index._nearest(np.zeros(256, dtype=np.float32), k=3) == []
+    assert index._nearest(np.full(256, np.nan, dtype=np.float32), k=3) == []
+    assert "unusable" in caplog.text
+
+
+def test_dense_snapshot_refreshes_after_repair(tmp_path):
+    index = ChunkIndex(CountingEmbedder(), data_dir=tmp_path / "i")
+    index.index_document(*vpn_doc())
+    lost = index.search_dense("certificate expired renew", k=1)[0].chunk.chunk_id
+    index.collection.delete(ids=[lost])  # simulate a crash between the table write and the Chroma write
+    index._vectors = None
+    assert lost not in {h.chunk.chunk_id for h in index.search_dense("certificate expired renew", k=10)}
+    index.repair()
+    assert index.search_dense("certificate expired renew", k=1)[0].chunk.chunk_id == lost

@@ -156,6 +156,7 @@ class ChunkIndex:
         self._check_embedding_model()
         self._bm25 = None
         self._bm25_ids: list[str] = []
+        self._vectors: tuple[list[str], np.ndarray] | None = None  # exact-search snapshot of Chroma
         self._seen_version = self._data_version()
 
     def _check_embedding_model(self) -> None:
@@ -181,7 +182,7 @@ class ChunkIndex:
         object wrote to it since we built them, rebuild them instead of serving (and crashing on) old data."""
         version = self._data_version()
         if version != self._seen_version:
-            self._bm25, self._near, self._seen_version = None, None, version
+            self._bm25, self._near, self._vectors, self._seen_version = None, None, None, version
 
     # ----- writing -----
 
@@ -280,6 +281,7 @@ class ChunkIndex:
         if kept:
             self.collection.update(ids=[c.chunk_id for c in kept], metadatas=[self._meta(c) for c in kept])
         self._bm25 = None  # rebuilt from the table on the next keyword search
+        self._vectors = None  # and the exact-search matrix from Chroma on the next meaning search
         return IndexResult(doc_id, len(to_add), len(to_remove), len(kept), len(skipped))
 
     def _near_index(self) -> NearDuplicateIndex:
@@ -308,15 +310,40 @@ class ChunkIndex:
             return self._nearest(qv, k)
 
     def _nearest(self, qv: np.ndarray, k: int) -> list[Hit]:
-        if self.count() == 0:  # emptied while we were embedding
+        """EXACT cosine top-k over every stored vector. Chroma's HNSW index is approximate, and on this
+        corpus it missed 1-2 of the true top 10 for 3 of 6 test questions, differently in each process
+        (docs/phase2-audit.md, S6). A matrix product over 1,266 x 1024 floats takes ~0.25 ms and is exact
+        and deterministic. Chroma stays the vector store; past ~100k chunks (~400 MB of float32) switch back to
+        an approximate index with a tuned ef_search and measured recall."""
+        self._drop_stale_caches()
+        ids, matrix = self._vector_matrix()
+        if not ids:  # emptied while we were embedding
             return []
-        res = self.collection.query(query_embeddings=[qv.tolist()], n_results=min(k, self.count()),
-                                    include=["distances"])
-        ids, distances = res["ids"][0], res["distances"][0]
-        chunks = self._chunks(ids)
-        self._warn_missing(ids, chunks)
-        # cosine distance = 1 - similarity; ids the table doesn't have (drift) are skipped, not fatal
-        return [Hit(chunks[i], 1.0 - d) for i, d in zip(ids, distances) if i in chunks]
+        norm = float(np.linalg.norm(qv))
+        if not np.isfinite(norm) or norm == 0:  # NaN scores would rank chunks arbitrarily
+            log.warning("query embedding is unusable (norm %s); no meaning-search results", norm)
+            return []
+        sims = matrix @ (qv / norm)
+        k = min(k, len(ids))
+        top = np.argpartition(-sims, k - 1)[:k]
+        top = top[np.lexsort((top, -sims[top]))]  # by similarity, ties by position (ids are sorted): stable
+        found = [ids[i] for i in top]
+        chunks = self._chunks(found)
+        self._warn_missing(found, chunks)  # ids the table doesn't have (drift) are skipped, not fatal
+        return [Hit(chunks[ids[i]], float(sims[i])) for i in top if ids[i] in chunks]
+
+    def _vector_matrix(self) -> tuple[list[str], np.ndarray]:
+        if self._vectors is None:
+            got = self.collection.get(include=["embeddings"])
+            if not got["ids"]:
+                self._vectors = ([], np.empty((0, 0), dtype=np.float32))
+            else:
+                order = sorted(range(len(got["ids"])), key=lambda i: got["ids"][i])  # same order in every process
+                ids = [got["ids"][i] for i in order]
+                matrix = np.asarray(got["embeddings"], dtype=np.float32)[order]
+                matrix /= np.linalg.norm(matrix, axis=1, keepdims=True)
+                self._vectors = (ids, matrix)
+        return self._vectors
 
     @_locked
     def search_sparse(self, query: str, k: int = 10) -> list[Hit]:
@@ -379,6 +406,8 @@ class ChunkIndex:
                     self.collection.add(ids=[c.chunk_id for c in ordered], embeddings=vectors.tolist(),
                                         documents=[c.text for c in ordered],
                                         metadatas=[self._meta(c) for c in ordered])
+        with self._lock:
+            self._vectors = None  # Chroma changed underneath the exact-search snapshot
         if any(problems.values()):
             log.warning("repaired index: %s", {k: len(v) for k, v in problems.items()})
         return problems

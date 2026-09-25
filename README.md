@@ -19,9 +19,9 @@ Work in progress, built one step at a time. The description above is the target 
 - [x] Production audit of Phase 1, three rounds ([docs/phase1-audit.md](docs/phase1-audit.md)): 32 findings fixed with before/after measurements; an offline test suite covers every one (run `python -m pytest -q`)
 - [x] One pipeline for documents in and out (`hyrag/pipeline.py`): store → chunk → index, and deletions reach both
 - [x] Chunking: semantic (topic cuts from neighbour-embedding similarity, relative per-document threshold; whether it beats structure-aware is measured in the eval phase)
-- [x] Embeddings + ChromaDB, BM25 index kept in sync (one SQLite chunk table is the source of truth; Chroma is reconciled against it, BM25 is rebuilt from it; `check_sync()` / `repair()`)
+- [x] Embeddings + ChromaDB, BM25 index kept in sync (one SQLite chunk table is the source of truth; Chroma is reconciled against it, BM25 is rebuilt from it; `check_sync()` / `repair()`). Meaning search is exact cosine over the stored vectors, not Chroma's approximate HNSW, which missed real top-10 results on this corpus (measured in [docs/phase2-audit.md](docs/phase2-audit.md), S6)
 - [x] Near-duplicate detection (by text, not embeddings: ≥90% shared 3-word sequences + identical numbers/identifiers; skipped copies are recorded and promoted back if their original disappears)
-- [ ] Hybrid retrieval with RRF and reranking
+- [x] Hybrid retrieval: weighted Reciprocal Rank Fusion of both searches (`hyrag/retrieval.py`), then a local cross-encoder reranker (`hyrag/rerank.py`, ms-marco-MiniLM-L6-v2, pinned revision) that keeps the best 5 of the fused 20. Audited: [docs/phase2-audit.md](docs/phase2-audit.md)
 - [ ] Grounded generation with citation verification and confidence scoring
 - [ ] Evaluation suite and chunking comparison
 - [ ] FastAPI service, dashboard, Docker
@@ -35,5 +35,15 @@ pip install -r requirements.txt
 python sample_docs/make_sample_pdf.py
 python try_loader.py
 ```
+
+Retrieval (needs `MISTRAL_API_KEY` in `.env`):
+
+```bash
+python try_index.py             # parse, chunk and index the corpus into data/index/
+python -m hyrag.rerank          # download the reranker model once (~88 MB); it loads offline after that
+python try_rerank.py            # hybrid search + reranking on real questions
+```
+
+Heads-up on size: `requirements.txt` pulls in PyTorch for the reranker (a ~124 MB CPU wheel on Windows/macOS; on Linux, install the CPU build from https://download.pytorch.org/whl/cpu or pip fetches the multi-GB CUDA one). Loading the reranker takes ~10-13 s and ~590 MB of RAM, so a server should load it once at startup.
 
 `try_loader.py` loads every file in `sample_docs/`, prints the sections it extracted, and saves the originals to `data/raw/` and the cleaned versions to `data/processed/`.

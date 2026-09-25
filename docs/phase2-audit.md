@@ -1,5 +1,65 @@
 # HyRAG Phase 2 audit
 
+## Round 2 (2026-09-25): Step 4, cross-encoder reranking
+
+**Scope:** `hyrag/rerank.py`, the reranking path in `hyrag/retrieval.py`, `tests/test_rerank.py`, `try_rerank.py`, the dependency and lock changes, and a regression pass over round 1. The Step 4 code was audited while it was still uncommitted. **Method:** Phase A was read-only, with measured probes. Every load time came from a fresh process, and the slow cases were run twice: one early 105 s reading and one 29 s reading were machine noise and are not used below. One real Mistral request was made (the over-long query in S3).
+
+```bash
+PYTHONPATH=. python scripts/audit/probe_rerank.py      # this round (needs the model cached: python -m hyrag.rerank)
+PYTHONPATH=. python scripts/audit/probe_recall.py      # S6: meaning search vs exact brute force (needs the real index)
+PYTHONPATH=. python scripts/audit/probe_retrieval.py   # regression: round 1
+python -m pytest -q                                    # pytest -m "not model" skips the ~20 s real-model test
+```
+
+### Results after fixes
+
+All six fixed (S6 below). 170 tests pass; every probe passes.
+
+| ID | Sev | Before | After | Verified by |
+|---|---|---|---|---|
+| S1 | High | The default `local_files_only=False` let a cached, pinned model contact the Hub on every load. With the Hub unreachable, loading took **250 s** (reproduced twice), and every reranking request waited behind the load lock. | Offline by default (`local_files_only=True`). The model is fetched once, explicitly: `python -m hyrag.rerank` (`download()`), or automatically by `try_rerank.py` when `is_downloaded()` is false. With the Hub unreachable, loading now takes **10.0 s** (twice), the same as with no network problem. | test (default); probe 8; timing runs in fresh processes |
+| S2 | High | A reranker exception failed the whole search, although the fused results were ready. A failed load wasn't remembered, so every request re-tried it (10–27 s each). | `retrieve()` falls back to the fused top `rerank_top_n`, logs the error, and leaves `rerank_score` `None` so callers can see the results weren't reranked. A failed load raises `RerankerUnavailable` (with the "run `python -m hyrag.rerank`" hint) and is re-tried only after 60 s: the next request fails in **0 ms**, down from ~12 s. | 2 tests (fallback; cool-down with a fake clock); probes 1–2 |
+| S3 | Med | A 46,830-char query (a pasted log) got **400 Bad Request from Mistral after a request was sent**. The reranker would have silently cut its 18,014 tokens to 512. | `MAX_QUERY_CHARS = 2000`: rejected with a `ValueError` before any search, **0 requests**. | test (limit and limit+1); probe 6 |
+| S4 | Low | `top_k=3, rerank_top_n=10` was accepted. | Rejected when a `HybridRetriever` **with a reranker** is built. A first version put the check in `RetrievalConfig`, which broke 5 existing tests that use `top_k=3` with no reranker, a legitimate setup. The check moved to where `rerank_top_n` is actually used. | test; probe 3 |
+| S5 | Low | The README didn't mention PyTorch, the model download, or the memory cost. | "Try it" section: index, `python -m hyrag.rerank`, `try_rerank.py`; PyTorch size (and the Linux CUDA-wheel trap); ~10–13 s load and **~590 MB RAM** (measured: working set 30 → 620 MB). | read |
+
+### Checked and fine
+- **Reranking holds no index lock:** a keyword search takes 1 ms while the model scores.
+- **Deterministic:** a pair scored alone vs inside a padded batch of 20 differs by 2.4e-7, and repeated batches are identical.
+- **Model files:** `model.safetensors` only (no pickle), `trust_remote_code` off, revision pinned to a commit hash.
+- **Truncation:** 1 of 1,266 chunks exceeds the 512-token window, and questions are now capped (S3).
+- **Regression:** round 1's probes pass 15/15. All 165 tests pass. The real demo's ranks are unchanged (4012: fused #2 → #1; credentials: fused #3 → #1).
+
+### S6 (High, found during this round's regression checks): meaning search missed real top-10 results
+
+The Friday question's candidate pool was 15 chunks in some runs and 16 in others. The cause was Chroma's HNSW index, which is approximate. Measured against exact brute-force cosine over all 1,266 vectors:
+
+| Collection | ef_search 100 (default) | ef_search 500 |
+|---|---|---|
+| `data/index` (graph after Phase 1's many delete/re-add cycles) | missed 1–2 of the exact top 10 for 3 of 6 questions; **which** chunks were missed varied between processes | still missed 1 (the 4012 question) |
+| a fresh collection from the same vectors | missed 1–3 | **0 misses** (two runs) |
+
+These were real misses, not near-ties: the credentials question lost the exact #4 (cosine 0.750) while Chroma returned a chunk at 0.739. Two causes: mistral-embed vectors are low-contrast (everything scores 0.65–0.85), so the default search width is too narrow, and the graph degrades with churn.
+
+**Fix (chosen by the user over tuning HNSW):** meaning search ranks by **exact cosine** over an in-memory copy of the stored vectors (`ChunkIndex._nearest` / `_vector_matrix`). Chroma remains the vector store and stays reconciled with the chunk table. The copy is rebuilt on demand and dropped whenever BM25 is: on every write, on `repair()`, and when another process or index object commits (`PRAGMA data_version`). Ids are sorted, so ties break the same way in every process. A query vector with zero or non-finite length returns no results with a warning, instead of ranking by NaN.
+
+| | Before (Chroma HNSW) | After (exact) |
+|---|---|---|
+| exact top-10 chunks missed, 6 questions × 5 processes | 1–2 in 3 of 6 questions, varying per process | **0** in every process |
+| Friday candidate pool across processes | 15 or 16 | **15** every time |
+| dense search latency (cached query embedding) | 2–3 ms | **0.7–0.8 ms** (first query per process: +135–450 ms to build the copy) |
+| memory | none extra | 4 KB per chunk (5 MB now; ~400 MB at 100k chunks, the point to go back to a tuned approximate index) |
+
+Verified by 5 tests: equals brute force, refreshes after this object's writes, after another object's writes, and after `repair()`, plus the unusable-vector guard. Every probe from rounds 1–2 and Phase 1 round 3 passes. The real demo's ranks are unchanged. Note: comparing the new search with brute force is nearly tautological (both compute the same thing); what it proves is that the approximate path is gone and the in-memory copy matches Chroma.
+
+---|---|---|
+| `data/index` (graph after Phase 1's many delete/re-add cycles) | misses 1–2 of the exact top 10 for 3 of 6 questions; **which** chunks are missed varies between processes | still misses 1 (the 4012 question) |
+| a fresh collection from the same vectors | misses 1–3 | **0 misses** (two runs) |
+
+These are real misses, not near-ties: the credentials question lost the exact #4 (cosine 0.750) while Chroma returned a chunk at 0.739. Two causes: mistral-embed vectors are low-contrast (everything scores 0.65–0.85), so the default search width is too narrow, and the graph degrades with churn. Exact search over the same vectors takes **0.25 ms** per query (Chroma: 2–3 ms). How to fix it is a design decision and was left to the user: see the checkpoint in the conversation log.
+
+---
+
 ## Round 1 (2026-09-24): Step 3, hybrid retrieval (RRF fusion)
 
 **Scope:** `hyrag/retrieval.py`, `tests/test_retrieval.py`, `try_retrieval.py`, plus the index code they depend on (`ChunkIndex.search_dense` / `search_sparse` and its locking). The Step 3 code was audited while it was still uncommitted.
