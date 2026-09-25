@@ -30,7 +30,7 @@ class ChatResult:
 
 
 class GroqChat:
-    def __init__(self, model: str = "openai/gpt-oss-120b", reasoning_effort: str = "low",
+    def __init__(self, model: str = "openai/gpt-oss-120b", reasoning_effort: str | None = "low",
                  temperature: float = 0.0, seed: int = 7, max_completion_tokens: int = 1024):
         load_dotenv()  # read .env when a client is created, not as a side effect of importing this module
         self.api_key = os.environ.get("GROQ_API_KEY")
@@ -53,9 +53,15 @@ class GroqChat:
     def __exit__(self, *exc) -> None:
         self.close()
 
-    def complete(self, messages: list[dict]) -> ChatResult:
+    def complete(self, messages: list[dict], json_schema: dict | None = None) -> ChatResult:
+        """`json_schema`: force the reply to match this JSON Schema (strict structured output), e.g. a verdict."""
         payload = {"model": self.model, "messages": messages, "temperature": self.temperature, "seed": self.seed,
-                   "reasoning_effort": self.reasoning_effort, "max_completion_tokens": self.max_completion_tokens}
+                   "max_completion_tokens": self.max_completion_tokens}
+        if self.reasoning_effort is not None:  # only reasoning models (gpt-oss) take this; None to omit it
+            payload["reasoning_effort"] = self.reasoning_effort
+        if json_schema is not None:
+            payload["response_format"] = {"type": "json_schema",
+                                          "json_schema": {"name": "reply", "strict": True, "schema": json_schema}}
         t0 = time.perf_counter()
         data = post_json(self.client, GROQ_CHAT_URL, payload, what="Groq chat request", on_attempt=self._count)
         choice, usage = data["choices"][0], data.get("usage", {})
