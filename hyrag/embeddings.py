@@ -10,11 +10,12 @@ import httpx
 import numpy as np
 from dotenv import load_dotenv
 
+from hyrag.http import post_json
+
 log = logging.getLogger(__name__)
 
 MISTRAL_EMBEDDINGS_URL = "https://api.mistral.ai/v1/embeddings"
 KNOWN_DIMENSIONS = {"mistral-embed": 1024}
-MAX_RETRY_WAIT_SECONDS = 60
 
 
 class EmbeddingCache:
@@ -83,36 +84,13 @@ class MistralEmbedder:
         self.close()
 
     def _request(self, batch: list[str], attempts: int = 5) -> list[list[float]]:
-        for attempt in range(attempts):
-            try:
-                with self._count_lock:
-                    self.requests_made += 1
-                resp = self.client.post(MISTRAL_EMBEDDINGS_URL, json={"model": self.model, "input": batch})
-            except httpx.TransportError as e:  # timeout, dropped connection, DNS hiccup
-                resp, reason = None, type(e).__name__
-            else:
-                reason = f"HTTP {resp.status_code}"
-            # 429 = rate limited, 5xx = Mistral-side problem: both are temporary, so wait and retry.
-            if resp is None or resp.status_code == 429 or resp.status_code >= 500:
-                if attempt < attempts - 1:
-                    wait = self._retry_wait(resp, attempt)
-                    log.warning("embedding request failed (%s); retry %d/%d in %.1fs",
-                                reason, attempt + 1, attempts - 1, wait)
-                    time.sleep(wait)
-                continue
-            resp.raise_for_status()  # anything else (bad key, bad input) won't fix itself: fail now
-            items = sorted(resp.json()["data"], key=lambda d: d["index"])
-            return [item["embedding"] for item in items]
-        raise RuntimeError(f"Mistral embeddings failed after {attempts} attempts")
+        data = post_json(self.client, MISTRAL_EMBEDDINGS_URL, {"model": self.model, "input": batch},
+                         what="embedding request", attempts=attempts, on_attempt=self._count_request)
+        return [item["embedding"] for item in sorted(data["data"], key=lambda d: d["index"])]
 
-    @staticmethod
-    def _retry_wait(resp: httpx.Response | None, attempt: int) -> float:
-        """Honour the server's Retry-After (seconds) when it sends one; otherwise back off 1s, 2s, 4s..."""
-        header = resp.headers.get("Retry-After") if resp is not None else None
-        try:
-            return min(float(header), MAX_RETRY_WAIT_SECONDS)
-        except (TypeError, ValueError):
-            return float(2**attempt)
+    def _count_request(self) -> None:
+        with self._count_lock:
+            self.requests_made += 1
 
     def embed(self, texts: list[str]) -> np.ndarray:
         """Return one vector per text, as rows of a (len(texts), dimensions) array, each scaled to length 1.
