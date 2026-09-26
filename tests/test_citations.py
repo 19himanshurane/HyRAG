@@ -12,10 +12,26 @@ from .test_generation import hit
 # ----- splitting an answer into claims -----
 
 def test_citation_after_the_full_stop_belongs_to_the_sentence_before():
-    claims = split_claims("Open NimbusConnect and click Renew. Then run the command. [1]")
+    claims = split_claims("Deploys stop on Fridays. [1] Staging needs no approval. [2]")
     assert [(c.text, c.citations, c.kind) for c in claims] == [
-        ("Open NimbusConnect and click Renew.", [], "uncited"),
-        ("Then run the command.", [1], "cited")]
+        ("Deploys stop on Fridays.", [1], "cited"), ("Staging needs no approval.", [2], "cited")]
+
+
+def test_uncited_sentences_are_verified_with_the_next_citation():
+    # The model's habit: one citation after a paragraph or a command block. The combined text is judged.
+    claims = split_claims("Open NimbusConnect and click Renew. Then run:\n\n```\nnimbus-vpn --renew-cert\n``` [1]")
+    assert [(c.text, c.citations) for c in claims] == [
+        ("Open NimbusConnect and click Renew. Then run: nimbus-vpn --renew-cert", [1])]
+
+
+def test_uncited_sentences_without_a_later_citation_stay_uncited():
+    claims = split_claims("Renew it [1]. Then restart your laptop.")
+    assert [(c.text, c.kind) for c in claims] == [("Renew it.", "cited"), ("Then restart your laptop.", "uncited")]
+
+
+def test_a_gap_statement_is_never_merged_into_a_claim():
+    claims = split_claims("Restart it. The documents do not cover pricing. Renew it [1].")
+    assert [c.kind for c in claims] == ["uncited", "gap", "cited"]
 
 
 def test_claims_keep_all_their_citations_once_in_order():
@@ -25,8 +41,8 @@ def test_claims_keep_all_their_citations_once_in_order():
 
 
 def test_bullets_and_lines_are_separate_claims():
-    claims = split_claims("Reasons:\n- Not enough CPU [1].\n* Too many hostPorts [2].\n1. Taints [3].")
-    assert [c.text for c in claims] == ["Reasons:", "Not enough CPU.", "Too many hostPorts.", "Taints."]
+    claims = split_claims("- Not enough CPU [1].\n* Too many hostPorts [2].\n1. Taints [3].")
+    assert [c.text for c in claims] == ["Not enough CPU.", "Too many hostPorts.", "Taints."]
 
 
 @pytest.mark.parametrize("sentence", ["The documents do not provide any information about the monthly cost.",

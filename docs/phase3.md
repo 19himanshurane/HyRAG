@@ -79,3 +79,51 @@ The first 120b run scored 29/32. All 3 misses were the quote check being too str
 - A claim is checked only against the passages it **cites**. A claim that's true in another retrieved passage but cited to the wrong one fails. That's correct for citations, but it isn't a "miscited" diagnosis.
 - 32 pairs is a small set for choosing a judge; Phase 4's golden set re-measures it on real answers.
 - Each judge call is ~300–600 tokens. Judging a 5-claim answer adds ~5 requests and a few seconds.
+
+---
+
+## Step 3 (2026-09-25): answer confidence
+
+**Code:** `hyrag/confidence.py`. **Calibration set:** `eval/calibration_questions.json` (10 answerable, 10 unanswerable). **Evaluation:** `scripts/eval_confidence.py` (the whole pipeline). **Tests:** `tests/test_confidence.py`.
+
+Before a question was labelled unanswerable, the corpus was searched for its topic. Several questions I expected to be missing were not: "vacation" has 121 chunks and "parental leave" has 3, so those became answerable instead.
+
+### The three parts
+
+| Part | How | Why this signal |
+|---|---|---|
+| **Retrieval** | the reranker's top logit through a logistic curve centred at −3 (scale 1.4) | On the 20 calibration questions, the top logit **separated them completely**: answerable +0.08…+9.40, unanswerable −5.83…−11.25. Meaning-search similarity barely separated them (0.784+ vs 0.751−) and BM25 overlapped (5.5 vs 9.9). The textbook sigmoid(logit) gave the correctly answered SQLSTATE 23505 (a row in a big table, logit 0.08) only 0.52, so the curve is centred in the measured gap: 23505 → 0.90, the most plausible unanswerable (Slack password, −5.83) → 0.12. If reranking failed, the fallback is dense similarity, flagged as the weaker signal. |
+| **Citations** | the share of claims Step 2 verified; partial counts ½; "the documents don't cover X" is left out | directly measures "is what it says backed?" |
+| **Completeness** | the judge splits the question into parts: answered / not_covered (the answer says it's missing) / missing (ignored) | the brief's "did it address all parts"; strict JSON |
+
+**Composite:** 0.3 × retrieval + 0.4 × citations + 0.3 × completeness. Hard caps then apply, so a red flag can't be averaged away:
+- ungrounded (no citations at all): 0.2
+- unsupported claim: 0.4 (below "medium")
+- truncated: 0.5
+- a part silently ignored: 0.6
+- a partial claim: 0.7 (never "high")
+- honestly incomplete: 0.75 (never "high")
+
+**Levels:** high ≥ 0.8, medium ≥ 0.5, low below that, and not_found when the answer says so. The weights and caps are judgement calls, to be checked against human ratings in Phase 4.
+
+### Mistakes the evaluation caught (fixed)
+1. **A deliberately wrong answer scored "medium" (0.50):** every claim was unsupported, but retrieval and completeness were perfect and the cap was 0.5. The unsupported cap is now 0.4 (low), and partial claims rule out "high".
+2. **A verified half answer scored "high" (0.85):** a unit test found it. The "incomplete" cap is 0.75.
+3. **Correct answers had low citation coverage.** The model often cites once, after a paragraph or a command block ("Open NimbusConnect… click Renew. Then run: ```nimbus-vpn --renew-cert``` [1]"), so the 4012 answer scored 0.80 with one of three claims "supported". Uncited sentences are now **verified together with the next cited sentence**, against its citation. The judge still checks every fact: an unsupported extra sentence makes the claim partial and flagged. Nothing is assumed.
+4. **A pre-existing Step 2 bug** found while writing the tests for (3): in "Fridays. [1] Staging needs no approval. [2]", the `[1]` was attached to the *next* sentence. Citations after a full stop are now moved before it prior to splitting.
+
+### Result (2 full runs, after the fixes)
+
+| | Run 1 | Run 2 |
+|---|---|---|
+| 10 answerable | 10 high | 9 high, 1 medium (one caregiver-policy claim judged partial) |
+| 10 unanswerable | 10 not_found (confidence 0) | 10 not_found |
+| "fix 4012 **and** how much does the VPN cost?" | medium 0.75, `incomplete`, completeness 0.5 | same |
+| deliberately wrong answer | **low 0.40**, `unsupported_claim` | same |
+
+**Run-to-run variance is real.** The same question scored 1.00 in one run and 0.70 in another, because the writer and the judge both vary a little even at temperature 0 with a fixed seed. One run's confidence is a noisy estimate; Phase 4 should report spread, not a single number.
+
+### Known limits
+- **Calibration on 20 questions** with a clear gap: the centre (−3) could sit anywhere between −5.8 and +0.1 and still separate them. Phase 4's golden set, with harder near-miss questions, must re-check it.
+- **All 10 unanswerable questions were also refused by the writer.** The retrieval part hasn't yet been tested on a case where the writer answers from weak passages. That's where it matters most, and where Step 4's threshold comes in.
+- **Cost:** completeness adds one judge request per answer.

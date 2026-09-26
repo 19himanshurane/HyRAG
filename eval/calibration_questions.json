@@ -1,0 +1,82 @@
+[
+ {
+  "question": "How do I fix ERR_TUNNEL_4012?",
+  "answerable": true
+ },
+ {
+  "question": "What does error ERR_TUNNEL_4013 mean?",
+  "answerable": true
+ },
+ {
+  "question": "What does SQLSTATE 23505 mean?",
+  "answerable": true
+ },
+ {
+  "question": "Can I deploy to production on a Friday?",
+  "answerable": true
+ },
+ {
+  "question": "Do staging deploys need approval?",
+  "answerable": true
+ },
+ {
+  "question": "Why is my pod stuck in Pending?",
+  "answerable": true
+ },
+ {
+  "question": "How can a user recover their account after losing their authenticators?",
+  "answerable": true
+ },
+ {
+  "question": "What is GitLab's caregiver sick time policy?",
+  "answerable": true
+ },
+ {
+  "question": "What does the max_connections setting control in PostgreSQL?",
+  "answerable": true
+ },
+ {
+  "question": "What is the Opaque type of Kubernetes Secret?",
+  "answerable": true
+ },
+ {
+  "question": "How do I connect to the guest Wi-Fi?",
+  "answerable": false
+ },
+ {
+  "question": "How do I request a new laptop?",
+  "answerable": false
+ },
+ {
+  "question": "How do I submit an expense for reimbursement?",
+  "answerable": false
+ },
+ {
+  "question": "How do I set up the office printer?",
+  "answerable": false
+ },
+ {
+  "question": "How do I reset my Slack password?",
+  "answerable": false
+ },
+ {
+  "question": "How much extra pay do I get for being on call?",
+  "answerable": false
+ },
+ {
+  "question": "How do I book a meeting room?",
+  "answerable": false
+ },
+ {
+  "question": "What is the office dress code?",
+  "answerable": false
+ },
+ {
+  "question": "How do I get a parking permit?",
+  "answerable": false
+ },
+ {
+  "question": "When do my stock options vest?",
+  "answerable": false
+ }
+]

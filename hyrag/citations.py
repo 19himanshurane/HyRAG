@@ -45,6 +45,7 @@ JUDGE_SCHEMA = {
 }
 
 _CITATION = re.compile(r"\[(\d+(?:\s*,\s*\d+)*)\]")
+_TRAILING_CITATIONS = re.compile(r"([.!?])((?:[ \t]*\[\d+(?:\s*,\s*\d+)*\])+)")
 _SENTENCE_END = re.compile(r"(?<=[.!?])\s+(?=[A-Z0-9`*\[(\"'])")
 _BULLET = re.compile(r"^\s*(?:[-*•]|\d+[.)])\s+")
 # "The documents do not cover the monthly cost." is an honest statement about a gap, not a claim to cite.
@@ -90,6 +91,9 @@ class CitationReport:
 
 
 def split_claims(text: str) -> list[Claim]:
+    # "Fridays. [1] Staging..." -> "Fridays [1]. Staging...": a citation after the full stop belongs to the
+    # sentence before it (without this, [1] was glued to the NEXT sentence).
+    text = _TRAILING_CITATIONS.sub(r"\2\1", text)
     pieces: list[str] = []
     for line in text.splitlines():
         line = _BULLET.sub("", line).strip()
@@ -111,7 +115,29 @@ def split_claims(text: str) -> list[Claim]:
                 seen.append(n)
         kind = "cited" if seen else ("gap" if _GAP.search(bare) else "uncited")
         claims.append(Claim(bare, seen, kind))
-    return claims
+    return _attach_to_next_citation(claims)
+
+
+def _attach_to_next_citation(claims: list[Claim]) -> list[Claim]:
+    """Uncited sentences are verified together with the next cited sentence, against its citations.
+
+    The model often cites once, at the end of a paragraph or after a command block ("Open X and click Renew.
+    Then run: ... [1]"), which left correct instructions "uncited". Merging does not assume support: the judge
+    checks the combined text, so an uncited sentence the passage doesn't back makes the claim "partial" and it
+    is still flagged. Uncited sentences with no cited sentence after them stay "uncited"."""
+    out: list[Claim] = []
+    pending: list[Claim] = []
+    for claim in claims:
+        if claim.kind == "uncited":
+            pending.append(claim)
+            continue
+        if claim.kind == "cited" and pending:
+            claim = Claim(" ".join([p.text for p in pending] + [claim.text]), claim.citations, "cited")
+        else:
+            out.extend(pending)  # a gap statement ends the run: keep them as they were
+        pending = []
+        out.append(claim)
+    return out + pending
 
 
 def _norm(s: str) -> str:
