@@ -1,0 +1,244 @@
+{
+ "seed": 20260928,
+ "min_words": 40,
+ "sections": [
+  {
+   "source": "security/nist-sp-800-63b-4-authentication.pdf",
+   "section_index": 201,
+   "heading": "Digital Identity Guidelines: Authentication and Authenticator Management > Appendix B. Syncable Authenticators > B.4. Sharing",
+   "page": 106,
+   "text": "The risk of sharing posed by this new class of authenticators is not unique. It applies to\nall authenticator types, some of which are weaker than syncable authenticators. Any\nauthenticator can be shared by a user who is determined to share it. Users can actively\nshare passwords, OTPs, out-of-band authenticators, and even push-based authentication\nevents that allow a designee (whether formal or not) to authenticate on behalf of an end\nuser.\n\nAgencies determine which authenticators they will accept for their applications based on\nthe specific risks, threats, and usability considerations they face. Syncable authenticators\nmay be offered as a new option for applications that seek to implement up to AAL2. The\ntrade-offs of this technology should be balanced with expected outcomes for security,\nprivacy, and user experience."
+  },
+  {
+   "source": "security/nist-sp-800-63b-4-authentication.pdf",
+   "section_index": 163,
+   "heading": "Digital Identity Guidelines: Authentication and Authenticator Management > 8. Customer Experience Considerations > 8.1. Usability > 8.1.2. Usability Considerations by Authenticator Type > 8.1.2.1. Passwords > Typical Usage",
+   "page": 83,
+   "text": "Users often manually input the password (sometimes referred to as a passphrase or\nPIN). Alternatively, they may use a password manager to select a secure password\nand maintain distinct passwords for each authenticated service. The use of distinct\npasswords is important to avoid “password stuffing” attacks in which an attacker uses\na compromised password from one site to access the user’s account on other sites.\nAgencies should carefully evaluate password managers before making recommendations\nor mandates to confirm that they meet expectations for secure implementation.\n\nUsability considerations for typical usage without a password manager include:\n\n• Memorability of the password\n\n– The likelihood of a recall failure increases if there are more items for users to\nremember. With fewer passwords, users can more easily recall the specific\npassword needed for a particular RP.\n\n– The memory burden is greater for a less frequently used password.\n\nUsability considerations for typical usage with a password manager include:\n\n• Ease of entry\n\n– Support autofill functionality to allow for the safe retrieval of secrets from\npassword managers.\n\n– Support copy and paste functionality in fields for entering passwords,\nincluding passphrases."
+  },
+  {
+   "source": "security/nist-sp-800-63b-4-authentication.pdf",
+   "section_index": 84,
+   "heading": "Digital Identity Guidelines: Authentication and Authenticator Management > 3. Authenticator and Verifier Requirements > 3.2. General Authenticator Requirements > 3.2.3. Use of Biometrics > 3.2.3.4. Use of Biometric Samples",
+   "page": 45,
+   "text": "Biometric samples collected in the authentication process MAY be used locally within\nthe authenticator or verifier performing the biometric comparison to update the\ntemplates for the purpose of compensating for changes in subscriber characteristics or\n— with explicit subscriber consent — other research purposes. The biometric samples\nand any other biometric data derived from them SHALL be erased immediately after\nany adaptation or research data has been derived. A limit on the allowable time for\nadaptation SHALL be established and enforced by the authenticator or the CSP."
+  },
+  {
+   "source": "security/nist-sp-800-63b-4-authentication.pdf",
+   "section_index": 203,
+   "heading": "Digital Identity Guidelines: Authentication and Authenticator Management > Appendix B. Syncable Authenticators > Phishing resistance (recommended, required for federal enterprise)",
+   "page": 106,
+   "text": "Achieved: Properly configured syncable authenticators create a unique public or\nprivate key pair whose use is constrained to the domain in which it was created (i.e.,\nthe key can only be used with a specific website or RP). This prevents a falsified web\npage from being able to capture and reuse an authenticator output."
+  },
+  {
+   "source": "security/nist-sp-800-63b-4-authentication.pdf",
+   "section_index": 325,
+   "heading": "Digital Identity Guidelines: Authentication and Authenticator Management > Appendix D. Glossary > password",
+   "page": 121,
+   "text": "A type of authenticator consisting of a character string that is intended to be memorized\nor memorable by the subscriber to permit the claimant to demonstrate something they\nknow as part of an authentication process. Passwords were referred to as memorized\nsecrets in the initial release of SP 800-63B."
+  },
+  {
+   "source": "security/nist-sp-800-63b-4-authentication.pdf",
+   "section_index": 295,
+   "heading": "Digital Identity Guidelines: Authentication and Authenticator Management > Appendix D. Glossary > digital signature",
+   "page": 118,
+   "text": "An asymmetric key operation in which the private key is used to digitally sign data, and\nthe public key is used to verify the signature. Digital signatures provide authenticity\nprotection, integrity protection, and non-repudiation support but not confidentiality or\nreplay attack protection."
+  },
+  {
+   "source": "security/nist-sp-800-61r3-incident-response.pdf",
+   "section_index": 9,
+   "heading": "Incident Response Recommendations and Considerations for Cybersecurity Risk Management: A CSF 2.0 Community Profile > Abstract",
+   "page": 5,
+   "text": "This publication seeks to assist organizations with incorporating cybersecurity incident response\nrecommendations and considerations throughout their cybersecurity risk management\nactivities as described by the NIST Cybersecurity Framework (CSF) 2.0. Doing so can help\norganizations prepare for incident responses, reduce the number and impact of incidents that\noccur, and improve the efficiency and effectiveness of their incident detection, response, and\nrecovery activities. Readers are encouraged to utilize online resources in conjunction with this\ndocument to access additional information on implementing these recommendations and\nconsiderations."
+  },
+  {
+   "source": "security/nist-sp-800-61r3-incident-response.pdf",
+   "section_index": 23,
+   "heading": "Incident Response Recommendations and Considerations for Cybersecurity Risk Management: A CSF 2.0 Community Profile > 2. Incident Response as Part of Cybersecurity Risk Management",
+   "page": 12,
+   "text": "This section explains the fundamental concepts of incident response as an integral part of\ncybersecurity risk management. Section 2.1 explores the incident response life cycle and\nproposes a new life cycle model based on CSF 2.0 Functions. Section 2.2 discusses incident\nresponse roles and responsibilities both inside and outside an organization. Finally, Section 2.3\nbriefly examines incident response policies, processes, and procedures."
+  },
+  {
+   "source": "security/nist-sp-800-61r3-incident-response.pdf",
+   "section_index": 15,
+   "heading": "Incident Response Recommendations and Considerations for Cybersecurity Risk Management: A CSF 2.0 Community Profile > Patent Disclosure Notice",
+   "page": 7,
+   "text": "NOTICE: ITL has requested that holders of patent claims whose use may be required for\ncompliance with the guidance or requirements of this publication disclose such patent claims to\nITL. However, holders of patents are not obligated to respond to ITL calls for patents and ITL has\nnot undertaken a patent search in order to identify which, if any, patents may apply to this\npublication.\n\nAs of the date of publication and following call(s) for the identification of patent claims whose\nuse may be required for compliance with the guidance or requirements of this publication, no\nsuch patent claims have been identified to ITL.\n\nNo representation is made or implied by ITL that licenses are not required to avoid patent\ninfringement in the use of this publication."
+  },
+  {
+   "source": "engineering/k8s-pod-lifecycle.md",
+   "section_index": 28,
+   "heading": "Pod Lifecycle > Container probes",
+   "page": null,
+   "text": "Kubernetes lets you define _probes_ to continuously monitor the health\nof containers in a Pod. A probe is a diagnostic performed periodically\nby the kubelet on a container.\nTo perform a diagnostic, the kubelet either executes code within\nthe container or makes a network request.\n\nBased on the probe results, Kubernetes can restart unhealthy containers\nor stop sending traffic to containers that are not ready.\n\nThe kubelet can optionally perform and react to three kinds of probes on running\ncontainers, each serving a different purpose. For probe mechanisms (exec,\ngrpc, httpGet, tcpSocket), configuration fields, and detailed usage\nguidance, see Liveness, Readiness, and Startup Probes."
+  },
+  {
+   "source": "engineering/k8s-pod-lifecycle.md",
+   "section_index": 22,
+   "heading": "Pod Lifecycle > Pod conditions > Pod readiness",
+   "page": null,
+   "text": "Feature state: stable v1.14\n\nYour application can inject extra feedback or signals into PodStatus:\n_Pod readiness_. To use this, set readinessGates in the Pod's spec to\nspecify a list of additional conditions that the kubelet evaluates for Pod readiness.\n\nReadiness gates are determined by the current state of status.condition\nfields for the Pod. If Kubernetes cannot find such a condition in the\nstatus.conditions field of a Pod, the status of the condition\nis defaulted to \"False\".\n\nHere is an example:\n\nkind: Pod\n...\nspec:\n  readinessGates:\n    - conditionType: \"www.example.com/feature-1\"\nstatus:\n  conditions:\n    - type: Ready # a built-in PodCondition\n      status: \"False\"\n      lastProbeTime: null\n      lastTransitionTime: 2018-01-01T00:00:00Z\n    - type: \"www.example.com/feature-1\" # an extra PodCondition\n      status: \"False\"\n      lastProbeTime: null\n      lastTransitionTime: 2018-01-01T00:00:00Z\n  containerStatuses:\n    - containerID: docker://abcd...\n      ready: true\n...\n\nThe Pod conditions you add must have names that meet the Kubernetes\nlabel key format."
+  },
+  {
+   "source": "engineering/k8s-pod-lifecycle.md",
+   "section_index": 39,
+   "heading": "Pod Lifecycle > Pod behavior during kubelet restarts",
+   "page": null,
+   "text": "If you restart the kubelet, Pods (and their containers) continue to run\neven during the restart.\nWhen there are running Pods on a node, stopping or restarting the kubelet\non that node does not cause the kubelet to stop all local Pods\nbefore the kubelet itself stops.\nTo stop the Pods on a node, you can use kubectl drain."
+  },
+  {
+   "source": "handbook/gitlab-incident-management.html",
+   "section_index": 13,
+   "heading": "Incident Management > Detailed Role Responsibilities > Incident Responder Responsibilities",
+   "page": null,
+   "text": "An Incident Responder is anyone who contributes to the technical investigation and resolution of an incident. While the EOC team typically serves as primary responders, any GitLab team member with relevant expertise may be called upon to assist.\nSee a more detailed breakdown of incident responder responsibilities"
+  },
+  {
+   "source": "handbook/gitlab-incident-management.html",
+   "section_index": 50,
+   "heading": "Incident Management > Incident Workflow > Timeline",
+   "page": null,
+   "text": "The incident Timeline is available on the incident in the incident.io web interface by changing “Highlights” to “All Activity” in the Activity section towards the bottom of the page. Items can be added to the timeline via the :pushpin: (📌) or :star (⭐) emoji reaction to a Slack post within the incident channel. If you react with the :pushpin:, a public comment will be left on the GitLab incident issue. If you react with a :star:, it will add an internal comment to the GitLab incident issue. Images attached to the Slack message will be added to the incident.io timeline, but will not be posted to the GitLab issue."
+  },
+  {
+   "source": "handbook/gitlab-incident-management.html",
+   "section_index": 22,
+   "heading": "Incident Management > References > Incident Mitigation Methods - EOC/Incident Manager",
+   "page": null,
+   "text": "If wider user impact has been established during an S1 or S2 incident, as EOC you have the authority - without requiring further permission - to Block Users as needed in order to mitigate the incident. Make sure to follow Support guidelines regarding Admin Notes, leaving a note that contains a link to the incident, and any further notes explaining why the user is being blocked.\nIf users are blocked, then further follow-up will be required. This can either take place during the incident, or after it has been mitigated, depending on time-constraints.\nIf the activity on the account is considered abusive), report the user to Trust and Safety so that the account can be permanently blocked and cleaned-up. Depending on the nature of the event, the EOC may also consider reaching out to the SIRT team.\nIf not, open a related confidential incident issue and assign it to CMOC to reach out to the user, explaining why we had to block their account temporarily.\nIf the EOC is unable to determine whether the user’s traffic was malicious or not, please engage the SIRT team to carry out an investigation.\nOnce the account no longer needs to remain blocked to mitigate the incident, IMOC decides whether to unblock it, based on EOC’s confirmation that mitigation is holding and the triggering behavior is understood and will not recur.\nDo not unblock while abuse is suspected or maliciousness is unclear; those cases stay blocked pending Trust and Safety or SIRT review.\nBefore access is restored, CMOC should reach out to the user, or have a notice ready.\nOnce approved, an admin-capable responder (typically EOC) executes the unblock and updates the admin note with the approver, executor, date, and rationale."
+  },
+  {
+   "source": "handbook/gitlab-time-off-types.html",
+   "section_index": 38,
+   "heading": "Time Off Types > GitLab Legal Civic Obligations Policy > Eligibility & Entitlement",
+   "page": null,
+   "text": "This benefit is available to all team members on their first day of work.\nTeam members on an authorized Leave for Legal Civic Obligations are eligible to pay for up to the equivalent of 25 full working days of such leave, unless otherwise provided by applicable law. Pay for this leave is not available for days when the team member otherwise would not be required to work, regardless of whether the applicable judicial body is in session. Pay for this leave is paid at the eligible team members usual rate of pay based on a regularly scheduled workday.\nRequest Process"
+  },
+  {
+   "source": "handbook/gitlab-time-off-types.html",
+   "section_index": 2,
+   "heading": "Time Off Types > Flexible Paid Time Off (PTO) > Overview",
+   "page": null,
+   "text": "GitLab offers a Flexible PTO policy that empowers team members to take the time they need while ensuring business continuity. This policy reflects our values of transparency, collaboration, and GitLab’s overall Philosophy to Time Away from Work.\nOur Flexible PTO policy means that as long as you have coordinated with your manager about your planned time off and made a coverage plan, you are free to take PTO.\nGitLab does not set a specific limit on the amount of PTO a team member can take per year. However, for time off exceeding 25 consecutive calendar days (including weekends and holidays), special permission is required from your Manager, People Business Partner, and the Absence Management Team at leaves@gitlab.com.\nAll team members are encouraged to take adequate time off to recharge.\nTeam members are not allowed to substitute PTO for sick time. If taking time off for medical needs or sick time, whether physical or mental-health-related, please follow our Sick Time Policy.\nWe strongly recommend taking at least two consecutive weeks of time off and at minimum 25 days total throughout the year."
+  },
+  {
+   "source": "handbook/gitlab-time-off-types.html",
+   "section_index": 33,
+   "heading": "Time Off Types > Volunteer > Overview",
+   "page": null,
+   "text": "GitLab encourages team members to volunteer within their community to take care of others. Volunteer time-off at GitLab falls under our Flexible PTO framework, allowing team members to take time off to support causes that matter to you and your personal commitment to GitLab’s values such as diversity, inclusion and belonging.\nRequest Process"
+  },
+  {
+   "source": "engineering/postgres-config-resource.html",
+   "section_index": 0,
+   "heading": "PostgreSQL: Documentation: 18: 19.4. Resource Consumption",
+   "page": null,
+   "text": "Documentation → PostgreSQL 18\nSupported Versions: Current (18) / 17 / 16 / 15 / 14\nDevelopment Versions: 19 / devel\nUnsupported versions: 13 / 12 / 11 / 10 / 9.6 / 9.5 / 9.4 / 9.3 / 9.2 / 9.1 / 9.0 / 8.4 / 8.3 / 8.2 / 8.1\n19.4. Resource Consumption\nPrev | Up | Chapter 19. Server Configuration | Home | Next"
+  },
+  {
+   "source": "engineering/postgres-config-resource.html",
+   "section_index": 3,
+   "heading": "19.4. Resource Consumption > 19.4.2. Disk",
+   "page": null,
+   "text": "temp_file_limit (integer)\nSpecifies the maximum amount of disk space that a process can use for temporary files, such as sort and hash temporary files, or the storage file for a held cursor. A transaction attempting to exceed this limit will be canceled. If this value is specified without units, it is taken as kilobytes. -1 (the default) means no limit. Only superusers and users with the appropriate SET privilege can change this setting.\nThis setting constrains the total space used at any instant by all temporary files used by a given PostgreSQL process. It should be noted that disk space used for explicit temporary tables, as opposed to temporary files used behind-the-scenes in query execution, does not count against this limit.\nfile_copy_method (enum)\nSpecifies the method used to copy files. Possible values are COPY (default) and CLONE (if operating support is available).\nThis parameter affects:\nCREATE DATABASE ... STRATEGY=FILE_COPY\nALTER DATABASE ... SET TABLESPACE ...\nCLONE uses the copy_file_range() (Linux, FreeBSD) or copyfile (macOS) system calls, giving the kernel the opportunity to share disk blocks or push work down to lower layers on some file systems.\nfile_extend_method (enum)\nSpecifies the method used to extend data files during bulk operations such as COPY. The first available option is used as the default, depending on the operating system:\nposix_fallocate (Unix) uses the standard POSIX interface for allocating disk space, but is missing on some systems. If it is present but the underlying file system doesn't support it, this option silently falls back to write_zeros. Current versions of BTRFS are known to disable compression when this option is used. This is the default on systems that have the function.\nwrite_zeros extends files by writing out blocks of zero bytes. This is the default on systems that don't have the function posix_fallocate.\nThe write_zeros method is always used when data files are extended by 8 blocks or fewer.\nmax_notify_queue_pages (integer)\nSpecifies the maximum amount of allocated pages for NOTIFY / LISTEN queue. The default value is 1048576. For 8 KB pages it allows to consume up to 8 GB of disk space. This parameter can only be set at server start."
+  },
+  {
+   "source": "engineering/k8s-secrets.md",
+   "section_index": 22,
+   "heading": "Secrets > Working with Secrets > Container image pull Secrets > Using imagePullSecrets",
+   "page": null,
+   "text": "The imagePullSecrets field is a list of references to Secrets in the same namespace.\nYou can use an imagePullSecrets to pass a Secret that contains a Docker (or other) image registry\npassword to the kubelet. The kubelet uses this information to pull a private image on behalf of your Pod.\nSee the PodSpec API\nfor more information about the imagePullSecrets field."
+  },
+  {
+   "source": "engineering/k8s-secrets.md",
+   "section_index": 24,
+   "heading": "Secrets > Working with Secrets > Container image pull Secrets > Using imagePullSecrets > Arranging for imagePullSecrets to be automatically attached",
+   "page": null,
+   "text": "You can manually create imagePullSecrets, and reference these from a ServiceAccount. Any Pods\ncreated with that ServiceAccount or created with that ServiceAccount by default, will get their\nimagePullSecrets field set to that of the service account.\nSee Add ImagePullSecrets to a service account\nfor a detailed explanation of that process."
+  },
+  {
+   "source": "engineering/postgres-config-connection.html",
+   "section_index": 4,
+   "heading": "19.3. Connections and Authentication > 19.3.3. Authentication",
+   "page": null,
+   "text": "authentication_timeout (integer)\nMaximum amount of time allowed to complete client authentication. If a would-be client has not completed the authentication protocol in this much time, the server closes the connection. This prevents hung clients from occupying a connection indefinitely. If this value is specified without units, it is taken as seconds. The default is one minute (1m). This parameter can only be set in the postgresql.conf file or on the server command line.\npassword_encryption (enum)\nWhen a password is specified in CREATE ROLE or ALTER ROLE, this parameter determines the algorithm to use to encrypt the password. Possible values are scram-sha-256, which will encrypt the password with SCRAM-SHA-256, and md5, which stores the password as an MD5 hash. The default is scram-sha-256.\nNote that older clients might lack support for the SCRAM authentication mechanism, and hence not work with passwords encrypted with SCRAM-SHA-256. See Section 20.5 for more details."
+  },
+  {
+   "source": "engineering/postgres-config-connection.html",
+   "section_index": 6,
+   "heading": "19.3. Connections and Authentication > Note",
+   "page": null,
+   "text": "If a role password was created with a different iteration count than the value of scram_iterations specified in the postgresql.conf file or on the server command line, an unauthenticated user can discern the existence of the role by observing discrepancies in the server's responses to connection attempts. If you find this concerning, ensure that all role passwords are created with scram_iterations set to the value specified in the postgresql.conf file or on the server command line.\nmd5_password_warnings (boolean)\nControls whether a WARNING about MD5 password deprecation is produced when a CREATE ROLE or ALTER ROLE statement sets an MD5-encrypted password. The default value is on.\nkrb_server_keyfile (string)\nSets the location of the server's Kerberos key file. The default is FILE:/usr/local/pgsql/etc/krb5.keytab (where the directory part is whatever was specified as sysconfdir at build time; use pg_config --sysconfdir to determine that). If this parameter is set to an empty string, it is ignored and a system-dependent default is used. This parameter can only be set in the postgresql.conf file or on the server command line. See Section 20.6 for more information.\nkrb_caseins_users (boolean)\nSets whether GSSAPI user names should be treated case-insensitively. The default is off (case sensitive). This parameter can only be set in the postgresql.conf file or on the server command line.\ngss_accept_delegation (boolean)\nSets whether GSSAPI delegation should be accepted from the client. The default is off meaning credentials from the client will not be accepted. Changing this to on will make the server accept credentials delegated to it from the client. This parameter can only be set in the postgresql.conf file or on the server command line.\noauth_validator_libraries (string)\nThe library/libraries to use for validating OAuth connection tokens. If only one validator library is provided, it will be used by default for any OAuth connections; otherwise, all oauth HBA entries must explicitly set a validator chosen from this list. If set to an empty string (the default), OAuth connections will be refused. This parameter can only be set in the postgresql.conf file.\nValidator modules must be implemented/obtained separately; PostgreSQL does not ship with any default implementations. For more information on implementing OAuth validators, see Chapter 50."
+  },
+  {
+   "source": "engineering/k8s-debug-pods.md",
+   "section_index": 12,
+   "heading": "Debug Pods > What's next",
+   "page": null,
+   "text": "If none of the above solves your problem, follow the instructions in\nDebugging Service document\nto make sure that your Service is running, has Endpoints, and your Pods are\nactually serving; you have DNS working, iptables rules installed, and kube-proxy\ndoes not seem to be misbehaving.\n\nYou may also visit troubleshooting document for more information."
+  },
+  {
+   "source": "engineering/k8s-debug-pods.md",
+   "section_index": 3,
+   "heading": "Debug Pods > Diagnosing the problem > Debugging Pods > My pod stays pending",
+   "page": null,
+   "text": "If a Pod is stuck in Pending it means that it can not be scheduled onto a node.\nGenerally this is because there are insufficient resources of one type or another\nthat prevent scheduling. Look at the output of the kubectl describe ... command above.\nThere should be messages from the scheduler about why it can not schedule your pod.\nReasons include:\n\n- You don't have enough resources: You may have exhausted the supply of CPU\n  or Memory in your cluster, in this case you need to delete Pods, adjust resource\n  requests, or add new nodes to your cluster. See Compute Resources document\n  for more information.\n\n- You are using hostPort: When you bind a Pod to a hostPort there are a\n  limited number of places that pod can be scheduled. In most cases, hostPort\n  is unnecessary, try using a Service object to expose your Pod. If you do require\n  hostPort then you can only schedule as many Pods as there are nodes in your Kubernetes cluster."
+  },
+  {
+   "source": "vpn-setup.md",
+   "section_index": 0,
+   "heading": "VPN Setup Guide",
+   "page": null,
+   "text": "All employees must connect through the Nimbus VPN when working remotely."
+  },
+  {
+   "source": "vpn-setup.md",
+   "section_index": 1,
+   "heading": "VPN Setup Guide > Installing the Client",
+   "page": null,
+   "text": "Download NimbusConnect from the IT portal. Supported on Windows 11 and macOS 14+.\n\nRun the installer and sign in with your SSO account."
+  },
+  {
+   "source": "engineering/postgres-error-codes.html",
+   "section_index": 1,
+   "heading": "Appendix A. PostgreSQL Error Codes",
+   "page": null,
+   "text": "All messages emitted by the PostgreSQL server are assigned five-character error codes that follow the SQL standard's conventions for “SQLSTATE” codes. Applications that need to know which error condition has occurred should usually test the error code, rather than looking at the textual error message. The error codes are less likely to change across PostgreSQL releases, and also are not subject to change due to localization of error messages. Note that some, but not all, of the error codes produced by PostgreSQL are defined by the SQL standard; some additional error codes for conditions not defined by the standard have been invented or borrowed from other databases.\nAccording to the standard, the first two characters of an error code denote a class of errors, while the last three characters indicate a specific condition within that class. Thus, an application that does not recognize the specific error code might still be able to infer what to do from the error class.\nTable A.1 lists all the error codes defined in PostgreSQL 18.6. (Some are not actually used at present, but are defined by the SQL standard.) The error classes are also shown. For each error class there is a “standard” error code having the last three characters 000. This code is used only for error conditions that fall within the class but do not have any more-specific code assigned.\nThe symbol shown in the column “Condition Name” is the condition name to use in PL/pgSQL. Condition names can be written in either upper or lower case. (Note that PL/pgSQL does not recognize warning, as opposed to error, condition names; those are classes 00, 01, and 02.)\nFor some types of errors, the server reports the name of a database object (a table, table column, data type, or constraint) associated with the error; for example, the name of the unique constraint that caused a unique_violation error. Such names are supplied in separate fields of the error report message so that applications need not try to extract them from the possibly-localized human-readable text of the message. As of PostgreSQL 9.3, complete coverage for this feature exists only for errors in SQLSTATE class 23 (integrity constraint violation), but this is likely to be expanded in future.\nTable A.1. PostgreSQL Error Codes\nError Code | Condition Name\nClass 00 — Successful Completion\n00000 | successful_completion\nClass 01 — Warning\n01000 | warning\n0100C | dynamic_result_sets_returned\n01008 | implicit_zero_bit_padding\n01003 | null_value_eliminated_in_set_function\n01007 | privilege_not_granted\n01006 | privilege_not_revoked\n01004 | string_data_right_truncation\n01P01 | deprecated_feature\nClass 02 — No Data (this is also a warning class per the SQL standard)\n02000 | no_data\n02001 | no_additional_dynamic_result_sets_returned\nClass 03 — SQL Statement Not Yet Complete\n03000 | sql_statement_not_yet_complete\nClass 08 — Connection Exception\n08000 | connection_exception\n08003 | connection_does_not_exist\n08006 | connection_failure\n08001 | sqlclient_unable_to_establish_sqlconnection\n08004 | sqlserver_rejected_establishment_of_sqlconnection\n08007 | transaction_resolution_unknown\n08P01 | protocol_violation\nClass 09 — Triggered Action Exception\n09000 | triggered_action_exception\nClass 0A — Feature Not Supported\n0A000 | feature_not_supported\nClass 0B — Invalid Transaction Initiation\n0B000 | invalid_transaction_initiation\nClass 0F — Locator Exception\n0F000 | locator_exception\n0F001 | invalid_locator_specification\nClass 0L — Invalid Grantor\n0L000 | invalid_grantor\n0LP01 | invalid_grant_operation\nClass 0P — Invalid Role Specification\n0P000 | invalid_role_specification\nClass 0Z — Diagnostics Exception\n0Z000 | diagnostics_exception\n0Z002 | stacked_diagnostics_accessed_without_active_handler\nClass 10 — XQuery Error\n10608 | invalid_argument_for_xquery\nClass 20 — Case Not Found\n20000 | case_not_found\nClass 21 — Cardinality Violation\n21000 | cardinality_violation\nClass 22 — Data Exception\n22000 | data_exception\n2202E | array_subscript_error\n22021 | character_not_in_repertoire\n22008 | datetime_field_overflow\n22012 | division_by_zero\n22005 | error_in_assignment\n2200B | escape_character_conflict\n22022 | indicator_overflow\n22015 | interval_field_overflow\n2201E | invalid_argument_for_logarithm\n22014 | invalid_argument_for_ntile_function\n22016 | invalid_argument_for_nth_value_function\n2201F | invalid_argument_for_power_function\n2201G | invalid_argument_for_width_bucket_function\n22018 | invalid_character_value_for_cast\n22007 | invalid_datetime_format\n22019 | invalid_escape_character\n2200D | invalid_escape_octet\n22025 | invalid_escape_sequence\n22P06 | nonstandard_use_of_escape_character\n22010 | invalid_indicator_parameter_value\n22023 | invalid_parameter_value\n22013 | invalid_preceding_or_following_size\n2201B | invalid_regular_expression\n2201W | invalid_row_count_in_limit_clause\n2201X | invalid_row_count_in_result_offset_clause\n2202H | invalid_tablesample_argument\n2202G | invalid_tablesample_repeat\n22009 | invalid_time_zone_displacement_value\n2200C | invalid_use_of_escape_character\n2200G | most_specific_type_mismatch\n22004 | null_value_not_allowed\n22002 | null_value_no_indicator_parameter\n22003 | numeric_value_out_of_range\n2200H | sequence_generator_limit_exceeded\n22026 | string_data_length_mismatch\n22001 | string_data_right_truncation\n22011 | substring_error\n22027 | trim_error\n22024 | unterminated_c_string\n2200F | zero_length_character_string\n22P01 | floating_point_exception\n22P02 | invalid_text_representation\n22P03 | invalid_binary_representation\n22P04 | bad_copy_file_format\n22P05 | untranslatable_character\n2200L | not_an_xml_document\n2200M | invalid_xml_document\n2200N | invalid_xml_content\n2200S | invalid_xml_comment\n2200T | invalid_xml_processing_instruction\n22030 | duplicate_json_object_key_value\n22031 | invalid_argument_for_sql_json_datetime_function\n22032 | invalid_json_text\n22033 | invalid_sql_json_subscript\n22034 | more_than_one_sql_json_item\n22035 | no_sql_json_item\n22036 | non_numeric_sql_json_item\n22037 | non_unique_keys_in_a_json_object\n22038 | singleton_sql_json_item_required\n22039 | sql_json_array_not_found\n2203A | sql_json_member_not_found\n2203B | sql_json_number_not_found\n2203C | sql_json_object_not_found\n2203D | too_many_json_array_elements\n2203E | too_many_json_object_members\n2203F | sql_json_scalar_required\n2203G | sql_json_item_cannot_be_cast_to_target_type\nClass 23 — Integrity Constraint Violation\n23000 | integrity_constraint_violation\n23001 | restrict_violation\n23502 | not_null_violation\n23503 | foreign_key_violation\n23505 | unique_violation\n23514 | check_violation\n23P01 | exclusion_violation\nClass 24 — Invalid Cursor State\n24000 | invalid_cursor_state\nClass 25 — Invalid Transaction State\n25000 | invalid_transaction_state\n25001 | active_sql_transaction\n25002 | branch_transaction_already_active\n25008 | held_cursor_requires_same_isolation_level\n25003 | inappropriate_access_mode_for_branch_transaction\n25004 | inappropriate_isolation_level_for_branch_transaction\n25005 | no_active_sql_transaction_for_branch_transaction\n25006 | read_only_sql_transaction\n25007 | schema_and_data_statement_mixing_not_supported\n25P01 | no_active_sql_transaction\n25P02 | in_failed_sql_transaction\n25P03 | idle_in_transaction_session_timeout\n25P04 | transaction_timeout\nClass 26 — Invalid SQL Statement Name\n26000 | invalid_sql_statement_name\nClass 27 — Triggered Data Change Violation\n27000 | triggered_data_change_violation\nClass 28 — Invalid Authorization Specification\n28000 | invalid_authorization_specification\n28P01 | invalid_password\nClass 2B — Dependent Privilege Descriptors Still Exist\n2B000 | dependent_privilege_descriptors_still_exist\n2BP01 | dependent_objects_still_exist\nClass 2D — Invalid Transaction Termination\n2D000 | invalid_transaction_termination\nClass 2F — SQL Routine Exception\n2F000 | sql_routine_exception\n2F005 | function_executed_no_return_statement\n2F002 | modifying_sql_data_not_permitted\n2F003 | prohibited_sql_statement_attempted\n2F004 | reading_sql_data_not_permitted\nClass 34 — Invalid Cursor Name\n34000 | invalid_cursor_name\nClass 38 — External Routine Exception\n38000 | external_routine_exception\n38001 | containing_sql_not_permitted\n38002 | modifying_sql_data_not_permitted\n38003 | prohibited_sql_statement_attempted\n38004 | reading_sql_data_not_permitted\nClass 39 — External Routine Invocation Exception\n39000 | external_routine_invocation_exception\n39001 | invalid_sqlstate_returned\n39004 | null_value_not_allowed\n39P01 | trigger_protocol_violated\n39P02 | srf_protocol_violated\n39P03 | event_trigger_protocol_violated\nClass 3B — Savepoint Exception\n3B000 | savepoint_exception\n3B001 | invalid_savepoint_specification\nClass 3D — Invalid Catalog Name\n3D000 | invalid_catalog_name\nClass 3F — Invalid Schema Name\n3F000 | invalid_schema_name\nClass 40 — Transaction Rollback\n40000 | transaction_rollback\n40002 | transaction_integrity_constraint_violation\n40001 | serialization_failure\n40003 | statement_completion_unknown\n40P01 | deadlock_detected\nClass 42 — Syntax Error or Access Rule Violation\n42000 | syntax_error_or_access_rule_violation\n42601 | syntax_error\n42501 | insufficient_privilege\n42846 | cannot_coerce\n42803 | grouping_error\n42P20 | windowing_error\n42P19 | invalid_recursion\n42830 | invalid_foreign_key\n42602 | invalid_name\n42622 | name_too_long\n42939 | reserved_name\n42804 | datatype_mismatch\n42P18 | indeterminate_datatype\n42P21 | collation_mismatch\n42P22 | indeterminate_collation\n42809 | wrong_object_type\n428C9 | generated_always\n42703 | undefined_column\n42883 | undefined_function\n42P01 | undefined_table\n42P02 | undefined_parameter\n42704 | undefined_object\n42701 | duplicate_column\n42P03 | duplicate_cursor\n42P04 | duplicate_database\n42723 | duplicate_function\n42P05 | duplicate_prepared_statement\n42P06 | duplicate_schema\n42P07 | duplicate_table\n42712 | duplicate_alias\n42710 | duplicate_object\n42702 | ambiguous_column\n42725 | ambiguous_function\n42P08 | ambiguous_parameter\n42P09 | ambiguous_alias\n42P10 | invalid_column_reference\n42611 | invalid_column_definition\n42P11 | invalid_cursor_definition\n42P12 | invalid_database_definition\n42P13 | invalid_function_definition\n42P14 | invalid_prepared_statement_definition\n42P15 | invalid_schema_definition\n42P16 | invalid_table_definition\n42P17 | invalid_object_definition\nClass 44 — WITH CHECK OPTION Violation\n44000 | with_check_option_violation\nClass 53 — Insufficient Resources\n53000 | insufficient_resources\n53100 | disk_full\n53200 | out_of_memory\n53300 | too_many_connections\n53400 | configuration_limit_exceeded\nClass 54 — Program Limit Exceeded\n54000 | program_limit_exceeded\n54001 | statement_too_complex\n54011 | too_many_columns\n54023 | too_many_arguments\nClass 55 — Object Not In Prerequisite State\n55000 | object_not_in_prerequisite_state\n55006 | object_in_use\n55P02 | cant_change_runtime_param\n55P03 | lock_not_available\n55P04 | unsafe_new_enum_value_usage\nClass 57 — Operator Intervention\n57000 | operator_intervention\n57014 | query_canceled\n57P01 | admin_shutdown\n57P02 | crash_shutdown\n57P03 | cannot_connect_now\n57P04 | database_dropped\n57P05 | idle_session_timeout\nClass 58 — System Error (errors external to PostgreSQL itself)\n58000 | system_error\n58030 | io_error\n58P01 | undefined_file\n58P02 | duplicate_file\n58P03 | file_name_too_long\nClass F0 — Configuration File Error\nF0000 | config_file_error\nF0001 | lock_file_exists\nClass HV — Foreign Data Wrapper Error (SQL/MED)\nHV000 | fdw_error\nHV005 | fdw_column_name_not_found\nHV002 | fdw_dynamic_parameter_value_needed\nHV010 | fdw_function_sequence_error\nHV021 | fdw_inconsistent_descriptor_information\nHV024 | fdw_invalid_attribute_value\nHV007 | fdw_invalid_column_name\nHV008 | fdw_invalid_column_number\nHV004 | fdw_invalid_data_type\nHV006 | fdw_invalid_data_type_descriptors\nHV091 | fdw_invalid_descriptor_field_identifier\nHV00B | fdw_invalid_handle\nHV00C | fdw_invalid_option_index\nHV00D | fdw_invalid_option_name\nHV090 | fdw_invalid_string_length_or_buffer_length\nHV00A | fdw_invalid_string_format\nHV009 | fdw_invalid_use_of_null_pointer\nHV014 | fdw_too_many_handles\nHV001 | fdw_out_of_memory\nHV00P | fdw_no_schemas\nHV00J | fdw_option_name_not_found\nHV00K | fdw_reply_handle\nHV00Q | fdw_schema_not_found\nHV00R | fdw_table_not_found\nHV00L | fdw_unable_to_create_execution\nHV00M | fdw_unable_to_create_reply\nHV00N | fdw_unable_to_establish_connection\nClass P0 — PL/pgSQL Error\nP0000 | plpgsql_error\nP0001 | raise_exception\nP0002 | no_data_found\nP0003 | too_many_rows\nP0004 | assert_failure\nClass XX — Internal Error\nXX000 | internal_error\nXX001 | data_corrupted\nXX002 | index_corrupted\nPrev | Up | Next\nPart VIII. Appendixes | Home | Appendix B. Date/Time Support"
+  },
+  {
+   "source": "handbook/gitlab-security.html",
+   "section_index": 10,
+   "heading": "Security at GitLab > Security Vision and Mission > Contacting the Team > Other Frequently Used GitLab.com Projects",
+   "page": null,
+   "text": "Security crosses many teams in the company, so you will find ~security labeled issues across all GitLab projects, especially:\ngitlab-foss\ngitlab\ninfrastructure\nproduction\nWhen opening issues, please follow the Creating New Security Issues process for using labels and the confidential flag.\nLast modified April 24, 2026: updated external HB page for accuracy (eed43a98)\nView page source - Edit this page - please contribute."
+  },
+  {
+   "source": "handbook/gitlab-time-off-and-absence.html",
+   "section_index": 0,
+   "heading": "Time Off and Absence at GitLab > Understanding Time Away at GitLab",
+   "page": null,
+   "text": "Use the Time Away Philosophy section below to understand GitLab’s approach to time off, communication expectations, and how to track time away in Workday. The Time-Off Types and Leave Types pages include detailed information about how these can be used by GitLab team members."
+  },
+  {
+   "source": "deploy-guide.html",
+   "section_index": 0,
+   "heading": "Deployment Guide",
+   "page": null,
+   "text": "Services are deployed with the nimbus-deploy CLI."
+  },
+  {
+   "source": "leave-policy.txt",
+   "section_index": 0,
+   "heading": "leave-policy",
+   "page": null,
+   "text": "Nimbus Leave Policy\n\nFull-time employees receive 24 days of paid annual leave per calendar year.\nUp to 5 unused days may be carried over into the next year.\n\nSick leave does not count against annual leave. A doctor's note is required\nfor absences longer than 3 consecutive working days."
+  },
+  {
+   "source": "security-handbook.pdf",
+   "section_index": 1,
+   "heading": "security-handbook > Laptop Security",
+   "page": 2,
+   "text": "Laptops must use full-disk encryption.\nReport a lost laptop to security@nimbus.example within 1 hour."
+  }
+ ]
+}

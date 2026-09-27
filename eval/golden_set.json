@@ -1,0 +1,1192 @@
+{
+ "version": 1,
+ "created": "2026-09-28",
+ "how_written": "Lookup questions were written about sections drawn at random (scripts/sample_golden_sections.py, seed 20260928, eval/golden_sample.json), phrased as a user would ask rather than copying the section's words. Multi-hop pairs were chosen by shared topic (random pairs of sections would not make sensible questions). No-answer topics were checked absent from the corpus with a keyword search before being labelled; none repeats a calibration or near-miss question used to tune thresholds. Evidence quotes are checked against the parsed documents by scripts/check_golden.py. The dev/test split is assigned by that script with a fixed seed and must not be changed after results are seen.",
+ "expected_values": {
+  "answer": "answers, with the key facts",
+  "not_found": "says the documents don't contain it (not_found / partial-with-gap is acceptable only where noted); must not invent an answer",
+  "clarify_or_cover": "the question has several reasonable readings in the corpus: the answer must either cover each reading, labelled, or say which reading it answers"
+ },
+ "items": [
+  {
+   "id": "G01",
+   "type": "lookup",
+   "expected": "answer",
+   "question": "Is the risk of people sharing their login something specific to syncable authenticators?",
+   "answer": "No. Any authenticator can be shared by a user who is determined to share it, including passwords, OTPs, out-of-band authenticators and push-based approvals; it is not unique to syncable authenticators.",
+   "key_facts": [
+    "not unique to syncable authenticators",
+    "any authenticator can be shared by a determined user"
+   ],
+   "evidence": [
+    {
+     "source": "security/nist-sp-800-63b-4-authentication.pdf",
+     "section": "B.4. Sharing",
+     "quote": "Any authenticator can be shared by a user who is determined to share it."
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "G02",
+   "type": "lookup",
+   "expected": "answer",
+   "question": "Why should people use a different password for every website?",
+   "answer": "To avoid password stuffing attacks, where an attacker uses a password compromised on one site to get into the user's accounts on other sites.",
+   "key_facts": [
+    "password stuffing",
+    "a password compromised on one site is used on other sites"
+   ],
+   "evidence": [
+    {
+     "source": "security/nist-sp-800-63b-4-authentication.pdf",
+     "section": "8.1.2.1. Passwords > Typical Usage",
+     "quote": "attacker uses a compromised password from one site to access the"
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "G03",
+   "type": "lookup",
+   "expected": "answer",
+   "question": "What has to happen to biometric samples once they have been used to update a user's templates?",
+   "answer": "They must be erased immediately after the adaptation (or consented research) data has been derived, and a time limit for adaptation must be enforced.",
+   "key_facts": [
+    "erased immediately",
+    "after the adaptation data is derived"
+   ],
+   "evidence": [
+    {
+     "source": "security/nist-sp-800-63b-4-authentication.pdf",
+     "section": "3.2.3.4. Use of Biometric Samples",
+     "quote": "SHALL be erased immediately after any adaptation or research data has been derived"
+    }
+   ],
+   "split": "test"
+  },
+  {
+   "id": "G04",
+   "type": "lookup",
+   "expected": "answer",
+   "question": "How do syncable authenticators stop a fake login page from reusing what they produce?",
+   "answer": "They create a key pair whose use is constrained to the domain (website or relying party) it was created for, so a falsified page cannot capture and reuse the authenticator output.",
+   "key_facts": [
+    "key pair bound to the domain / relying party it was created for",
+    "a fake page cannot reuse the output"
+   ],
+   "evidence": [
+    {
+     "source": "security/nist-sp-800-63b-4-authentication.pdf",
+     "section": "Phishing resistance",
+     "quote": "whose use is constrained to the domain in which it was created"
+    }
+   ],
+   "split": "test"
+  },
+  {
+   "id": "G05",
+   "type": "lookup",
+   "expected": "answer",
+   "question": "What were passwords called in the first release of NIST SP 800-63B?",
+   "answer": "Memorized secrets.",
+   "key_facts": [
+    "memorized secrets"
+   ],
+   "evidence": [
+    {
+     "source": "security/nist-sp-800-63b-4-authentication.pdf",
+     "section": "Appendix D. Glossary > password",
+     "quote": "Passwords were referred to as memorized secrets in the initial release of SP 800-63B."
+    }
+   ],
+   "split": "test"
+  },
+  {
+   "id": "G06",
+   "type": "lookup",
+   "expected": "answer",
+   "question": "Does a digital signature keep the signed data confidential?",
+   "answer": "No. Digital signatures provide authenticity, integrity protection and non-repudiation support, but not confidentiality or replay attack protection.",
+   "key_facts": [
+    "no confidentiality",
+    "provides authenticity, integrity and non-repudiation"
+   ],
+   "evidence": [
+    {
+     "source": "security/nist-sp-800-63b-4-authentication.pdf",
+     "section": "Appendix D. Glossary > digital signature",
+     "quote": "but not confidentiality or replay attack protection"
+    }
+   ],
+   "split": "test"
+  },
+  {
+   "id": "G07",
+   "type": "lookup",
+   "expected": "answer",
+   "question": "What is NIST SP 800-61 Revision 3 meant to help organizations do?",
+   "answer": "Incorporate cybersecurity incident response recommendations and considerations throughout their cybersecurity risk management activities, as described by the NIST CSF 2.0.",
+   "key_facts": [
+    "incident response integrated into cybersecurity risk management",
+    "CSF 2.0"
+   ],
+   "evidence": [
+    {
+     "source": "security/nist-sp-800-61r3-incident-response.pdf",
+     "section": "Abstract",
+     "quote": "incorporating cybersecurity incident response recommendations and considerations throughout their cybersecurity risk management activities"
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "G08",
+   "type": "lookup",
+   "expected": "answer",
+   "question": "What topics does section 2 of the NIST incident response guide cover?",
+   "answer": "The incident response life cycle (with a new model based on the CSF 2.0 Functions), incident response roles and responsibilities inside and outside the organization, and incident response policies, processes and procedures.",
+   "key_facts": [
+    "life cycle model based on CSF 2.0 Functions",
+    "roles and responsibilities",
+    "policies, processes and procedures"
+   ],
+   "evidence": [
+    {
+     "source": "security/nist-sp-800-61r3-incident-response.pdf",
+     "section": "2. Incident Response as Part of Cybersecurity Risk Management",
+     "quote": "proposes a new life cycle model based on CSF 2.0 Functions"
+    }
+   ],
+   "split": "test"
+  },
+  {
+   "id": "G09",
+   "type": "lookup",
+   "expected": "answer",
+   "question": "Have any patent claims been identified that apply to NIST SP 800-61r3?",
+   "answer": "No. As of publication, no patent claims whose use may be required for compliance had been identified to ITL, although ITL did not do its own patent search.",
+   "key_facts": [
+    "no patent claims identified"
+   ],
+   "evidence": [
+    {
+     "source": "security/nist-sp-800-61r3-incident-response.pdf",
+     "section": "Patent Disclosure Notice",
+     "quote": "no such patent claims have been identified to ITL"
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "G10",
+   "type": "lookup",
+   "expected": "answer",
+   "question": "What is a probe in Kubernetes?",
+   "answer": "A diagnostic the kubelet performs periodically on a container, either by running code in it or making a network request; based on the results Kubernetes can restart unhealthy containers or stop sending traffic to ones that are not ready.",
+   "key_facts": [
+    "periodic diagnostic by the kubelet on a container",
+    "used to restart unhealthy containers or stop traffic to unready ones"
+   ],
+   "evidence": [
+    {
+     "source": "engineering/k8s-pod-lifecycle.md",
+     "section": "Container probes",
+     "quote": "A probe is a diagnostic performed periodically by the kubelet on a container."
+    }
+   ],
+   "split": "test"
+  },
+  {
+   "id": "G11",
+   "type": "lookup",
+   "expected": "answer",
+   "question": "If a Pod has a readiness gate but the matching condition is missing from its status, what does Kubernetes assume?",
+   "answer": "The condition's status defaults to False.",
+   "key_facts": [
+    "defaults to False"
+   ],
+   "evidence": [
+    {
+     "source": "engineering/k8s-pod-lifecycle.md",
+     "section": "Pod readiness",
+     "quote": "the status of the condition is defaulted to"
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "G12",
+   "type": "lookup",
+   "expected": "answer",
+   "question": "Will restarting the kubelet on a node kill the pods running there?",
+   "answer": "No. Pods and their containers keep running while the kubelet restarts; to stop the pods on a node, use kubectl drain.",
+   "key_facts": [
+    "pods keep running",
+    "use kubectl drain to stop them"
+   ],
+   "evidence": [
+    {
+     "source": "engineering/k8s-pod-lifecycle.md",
+     "section": "Pod behavior during kubelet restarts",
+     "quote": "Pods (and their containers) continue to run even during the restart"
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "G13",
+   "type": "lookup",
+   "expected": "answer",
+   "question": "Who counts as an incident responder at GitLab?",
+   "answer": "Anyone who contributes to the technical investigation and resolution of an incident; the EOC team is usually the primary responder, but any team member with relevant expertise may be called on.",
+   "key_facts": [
+    "anyone who contributes to investigating and resolving the incident",
+    "EOC usually primary, others with expertise can be called"
+   ],
+   "evidence": [
+    {
+     "source": "handbook/gitlab-incident-management.html",
+     "section": "Incident Responder Responsibilities",
+     "quote": "An Incident Responder is anyone who contributes to the technical investigation and resolution of an incident."
+    }
+   ],
+   "split": "test"
+  },
+  {
+   "id": "G14",
+   "type": "lookup",
+   "expected": "answer",
+   "question": "How do I add a Slack message to the incident timeline, and does it matter which emoji I use?",
+   "answer": "React to the Slack post in the incident channel with the pushpin or star emoji. A pushpin also leaves a public comment on the GitLab incident issue; a star adds an internal comment.",
+   "key_facts": [
+    "react with pushpin or star emoji",
+    "pushpin = public comment on the GitLab issue",
+    "star = internal comment"
+   ],
+   "evidence": [
+    {
+     "source": "handbook/gitlab-incident-management.html",
+     "section": "Incident Workflow > Timeline",
+     "quote": "If you react with the :pushpin:, a public comment will be left on the GitLab incident issue."
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "G15",
+   "type": "lookup",
+   "expected": "answer",
+   "question": "During a serious incident, can the engineer on call block users without asking anyone first?",
+   "answer": "Yes. If wider user impact is established during an S1 or S2 incident, the EOC has authority to block users without further permission, leaving an admin note that links the incident and explains why.",
+   "key_facts": [
+    "yes, during S1/S2 incidents with wider user impact",
+    "without further permission",
+    "leave an admin note linking the incident"
+   ],
+   "evidence": [
+    {
+     "source": "handbook/gitlab-incident-management.html",
+     "section": "Incident Mitigation Methods",
+     "quote": "as EOC you have the authority - without requiring further permission - to Block Users"
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "G16",
+   "type": "lookup",
+   "expected": "answer",
+   "question": "How many days of jury duty does GitLab pay for?",
+   "answer": "Up to the equivalent of 25 full working days of Legal Civic Obligations leave, available from the first day of work, unless local law provides otherwise.",
+   "key_facts": [
+    "up to 25 full working days"
+   ],
+   "evidence": [
+    {
+     "source": "handbook/gitlab-time-off-types.html",
+     "section": "Legal Civic Obligations Policy > Eligibility",
+     "quote": "eligible to pay for up to the equivalent of 25 full working days of such leave"
+    }
+   ],
+   "split": "test"
+  },
+  {
+   "id": "G17",
+   "type": "lookup",
+   "expected": "answer",
+   "question": "Is there a maximum amount of paid time off a GitLab team member can take in a year?",
+   "answer": "No set limit, as long as it is coordinated with the manager and there is a coverage plan; but more than 25 consecutive calendar days needs special permission from the manager, People Business Partner and Absence Management Team.",
+   "key_facts": [
+    "no specific yearly limit",
+    "more than 25 consecutive calendar days needs special permission"
+   ],
+   "evidence": [
+    {
+     "source": "handbook/gitlab-time-off-types.html",
+     "section": "Flexible Paid Time Off (PTO) > Overview",
+     "quote": "GitLab does not set a specific limit on the amount of PTO a team member can take per year."
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "G18",
+   "type": "lookup",
+   "expected": "answer",
+   "question": "Is there a separate time-off allowance for volunteering at GitLab?",
+   "answer": "No separate allowance: volunteer time off falls under GitLab's Flexible PTO framework.",
+   "key_facts": [
+    "falls under Flexible PTO"
+   ],
+   "evidence": [
+    {
+     "source": "handbook/gitlab-time-off-types.html",
+     "section": "Volunteer > Overview",
+     "quote": "Volunteer time-off at GitLab falls under our Flexible PTO framework"
+    }
+   ],
+   "split": "test"
+  },
+  {
+   "id": "G19",
+   "type": "lookup",
+   "expected": "answer",
+   "question": "Which PostgreSQL versions are listed as supported in the documentation?",
+   "answer": "18 (current), 17, 16, 15 and 14.",
+   "key_facts": [
+    "18 current",
+    "17, 16, 15, 14"
+   ],
+   "evidence": [
+    {
+     "source": "engineering/postgres-config-resource.html",
+     "section": "19.4. Resource Consumption",
+     "quote": "Supported Versions: Current (18) / 17 / 16 / 15 / 14"
+    }
+   ],
+   "notes": "The only source is the page's version-navigation line, which the parser keeps as text (see docs/phase4.md).",
+   "split": "test"
+  },
+  {
+   "id": "G20",
+   "type": "lookup",
+   "expected": "answer",
+   "question": "What does temp_file_limit control in PostgreSQL, and what is it set to by default?",
+   "answer": "The maximum disk space one process can use for temporary files (sort/hash files, held cursors); a transaction that exceeds it is cancelled. The default, -1, means no limit.",
+   "key_facts": [
+    "maximum disk space for a process's temporary files",
+    "exceeding it cancels the transaction",
+    "default -1 = no limit"
+   ],
+   "evidence": [
+    {
+     "source": "engineering/postgres-config-resource.html",
+     "section": "19.4.2. Disk",
+     "quote": "Specifies the maximum amount of disk space that a process can use for temporary files"
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "G21",
+   "type": "lookup",
+   "expected": "answer",
+   "question": "How does a Pod get the credentials it needs to pull an image from a private registry?",
+   "answer": "Through imagePullSecrets: a list of references to Secrets in the same namespace holding the registry password, which the kubelet uses to pull the private image for the Pod.",
+   "key_facts": [
+    "imagePullSecrets",
+    "Secret in the same namespace",
+    "kubelet uses it to pull the image"
+   ],
+   "evidence": [
+    {
+     "source": "engineering/k8s-secrets.md",
+     "section": "Using imagePullSecrets",
+     "quote": "The kubelet uses this information to pull a private image on behalf of your Pod."
+    }
+   ],
+   "split": "test"
+  },
+  {
+   "id": "G22",
+   "type": "lookup",
+   "expected": "answer",
+   "question": "Can image pull secrets be added to pods automatically instead of in every Pod spec?",
+   "answer": "Yes: reference them from a ServiceAccount, and Pods created with that ServiceAccount (or with it by default) get its imagePullSecrets.",
+   "key_facts": [
+    "reference them from a ServiceAccount",
+    "pods using that ServiceAccount inherit them"
+   ],
+   "evidence": [
+    {
+     "source": "engineering/k8s-secrets.md",
+     "section": "Arranging for imagePullSecrets to be automatically attached",
+     "quote": "will get their imagePullSecrets field set to that of the service account"
+    }
+   ],
+   "split": "test"
+  },
+  {
+   "id": "G23",
+   "type": "lookup",
+   "expected": "answer",
+   "question": "How long does PostgreSQL give a client to finish authenticating before it drops the connection?",
+   "answer": "authentication_timeout, one minute (1m) by default.",
+   "key_facts": [
+    "authentication_timeout",
+    "one minute default"
+   ],
+   "evidence": [
+    {
+     "source": "engineering/postgres-config-connection.html",
+     "section": "19.3.3. Authentication",
+     "quote": "The default is one minute (1m)."
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "G24",
+   "type": "lookup",
+   "expected": "answer",
+   "question": "What does the md5_password_warnings setting do?",
+   "answer": "It controls whether a WARNING about MD5 password deprecation is issued when CREATE ROLE or ALTER ROLE sets an MD5-encrypted password. It is on by default.",
+   "key_facts": [
+    "warning about MD5 password deprecation",
+    "on by default"
+   ],
+   "evidence": [
+    {
+     "source": "engineering/postgres-config-connection.html",
+     "section": "19.3. Connections and Authentication > Note",
+     "quote": "Controls whether a WARNING about MD5 password deprecation is produced"
+    }
+   ],
+   "split": "test"
+  },
+  {
+   "id": "G25",
+   "type": "lookup",
+   "expected": "answer",
+   "question": "The pod debugging steps didn't solve my problem. What should I look at next?",
+   "answer": "Follow the Debugging Service instructions: check the Service is running and has Endpoints, the Pods are actually serving, DNS works, iptables rules are installed and kube-proxy is behaving; the troubleshooting document has more.",
+   "key_facts": [
+    "Debugging Service document",
+    "Service, Endpoints, DNS, iptables, kube-proxy"
+   ],
+   "evidence": [
+    {
+     "source": "engineering/k8s-debug-pods.md",
+     "section": "What's next",
+     "quote": "follow the instructions in Debugging Service document"
+    }
+   ],
+   "split": "test"
+  },
+  {
+   "id": "G26",
+   "type": "lookup",
+   "expected": "answer",
+   "question": "Does binding a pod to a hostPort limit where it can be scheduled?",
+   "answer": "Yes. There are only a limited number of places such a pod can be scheduled; usually hostPort is unnecessary and a Service should be used to expose the pod instead.",
+   "key_facts": [
+    "limited places it can be scheduled",
+    "use a Service instead where possible"
+   ],
+   "evidence": [
+    {
+     "source": "engineering/k8s-debug-pods.md",
+     "section": "My pod stays pending",
+     "quote": "When you bind a Pod to a hostPort there are a limited number of places that pod can be scheduled"
+    }
+   ],
+   "split": "test"
+  },
+  {
+   "id": "G27",
+   "type": "lookup",
+   "expected": "answer",
+   "question": "Do I have to use the VPN when working from home?",
+   "answer": "Yes. All employees must connect through the Nimbus VPN when working remotely.",
+   "key_facts": [
+    "yes, all employees must use the Nimbus VPN remotely"
+   ],
+   "evidence": [
+    {
+     "source": "vpn-setup.md",
+     "section": "VPN Setup Guide",
+     "quote": "All employees must connect through the Nimbus VPN when working remotely."
+    }
+   ],
+   "split": "test"
+  },
+  {
+   "id": "G28",
+   "type": "lookup",
+   "expected": "answer",
+   "question": "Where do I get the VPN client, and which operating systems does it run on?",
+   "answer": "Download NimbusConnect from the IT portal; it supports Windows 11 and macOS 14+. Run the installer and sign in with your SSO account.",
+   "key_facts": [
+    "NimbusConnect from the IT portal",
+    "Windows 11 and macOS 14+"
+   ],
+   "evidence": [
+    {
+     "source": "vpn-setup.md",
+     "section": "Installing the Client",
+     "quote": "Download NimbusConnect from the IT portal. Supported on Windows 11 and macOS 14+."
+    }
+   ],
+   "split": "test"
+  },
+  {
+   "id": "G29",
+   "type": "lookup",
+   "expected": "answer",
+   "question": "What do the first two characters of a PostgreSQL error code tell you?",
+   "answer": "The class of the error; the last three characters identify the specific condition within that class.",
+   "key_facts": [
+    "error class",
+    "last three = specific condition"
+   ],
+   "evidence": [
+    {
+     "source": "engineering/postgres-error-codes.html",
+     "section": "Appendix A. PostgreSQL Error Codes",
+     "quote": "the first two characters of an error code denote a class of errors"
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "G30",
+   "type": "lookup",
+   "expected": "answer",
+   "question": "How should I open a new security issue in GitLab's projects?",
+   "answer": "Follow the Creating New Security Issues process, which covers the labels to use and the confidential flag.",
+   "key_facts": [
+    "Creating New Security Issues process",
+    "labels and the confidential flag"
+   ],
+   "evidence": [
+    {
+     "source": "handbook/gitlab-security.html",
+     "section": "Other Frequently Used GitLab.com Projects",
+     "quote": "follow the Creating New Security Issues process for using labels and the confidential flag"
+    }
+   ],
+   "split": "test"
+  },
+  {
+   "id": "G31",
+   "type": "lookup",
+   "expected": "answer",
+   "question": "Which system do GitLab team members use to record time away?",
+   "answer": "Workday.",
+   "key_facts": [
+    "Workday"
+   ],
+   "evidence": [
+    {
+     "source": "handbook/gitlab-time-off-and-absence.html",
+     "section": "Understanding Time Away at GitLab",
+     "quote": "how to track time away in Workday"
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "G32",
+   "type": "lookup",
+   "expected": "answer",
+   "question": "What tool do we use to deploy services?",
+   "answer": "The nimbus-deploy CLI.",
+   "key_facts": [
+    "nimbus-deploy CLI"
+   ],
+   "evidence": [
+    {
+     "source": "deploy-guide.html",
+     "section": "Deployment Guide",
+     "quote": "Services are deployed with the nimbus-deploy CLI."
+    }
+   ],
+   "split": "test"
+  },
+  {
+   "id": "G33",
+   "type": "lookup",
+   "expected": "answer",
+   "question": "How many vacation days do Nimbus employees get, and can unused ones be carried over?",
+   "answer": "Full-time employees get 24 days of paid annual leave per calendar year, and up to 5 unused days can be carried over to the next year.",
+   "key_facts": [
+    "24 days per year",
+    "up to 5 days carried over"
+   ],
+   "evidence": [
+    {
+     "source": "leave-policy.txt",
+     "section": "leave-policy",
+     "quote": "Full-time employees receive 24 days of paid annual leave per calendar year."
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "G34",
+   "type": "lookup",
+   "expected": "answer",
+   "question": "I lost my work laptop. Who do I tell, and how fast?",
+   "answer": "Report it to security@nimbus.example within 1 hour.",
+   "key_facts": [
+    "security@nimbus.example",
+    "within 1 hour"
+   ],
+   "evidence": [
+    {
+     "source": "security-handbook.pdf",
+     "section": "Laptop Security",
+     "quote": "Report a lost laptop to security@nimbus.example within 1 hour."
+    }
+   ],
+   "split": "test"
+  },
+  {
+   "id": "G35",
+   "type": "multi_hop",
+   "expected": "answer",
+   "question": "Does our password policy meet NIST SP 800-63B's rules for passwords?",
+   "answer": "Not fully. The Nimbus handbook requires 14-character passwords rotated every 180 days, but NIST requires single-factor passwords to be at least 15 characters and says verifiers SHALL NOT require periodic password changes (only on evidence of compromise).",
+   "key_facts": [
+    "Nimbus: at least 14 characters, rotate every 180 days",
+    "NIST: minimum 15 characters for single-factor",
+    "NIST: no periodic changes required"
+   ],
+   "evidence": [
+    {
+     "source": "security-handbook.pdf",
+     "section": "Security Handbook",
+     "quote": "Passwords must be at least 14 characters long."
+    },
+    {
+     "source": "security-handbook.pdf",
+     "section": "Security Handbook",
+     "quote": "Passwords rotate every 180 days."
+    },
+    {
+     "source": "security/nist-sp-800-63b-4-authentication.pdf",
+     "section": "3.1.1.2. Password Verifiers",
+     "quote": "to be a minimum of 15 characters in length"
+    },
+    {
+     "source": "security/nist-sp-800-63b-4-authentication.pdf",
+     "section": "3.1.1.2. Password Verifiers",
+     "quote": "SHALL NOT require subscribers to change passwords periodically"
+    }
+   ],
+   "split": "test"
+  },
+  {
+   "id": "G36",
+   "type": "multi_hop",
+   "expected": "answer",
+   "question": "If I'm off sick for 4 days, would I need a doctor's note at Nimbus? What about under GitLab's sick time policy?",
+   "answer": "At Nimbus, yes: a doctor's note is required for absences longer than 3 consecutive working days. At GitLab, no: a sick note isn't needed for absences of less than 6 consecutive days (unless local statutory rules require one).",
+   "key_facts": [
+    "Nimbus: note needed after more than 3 consecutive working days",
+    "GitLab: no note needed under 6 consecutive days"
+   ],
+   "evidence": [
+    {
+     "source": "leave-policy.txt",
+     "section": "leave-policy",
+     "quote": "A doctor's note is required for absences longer than 3 consecutive working days."
+    },
+    {
+     "source": "handbook/gitlab-time-off-types.html",
+     "section": "For Sick Absences 1-5 Consecutive Days",
+     "quote": "then you do not need to provide a sick note"
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "G37",
+   "type": "multi_hop",
+   "expected": "answer",
+   "question": "My pod is stuck Waiting because it can't pull an image from our private registry. What should I check, and how do I give it the registry credentials?",
+   "answer": "Check the image name is correct, that the image was pushed to the registry, and that it can be pulled manually (e.g. docker pull). Give the Pod registry credentials with imagePullSecrets referencing a Secret (in the same namespace) that holds the registry password; the kubelet uses it to pull the image.",
+   "key_facts": [
+    "check image name, that it was pushed, try pulling manually",
+    "imagePullSecrets with a registry Secret"
+   ],
+   "evidence": [
+    {
+     "source": "engineering/k8s-debug-pods.md",
+     "section": "My pod stays waiting",
+     "quote": "The most common cause of Waiting pods is a failure to pull the image."
+    },
+    {
+     "source": "engineering/k8s-secrets.md",
+     "section": "Using imagePullSecrets",
+     "quote": "The kubelet uses this information to pull a private image on behalf of your Pod."
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "G38",
+   "type": "multi_hop",
+   "expected": "answer",
+   "question": "I'm working from home and want to push a change to production on Wednesday afternoon. What do I need?",
+   "answer": "Connect through the Nimbus VPN (required when working remotely), get approval from one team lead, and deploy inside the window of Monday to Thursday, 10:00 to 16:00 UTC (with nimbus-deploy).",
+   "key_facts": [
+    "connect through the Nimbus VPN",
+    "approval from one team lead",
+    "Monday to Thursday 10:00-16:00 UTC window"
+   ],
+   "evidence": [
+    {
+     "source": "vpn-setup.md",
+     "section": "VPN Setup Guide",
+     "quote": "All employees must connect through the Nimbus VPN when working remotely."
+    },
+    {
+     "source": "deploy-guide.html",
+     "section": "Deployment Guide > Production",
+     "quote": "Production deploys require approval from one team lead."
+    },
+    {
+     "source": "deploy-guide.html",
+     "section": "Deployment Guide > Production",
+     "quote": "Deploy windows: Monday to Thursday, 10:00 to 16:00 UTC."
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "G39",
+   "type": "multi_hop",
+   "expected": "answer",
+   "question": "My laptop was stolen. What do I have to do, and how do I get back on the VPN with my replacement?",
+   "answer": "Report the loss to security@nimbus.example within 1 hour. On the new laptop, download NimbusConnect from the IT portal (Windows 11 or macOS 14+), run the installer and sign in with your SSO account.",
+   "key_facts": [
+    "report to security@nimbus.example within 1 hour",
+    "install NimbusConnect from the IT portal and sign in with SSO"
+   ],
+   "evidence": [
+    {
+     "source": "security-handbook.pdf",
+     "section": "Laptop Security",
+     "quote": "Report a lost laptop to security@nimbus.example within 1 hour."
+    },
+    {
+     "source": "vpn-setup.md",
+     "section": "Installing the Client",
+     "quote": "Run the installer and sign in with your SSO account."
+    }
+   ],
+   "split": "test"
+  },
+  {
+   "id": "G40",
+   "type": "multi_hop",
+   "expected": "answer",
+   "question": "How does GitLab's incident management lifecycle compare with the life cycle model in NIST SP 800-61r3?",
+   "answer": "GitLab runs a feedback loop of Preparation, Identification, Investigation, Containment, Remediation and Recovery. NIST SP 800-61r3 bases its model on the six CSF 2.0 Functions: Govern, Identify and Protect (prevent and prepare), and Detect, Respond and Recover (handle incidents).",
+   "key_facts": [
+    "GitLab: Preparation, Identification, Investigation, Containment, Remediation, Recovery",
+    "NIST: six CSF 2.0 Functions (Govern, Identify, Protect, Detect, Respond, Recover)"
+   ],
+   "evidence": [
+    {
+     "source": "handbook/gitlab-incident-management.html",
+     "section": "Incident Management Lifecycle",
+     "quote": "we approach Incident Management as a feedback loop with the following steps"
+    },
+    {
+     "source": "security/nist-sp-800-61r3-incident-response.pdf",
+     "section": "2.1. Incident Response Life Cycle Model",
+     "quote": "a high-level incident response life cycle model based on the six CSF 2.0 Functions"
+    }
+   ],
+   "split": "test"
+  },
+  {
+   "id": "G41",
+   "type": "multi_hop",
+   "expected": "answer",
+   "question": "An abusive user is causing a GitLab incident. What can the engineer on call do about the account, and how should the follow-up security issue be filed?",
+   "answer": "During an S1/S2 incident with wider user impact the EOC can block the user without further permission (leaving an admin note linking the incident) and report abusive accounts to Trust and Safety. Security issues should follow the Creating New Security Issues process, with the right labels and the confidential flag.",
+   "key_facts": [
+    "EOC can block users during S1/S2 without further permission",
+    "report abuse to Trust and Safety",
+    "security issue: labels + confidential flag"
+   ],
+   "evidence": [
+    {
+     "source": "handbook/gitlab-incident-management.html",
+     "section": "Incident Mitigation Methods",
+     "quote": "as EOC you have the authority - without requiring further permission - to Block Users"
+    },
+    {
+     "source": "handbook/gitlab-security.html",
+     "section": "Other Frequently Used GitLab.com Projects",
+     "quote": "follow the Creating New Security Issues process for using labels and the confidential flag"
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "G42",
+   "type": "multi_hop",
+   "expected": "answer",
+   "question": "What's the difference between a pod in the Pending phase and a pod that's stuck Waiting?",
+   "answer": "Pending means the cluster accepted the Pod but its containers aren't set up yet, which includes waiting to be scheduled and downloading images. A Waiting pod has already been scheduled to a node but can't run there, most commonly because the image can't be pulled.",
+   "key_facts": [
+    "Pending: accepted, not yet set up (includes scheduling and image download)",
+    "Waiting: scheduled on a node but can't run, usually image pull failure"
+   ],
+   "evidence": [
+    {
+     "source": "engineering/k8s-pod-lifecycle.md",
+     "section": "Pod phase",
+     "quote": "The Pod has been accepted by the Kubernetes cluster, but one or more of the containers has not been set up and made ready to run."
+    },
+    {
+     "source": "engineering/k8s-debug-pods.md",
+     "section": "My pod stays waiting",
+     "quote": "then it has been scheduled to a worker node"
+    }
+   ],
+   "split": "test"
+  },
+  {
+   "id": "G43",
+   "type": "multi_hop",
+   "expected": "answer",
+   "question": "Compare the vacation policies at Nimbus and GitLab.",
+   "answer": "Nimbus gives full-time employees 24 days of paid annual leave per year with up to 5 unused days carried over. GitLab has Flexible PTO with no set yearly limit, but more than 25 consecutive calendar days needs special permission.",
+   "key_facts": [
+    "Nimbus: 24 days, up to 5 carried over",
+    "GitLab: flexible, no set limit",
+    "GitLab: over 25 consecutive days needs special permission"
+   ],
+   "evidence": [
+    {
+     "source": "leave-policy.txt",
+     "section": "leave-policy",
+     "quote": "Up to 5 unused days may be carried over into the next year."
+    },
+    {
+     "source": "handbook/gitlab-time-off-types.html",
+     "section": "Flexible Paid Time Off (PTO) > Overview",
+     "quote": "GitLab does not set a specific limit on the amount of PTO a team member can take per year."
+    }
+   ],
+   "split": "test"
+  },
+  {
+   "id": "G44",
+   "type": "multi_hop",
+   "expected": "answer",
+   "question": "Which SQLSTATE does PostgreSQL return for a wrong password, and which setting decides how passwords are hashed?",
+   "answer": "28P01 (invalid_password). Password hashing is set by password_encryption, which defaults to scram-sha-256 (md5 is the other option).",
+   "key_facts": [
+    "28P01 invalid_password",
+    "password_encryption",
+    "default scram-sha-256"
+   ],
+   "evidence": [
+    {
+     "source": "engineering/postgres-error-codes.html",
+     "section": "Appendix A. PostgreSQL Error Codes",
+     "quote": "28P01 | invalid_password"
+    },
+    {
+     "source": "engineering/postgres-config-connection.html",
+     "section": "19.3.3. Authentication",
+     "quote": "The default is scram-sha-256."
+    }
+   ],
+   "split": "test"
+  },
+  {
+   "id": "G45",
+   "type": "no_answer",
+   "expected": "not_found",
+   "subtype": "out_of_scope",
+   "question": "How do I request a standing desk?",
+   "answer": "Not covered by the documents.",
+   "key_facts": [],
+   "evidence": [],
+   "absence_check": [
+    "standing desk"
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "G46",
+   "type": "no_answer",
+   "expected": "not_found",
+   "subtype": "out_of_scope",
+   "question": "What is the maximum size for email attachments?",
+   "answer": "Not covered by the documents.",
+   "key_facts": [],
+   "evidence": [],
+   "absence_check": [
+    "attachment size",
+    "size of an attachment",
+    "size of an email attachment"
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "G47",
+   "type": "no_answer",
+   "expected": "not_found",
+   "subtype": "out_of_scope",
+   "question": "Where can employees park at the office?",
+   "answer": "Not covered by the documents.",
+   "key_facts": [],
+   "evidence": [],
+   "absence_check": [
+    "parking"
+   ],
+   "split": "test"
+  },
+  {
+   "id": "G48",
+   "type": "no_answer",
+   "expected": "not_found",
+   "subtype": "out_of_scope",
+   "question": "How do I order new business cards?",
+   "answer": "Not covered by the documents.",
+   "key_facts": [],
+   "evidence": [],
+   "absence_check": [
+    "business card"
+   ],
+   "split": "test"
+  },
+  {
+   "id": "G49",
+   "type": "no_answer",
+   "expected": "not_found",
+   "subtype": "out_of_scope",
+   "question": "How do I join the company book club?",
+   "answer": "Not covered by the documents.",
+   "key_facts": [],
+   "evidence": [],
+   "absence_check": [
+    "book club"
+   ],
+   "split": "test"
+  },
+  {
+   "id": "G50",
+   "type": "no_answer",
+   "expected": "not_found",
+   "subtype": "near_miss",
+   "question": "Which network port does the Nimbus VPN use?",
+   "answer": "Not covered: the VPN guide doesn't mention ports (its only 'port' is the IT portal).",
+   "key_facts": [],
+   "evidence": [],
+   "notes": "Replaced 'How do I fix ERR_TUNNEL_4014?', which repeated the tuning probe for ERR_TUNNEL_4099 (a leak).",
+   "absence_check_in": {
+    "vpn-setup.md": [
+     " port ",
+     "port number",
+     "udp",
+     "tcp"
+    ]
+   },
+   "split": "dev"
+  },
+  {
+   "id": "G51",
+   "type": "no_answer",
+   "expected": "not_found",
+   "subtype": "near_miss",
+   "question": "What is the default value of statement_timeout in PostgreSQL?",
+   "answer": "Not covered: the PostgreSQL pages in the corpus don't include statement_timeout.",
+   "key_facts": [],
+   "evidence": [],
+   "absence_check": [
+    "statement_timeout"
+   ],
+   "notes": "Other PostgreSQL timeouts (authentication_timeout) are documented: must not substitute them.",
+   "split": "test"
+  },
+  {
+   "id": "G52",
+   "type": "no_answer",
+   "expected": "not_found",
+   "subtype": "near_miss",
+   "question": "Does the Nimbus VPN client work on Linux?",
+   "answer": "The VPN guide lists only Windows 11 and macOS 14+; it says nothing about Linux.",
+   "key_facts": [],
+   "evidence": [],
+   "absence_check_in": {
+    "vpn-setup.md": [
+     "linux"
+    ]
+   },
+   "acceptable": "may state that only Windows 11 and macOS 14+ are listed; must not claim Linux support or unsupport as fact",
+   "notes": "Linux appears in the PostgreSQL and Kubernetes pages, not in the VPN guide.",
+   "split": "test"
+  },
+  {
+   "id": "G53",
+   "type": "no_answer",
+   "expected": "not_found",
+   "subtype": "near_miss",
+   "question": "How many days of bereavement leave does Nimbus give?",
+   "answer": "Not covered: the Nimbus leave policy doesn't mention bereavement leave.",
+   "key_facts": [],
+   "evidence": [],
+   "absence_check_in": {
+    "leave-policy.txt": [
+     "bereavement"
+    ]
+   },
+   "acceptable": "may mention that GitLab's policy has bereavement leave only if clearly labelled as GitLab's, not Nimbus's",
+   "notes": "GitLab's time-off pages cover bereavement: must not present GitLab's policy as Nimbus's.",
+   "split": "test"
+  },
+  {
+   "id": "G54",
+   "type": "no_answer",
+   "expected": "not_found",
+   "subtype": "near_miss",
+   "question": "How much notice do I need to give before taking leave at Nimbus?",
+   "answer": "Not covered: the Nimbus leave policy says nothing about notice or requesting leave.",
+   "key_facts": [],
+   "evidence": [],
+   "absence_check_in": {
+    "leave-policy.txt": [
+     "notice",
+     "advance",
+     "request"
+    ]
+   },
+   "acceptable": "may mention GitLab's coordination rules only if clearly labelled as GitLab's, not Nimbus's",
+   "notes": "Replaced a public-holiday deploy question that reused the Friday/Saturday tuning template. GitLab's pages discuss coordinating time off: must not present them as Nimbus's.",
+   "split": "dev"
+  },
+  {
+   "id": "G55",
+   "type": "ambiguous",
+   "expected": "clarify_or_cover",
+   "question": "How long does my password have to be?",
+   "answer": "Depends on which rule: the Nimbus security handbook requires at least 14 characters; NIST SP 800-63B requires at least 15 characters for passwords used as a single factor.",
+   "key_facts": [
+    "Nimbus handbook: 14 characters",
+    "NIST: 15 characters for single-factor"
+   ],
+   "evidence": [
+    {
+     "source": "security-handbook.pdf",
+     "section": "Security Handbook",
+     "quote": "Passwords must be at least 14 characters long."
+    },
+    {
+     "source": "security/nist-sp-800-63b-4-authentication.pdf",
+     "section": "3.1.1.2. Password Verifiers",
+     "quote": "to be a minimum of 15 characters in length"
+    }
+   ],
+   "split": "test"
+  },
+  {
+   "id": "G56",
+   "type": "ambiguous",
+   "expected": "clarify_or_cover",
+   "question": "Do I need approval to deploy?",
+   "answer": "Depends on the environment: staging deploys need no approval; production deploys need approval from one team lead.",
+   "key_facts": [
+    "staging: no approval",
+    "production: one team lead"
+   ],
+   "evidence": [
+    {
+     "source": "deploy-guide.html",
+     "section": "Deployment Guide > Staging",
+     "quote": "Staging deploys need no approval."
+    },
+    {
+     "source": "deploy-guide.html",
+     "section": "Deployment Guide > Production",
+     "quote": "Production deploys require approval from one team lead."
+    }
+   ],
+   "split": "test"
+  },
+  {
+   "id": "G57",
+   "type": "ambiguous",
+   "expected": "clarify_or_cover",
+   "question": "How much time off can I take?",
+   "answer": "Depends on the company: Nimbus gives 24 days of annual leave a year (up to 5 carried over); GitLab's Flexible PTO has no set limit, with special permission needed beyond 25 consecutive days.",
+   "key_facts": [
+    "Nimbus: 24 days",
+    "GitLab: no set limit, special permission over 25 consecutive days"
+   ],
+   "evidence": [
+    {
+     "source": "leave-policy.txt",
+     "section": "leave-policy",
+     "quote": "Full-time employees receive 24 days of paid annual leave per calendar year."
+    },
+    {
+     "source": "handbook/gitlab-time-off-types.html",
+     "section": "Flexible Paid Time Off (PTO) > Overview",
+     "quote": "GitLab does not set a specific limit on the amount of PTO a team member can take per year."
+    }
+   ],
+   "split": "test"
+  },
+  {
+   "id": "G58",
+   "type": "ambiguous",
+   "expected": "clarify_or_cover",
+   "question": "What does this error mean?",
+   "answer": "The question doesn't say which error: the right response asks for the error code or message (the documents cover VPN errors like ERR_TUNNEL_4012/4013 and PostgreSQL SQLSTATE codes).",
+   "key_facts": [],
+   "evidence": [],
+   "acceptable": "asks which error / says the question is too vague; must not pick one error and explain it as if that were the question",
+   "overlap_ok": "Shares 'what does ... error mean' with a tuning question, but tests a question with NO error code (ambiguity), a different behaviour from looking up a named code.",
+   "split": "test"
+  },
+  {
+   "id": "G59",
+   "type": "ambiguous",
+   "expected": "clarify_or_cover",
+   "question": "Who do I report it to?",
+   "answer": "The question doesn't say what is being reported: e.g. a lost laptop goes to security@nimbus.example within 1 hour, while GitLab security issues follow the Creating New Security Issues process.",
+   "key_facts": [],
+   "evidence": [],
+   "acceptable": "asks what is being reported, or covers the candidate cases labelled; must not answer one case as if it were certain",
+   "split": "dev"
+  },
+  {
+   "id": "G60",
+   "type": "ambiguous",
+   "expected": "clarify_or_cover",
+   "question": "What's the default timeout?",
+   "answer": "Unclear which timeout: e.g. PostgreSQL's authentication_timeout defaults to one minute. The right response asks which system/setting, or labels what it answers.",
+   "key_facts": [],
+   "evidence": [
+    {
+     "source": "engineering/postgres-config-connection.html",
+     "section": "19.3.3. Authentication",
+     "quote": "The default is one minute (1m)."
+    }
+   ],
+   "acceptable": "asks which timeout, or answers a named one clearly labelled",
+   "split": "dev"
+  }
+ ],
+ "test_fingerprint": "fa9d05146c78e8c6"
+}
