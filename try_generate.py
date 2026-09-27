@@ -3,12 +3,12 @@
 retrieve (hybrid + rerank) -> answer from the top 5 with [n] citations -> a judge model checks each cited claim.
 
 Usage: python try_index.py first, then python try_generate.py   (needs MISTRAL_API_KEY and GROQ_API_KEY)
-Each question costs one Groq request to answer (~1.5-2.5k tokens) plus one judge request per cited claim.
+Each question costs one Groq request to answer (~1.1k tokens) plus one batched judge request for its claims.
 The last case is a deliberately WRONG answer, to show that verification catches a bad citation.
 """
 import logging
 
-from hyrag.citations import JUDGE_MODEL, verify
+from hyrag.citations import judge_client, verify
 from hyrag.embeddings import MistralEmbedder
 from hyrag.generation import GroundedAnswer, generate
 from hyrag.index import ChunkIndex
@@ -41,7 +41,7 @@ def main() -> None:
     logging.basicConfig(level=logging.WARNING, format="%(levelname)s %(name)s: %(message)s")
     if not is_downloaded():
         download()
-    with MistralEmbedder() as embedder, GroqChat() as chat, GroqChat(JUDGE_MODEL, reasoning_effort=None) as judge:
+    with MistralEmbedder() as embedder, GroqChat() as chat, judge_client() as judge:
         index = ChunkIndex(embedder)
         if index.count() == 0:
             raise SystemExit("data/index is empty: run python try_index.py first")

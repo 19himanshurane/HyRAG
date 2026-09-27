@@ -19,6 +19,7 @@ from dataclasses import dataclass, field
 
 from hyrag.citations import CitationReport
 from hyrag.generation import GroundedAnswer
+from hyrag.retrieval import FusedHit
 
 # Calibration (eval/calibration_questions.json, 2026-09-25): centre in the gap between the lowest answerable
 # (+0.08) and the highest unanswerable (-5.83) top rerank logit; scale so the ends of that gap map to ~0.9 / ~0.1.
@@ -34,6 +35,7 @@ CAPS = {  # flag -> the highest score an answer with that flag can get
     # don't back must put the answer below the medium threshold.
     "unsupported_claim": 0.4,   # at least one cited claim the judge found unsupported
     "partial_claim": 0.7,       # a claim with a fact the passage lacks: never "high"
+    "unchecked_claim": 0.4,     # the judge failed or ran out of time on a claim: unknown is not verified
     "truncated": 0.5,           # cut off by the token budget
     "missing_part": 0.6,        # a part of the question silently ignored
     # Honestly says a part isn't in the documents: not a red flag, but "high" means the WHOLE question is
@@ -64,17 +66,29 @@ def _logistic(x: float, centre: float, scale: float) -> float:
     return 1.0 / (1.0 + math.exp(-(x - centre) / scale))
 
 
-def retrieval_confidence(answer: GroundedAnswer) -> tuple[float, str]:
-    """(score 0..1, which signal it came from: "rerank", "dense", or "none")."""
-    if not answer.passages:
+def hit_relevance(hit: FusedHit) -> float | None:
+    """One passage's relevance 0..1 on the same calibrated scale (None if neither signal is available)."""
+    if hit.rerank_score is not None:
+        return _logistic(hit.rerank_score, RERANK_CENTRE, RERANK_SCALE)
+    if hit.dense_score is not None:
+        return _logistic(hit.dense_score, DENSE_CENTRE, DENSE_SCALE)
+    return None
+
+
+def passages_confidence(hits: list[FusedHit]) -> tuple[float, str]:
+    """(score 0..1, which signal it came from: "rerank", "dense", or "none") for a list of retrieved passages."""
+    if not hits:
         return 0.0, "none"
-    top = answer.passages[0]
-    if top.rerank_score is not None:
-        return _logistic(top.rerank_score, RERANK_CENTRE, RERANK_SCALE), "rerank"
-    dense = [h.dense_score for h in answer.passages if h.dense_score is not None]
+    if hits[0].rerank_score is not None:
+        return _logistic(hits[0].rerank_score, RERANK_CENTRE, RERANK_SCALE), "rerank"
+    dense = [h.dense_score for h in hits if h.dense_score is not None]
     if dense:
         return _logistic(max(dense), DENSE_CENTRE, DENSE_SCALE), "dense"
     return 0.0, "none"
+
+
+def retrieval_confidence(answer: GroundedAnswer) -> tuple[float, str]:
+    return passages_confidence(answer.passages)
 
 
 def citation_coverage(report: CitationReport) -> float:
@@ -99,7 +113,7 @@ def assess_completeness(question: str, answer_text: str, judge) -> Completeness:
                                  {"role": "user", "content": user}], json_schema=COMPLETENESS_SCHEMA)
         parts = json.loads(result.text)["parts"]
     except Exception as e:  # can't tell: count as incomplete rather than guess complete
-        return Completeness(0.0, [], f"{type(e).__name__}: {str(e)[:120]}")
+        return Completeness(0.0, [], f"{type(e).__name__}: {str(e)[:300]}")
     if not parts:
         return Completeness(0.0, [], "judge returned no parts")
     return Completeness(sum(p["status"] == "answered" for p in parts) / len(parts), parts)
@@ -132,6 +146,8 @@ def score_answer(answer: GroundedAnswer, report: CitationReport, judge) -> Confi
         flags.append("unsupported_claim")
     if any(c.status == "partial" for c in report.checks):
         flags.append("partial_claim")
+    if any(c.status == "unchecked" for c in report.checks):
+        flags.append("unchecked_claim")
     if answer.truncated:
         flags.append("truncated")
     if any(p["status"] == "missing" for p in completeness.parts) or completeness.error:

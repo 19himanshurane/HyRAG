@@ -67,7 +67,7 @@ The account's Groq model list (2026-09-25) had no Llama 70B-class model. `openai
 
 The first 120b run scored 29/32. All 3 misses were the quote check being too strict: a quote stitched from several sentences with "...". After the fragment-matching fix, 120b scored 32/32. One of the three was a real misquote ("using" vs the passage's "presenting" one or more recovery codes), which the check correctly refused.
 
-**Chosen: qwen3.8-27b.** It's as safe as 120b on this set, it comes from a different model family from the answer writer (so it isn't grading its own model's writing), and it has its own rate-limit budget, so judging doesn't compete with answering. The self-preference effect itself is not measured here: the claims in this set were written by hand, not by the model.
+**Chosen at the time: qwen3.8-27b.** *(Replaced by openai/gpt-oss-20b in the Phase 3 production audit: Qwen's 1,000 output-tokens-per-minute limit on this plan left real answers unchecked. See [phase3-audit.md](phase3-audit.md).)* It's as safe as 120b on this set, it comes from a different model family from the answer writer (so it isn't grading its own model's writing), and it has its own rate-limit budget, so judging doesn't compete with answering. The self-preference effect itself is not measured here: the claims in this set were written by hand, not by the model.
 
 ### On the real corpus (`try_generate.py`)
 - **Genuine answers:** 10 cited claims, all supported. 23505 was supported by both of its cited passages.
@@ -127,3 +127,49 @@ Before a question was labelled unanswerable, the corpus was searched for its top
 - **Calibration on 20 questions** with a clear gap: the centre (−3) could sit anywhere between −5.8 and +0.1 and still separate them. Phase 4's golden set, with harder near-miss questions, must re-check it.
 - **All 10 unanswerable questions were also refused by the writer.** The retrieval part hasn't yet been tested on a case where the writer answers from weak passages. That's where it matters most, and where Step 4's threshold comes in.
 - **Cost:** completeness adds one judge request per answer.
+
+---
+
+## Step 4 (2026-09-27): the graceful "I don't know"
+
+**Code:** `hyrag/answer.py` (`ask()`, the single entry point from question to response). **Demo:** `python try_ask.py ["question" ...] [--json]`. **Near-miss set:** `eval/near_miss_questions.json`. **Tests:** `tests/test_answer.py` (offline).
+
+### Four statuses
+
+| Status | When | What the reader gets |
+|---|---|---|
+| `answered` | claims verified | the answer, its sources by `[n]`, confidence, any flagged sentences |
+| `partial` | a part of the question is marked not covered | the answer, plus the parts the documents don't cover |
+| `unverified` | a claim is unsupported, or the answer cites nothing | **no answer**; "couldn't verify", the closest sections, documents to check. The model's text goes in `draft` so a UI can't show it as fact by accident |
+| `not_found` | retrieval below the gate (**the model isn't called**), or the model says it isn't in the documents | what was found (`closest`), documents worth checking (`check_manually`), or "Nothing in the documents looks related" |
+
+### Why three layers, not one threshold (measured)
+The brief asks for a retrieval threshold. On the near misses, that alone is not enough:
+
+| Near miss (answer not in the documents) | Retrieval | Stopped by |
+|---|---|---|
+| ERR_TUNNEL_4099 | **0.90** (the 4012/4013 pages look relevant) | the writer ("not found") |
+| SQLSTATE 23599 | 0.34 | the gate (model not called); suggests the PostgreSQL error-code appendix |
+| VPN monthly price | 0.01 | the gate |
+| HorizontalPodAutoscaler | 0.17 | the gate; suggests the Kubernetes pages |
+| (a deliberately wrong answer) | 0.90 | citation verification: withheld as unverified |
+
+- **Gate: 0.5** (rerank logit −3). Every correctly answered question scored ≥ 0.78; the unanswerable ones scored 0.00–0.34, except 4099.
+- **Suggestions** only for passages with relevance ≥ 0.1. The printer question gets "nothing looks related" instead of a NIST PDF.
+
+### A mistake of mine the demo exposed
+"How do I fix a pod stuck in ImagePullBackOff?" was labelled a near miss (unanswerable) because the word never appears in the corpus. The pipeline returned `unverified`, which looked like a success. Reading the cited passage showed the opposite: "My pod stays waiting" lists exactly the fix (check the image name, the registry, `docker pull <image>`). The answer was **right**, and the check was **wrong**:
+- the judge had said `supported`;
+- but its quote joined two bullet points without their `- ` markers;
+- so the character-level quote check rejected it.
+
+**Fix:** quotes are compared as word sequences (punctuation, bullets and markdown ignored; words still exact). After the fix: `answered`, high 0.99. The judge test set still shows 0/16 false support. The label is corrected in the file, with a note.
+
+Lessons:
+- label by concept, not by keyword;
+- an `unverified` verdict needs the same scrutiny as a `supported` one.
+
+### Known limits
+- The gate and the suggestion threshold rest on 20 calibration + 6 near-miss questions. Phase 4 re-measures them on the golden set.
+- A correct answer can still be withheld if the judge misjudges (the safe direction). How often is a Phase 4 number: "withheld but correct".
+- `not_found` doesn't explain *why* the neighbouring documents don't answer it (e.g., "the VPN guide covers 4012 and 4013, not 4099"). That would need an extra model call, and could come later.

@@ -173,3 +173,15 @@ def test_an_answer_that_cites_nothing_is_flagged_ungrounded():
 def test_no_break_spaces_become_plain_spaces():
     assert normalize_answer("run `nimbus-vpn\u00a0--renew-cert` under Settings\u202f>\u202fCertificates") == \
         "run `nimbus-vpn --renew-cert` under Settings > Certificates"
+
+
+def test_invalid_json_from_the_model_is_regenerated_but_other_400s_fail_fast(groq):
+    bad_json = (400, {"error": {"message": "Failed to generate JSON. Please adjust your prompt.",
+                                "code": "json_validate_failed"}})
+    chat, seen, _ = groq([bad_json, (200, OK_BODY)])
+    assert chat.complete([{"role": "user", "content": "x"}], json_schema={"type": "object"}).text == "Renew it [1]."
+    assert len(seen) == 2
+    chat, seen, _ = groq([bad_json])  # without a schema, a 400 is our fault: no retry
+    with pytest.raises(httpx.HTTPStatusError):
+        chat.complete([{"role": "user", "content": "x"}])
+    assert len(seen) == 1

@@ -5,6 +5,7 @@ Groq plan (listed 2026-09-25). It is a reasoning model: it "thinks" before answe
 in a separate `reasoning` field and never reaches the answer text; reasoning_effort="low" keeps it short
 (12 reasoning tokens and 0.7 s on a small grounded question, measured).
 """
+import logging
 import os
 import threading
 import time
@@ -16,6 +17,15 @@ from dotenv import load_dotenv
 from hyrag.http import post_json
 
 GROQ_CHAT_URL = "https://api.groq.com/openai/v1/chat/completions"
+JSON_REGENERATIONS = 2  # extra tries when the model's output fails the requested JSON schema
+
+log = logging.getLogger(__name__)
+
+
+def _is_json_generation_failure(e: httpx.HTTPStatusError) -> bool:
+    body = e.response.text if e.response is not None else ""
+    return e.response is not None and e.response.status_code == 400 and (
+        "json_validate_failed" in body or "Failed to generate" in body)
 
 
 @dataclass
@@ -31,7 +41,8 @@ class ChatResult:
 
 class GroqChat:
     def __init__(self, model: str = "openai/gpt-oss-120b", reasoning_effort: str | None = "low",
-                 temperature: float = 0.0, seed: int = 7, max_completion_tokens: int = 1024):
+                 temperature: float = 0.0, seed: int = 7, max_completion_tokens: int = 1024,
+                 timeout: float = 30.0, attempts: int = 5):
         load_dotenv()  # read .env when a client is created, not as a side effect of importing this module
         self.api_key = os.environ.get("GROQ_API_KEY")
         if not self.api_key:
@@ -40,7 +51,11 @@ class GroqChat:
         # temperature 0 + a fixed seed: as repeatable as the provider allows (not guaranteed identical)
         self.temperature, self.seed = temperature, seed
         self.max_completion_tokens = max_completion_tokens  # budget for reasoning + answer together
-        self.client = httpx.Client(headers={"Authorization": f"Bearer {self.api_key}"}, timeout=120)
+        # 30 s per attempt (was 120 s: one call could take 10.2 min). The attempt count stays 5: rate limits
+        # (429) are the common failure, and cutting to 3 turned bursts into unchecked answers (measured). What
+        # bounds a question is its time budget (hyrag.http.deadline, set by hyrag.answer.ask), not the count.
+        self.client = httpx.Client(headers={"Authorization": f"Bearer {self.api_key}"}, timeout=timeout)
+        self.attempts = attempts
         self.requests_made = 0
         self._count_lock = threading.Lock()
 
@@ -63,7 +78,19 @@ class GroqChat:
             payload["response_format"] = {"type": "json_schema",
                                           "json_schema": {"name": "reply", "strict": True, "schema": json_schema}}
         t0 = time.perf_counter()
-        data = post_json(self.client, GROQ_CHAT_URL, payload, what="Groq chat request", on_attempt=self._count)
+        for regenerate in range(JSON_REGENERATIONS + 1):
+            try:
+                data = post_json(self.client, GROQ_CHAT_URL, payload, what="Groq chat request",
+                                 attempts=self.attempts, on_attempt=self._count)
+                break
+            except httpx.HTTPStatusError as e:
+                # A 400 normally means OUR request is wrong: fail at once. The exception: the model's output
+                # failed the JSON schema ("json_validate_failed"). That is a bad sample, not a bad request; it
+                # hit 1 of 8 batched judge calls once, and the identical request then passed 6 times out of 6.
+                if not (json_schema is not None and _is_json_generation_failure(e)) or regenerate == JSON_REGENERATIONS:
+                    raise
+                log.warning("Groq returned invalid JSON for the schema; regenerating (%d/%d)",
+                            regenerate + 1, JSON_REGENERATIONS)
         choice, usage = data["choices"][0], data.get("usage", {})
         return ChatResult(
             text=choice["message"].get("content") or "",

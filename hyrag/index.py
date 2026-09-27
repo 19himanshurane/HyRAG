@@ -158,6 +158,7 @@ class ChunkIndex:
         self._bm25_ids: list[str] = []
         self._vectors: tuple[list[str], np.ndarray] | None = None  # exact-search snapshot of Chroma
         self._seen_version = self._data_version()
+        self._writes = 0  # this object's own committed writes (data_version only counts OTHER connections')
 
     def _check_embedding_model(self) -> None:
         """Vectors from two models live in different spaces: comparing them gives meaningless similarities,
@@ -281,6 +282,7 @@ class ChunkIndex:
         if kept:
             self.collection.update(ids=[c.chunk_id for c in kept], metadatas=[self._meta(c) for c in kept])
         self._bm25 = None  # rebuilt from the table on the next keyword search
+        self._writes += 1
         self._vectors = None  # and the exact-search matrix from Chroma on the next meaning search
         return IndexResult(doc_id, len(to_add), len(to_remove), len(kept), len(skipped))
 
@@ -408,9 +410,16 @@ class ChunkIndex:
                                         metadatas=[self._meta(c) for c in ordered])
         with self._lock:
             self._vectors = None  # Chroma changed underneath the exact-search snapshot
+            self._writes += 1
         if any(problems.values()):
             log.warning("repaired index: %s", {k: len(v) for k, v in problems.items()})
         return problems
+
+    @_locked
+    def version(self) -> tuple:
+        """Changes whenever the indexed content may have changed (a write by this object or by any other
+        connection). Caches of answers built from this index key on it."""
+        return (self.strategy, self._writes, self._data_version())
 
     @_locked
     def count(self) -> int:

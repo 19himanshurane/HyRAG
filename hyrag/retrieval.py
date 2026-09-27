@@ -128,6 +128,14 @@ class HybridRetriever:
         """Ranked candidates for `query`. mode="dense" / "sparse" run one search alone (same output shape),
         which is what the dashboard's hybrid-vs-dense comparison needs. With a reranker (and
         rerank_results=True) the fused top_k are re-scored and the best rerank_top_n returned."""
+        return self.search(query, mode, rerank_results).hits
+
+    def search(self, query: str, mode: Mode = "hybrid", rerank_results: bool = True) -> "Retrieval":
+        """Like retrieve(), but also reports which parts had to be skipped (`degraded`).
+
+        Meaning search needs the Mistral API for the query embedding; keyword search and the reranker run
+        locally. So in hybrid mode an embedding failure (outage, rate limit, time budget) degrades to keyword
+        search + reranking instead of failing the whole question, which it used to (docs/phase3-audit.md, H2)."""
         if mode not in get_args(Mode):
             raise ValueError(f"unknown mode {mode!r}; expected one of {get_args(Mode)}")
         if not query.strip():
@@ -137,24 +145,38 @@ class HybridRetriever:
         if self.index.count() == 0:
             log.warning("retrieving from an empty index (strategy %r): nothing has been indexed yet",
                         self.index.strategy)
-            return []
+            return Retrieval([], ["empty_index"])
         c = self.config
+        degraded: list[str] = []
         dense_w = c.dense_weight if mode == "hybrid" else float(mode == "dense")
         sparse_w = c.sparse_weight if mode == "hybrid" else float(mode == "sparse")
         lists: dict[str, tuple[list[Hit], float]] = {}
         if dense_w > 0:  # a zero-weight list can't change the order: don't pay for its search (or API call)
-            lists["dense"] = (self.index.search_dense(query, k=c.dense_k), dense_w)
+            try:
+                lists["dense"] = (self.index.search_dense(query, k=c.dense_k), dense_w)
+            except Exception as e:
+                if mode == "dense":  # nothing to fall back to
+                    raise
+                log.warning("meaning search unavailable (%s: %s); using keyword search only",
+                            type(e).__name__, str(e)[:120])
+                degraded.append("dense_search_unavailable")
         if sparse_w > 0:
             lists["sparse"] = (self.index.search_sparse(query, k=c.sparse_k), sparse_w)
         candidates = reciprocal_rank_fusion(lists, rrf_k=c.rrf_k)[: c.top_k]
         if self.reranker is None or not rerank_results:
-            return candidates
+            return Retrieval(candidates, degraded)
         try:
-            return rerank(query, candidates, self.reranker, c.rerank_top_n)
+            return Retrieval(rerank(query, candidates, self.reranker, c.rerank_top_n), degraded)
         except Exception:
             # The fused list is a good answer on its own: a broken reranker shouldn't take search down.
             # rerank_score stays None on every hit, so callers (Phase 3 confidence) can see it wasn't reranked.
             log.exception("reranker failed; returning the fused top %d instead", c.rerank_top_n)
             for hit in candidates:
                 hit.rerank_score = None
-            return candidates[: c.rerank_top_n]
+            return Retrieval(candidates[: c.rerank_top_n], degraded + ["rerank_unavailable"])
+
+
+@dataclass
+class Retrieval:
+    hits: list[FusedHit]
+    degraded: list[str] = field(default_factory=list)  # parts skipped: dense_search_unavailable, rerank_unavailable

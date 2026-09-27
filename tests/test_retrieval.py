@@ -111,3 +111,26 @@ def test_empty_index_warns(tmp_path, caplog):
     empty = HybridRetriever(ChunkIndex(CountingEmbedder(), data_dir=tmp_path / "e"))
     assert empty.retrieve("anything") == []
     assert "empty index" in caplog.text
+
+
+# ----- Phase 3 audit H2: an embedding outage degrades to keyword search -----
+
+class DeadEmbedder(CountingEmbedder):
+    def embed(self, texts):
+        raise RuntimeError("embedding request failed after 5 attempts")
+
+
+def test_embedding_outage_falls_back_to_keyword_search(tmp_path):
+    index = ChunkIndex(CountingEmbedder(), data_dir=tmp_path / "i")
+    index.index_document(*vpn_doc())
+    index.embedder = DeadEmbedder()
+    result = HybridRetriever(index).search("ERR_TUNNEL_4012")
+    assert result.degraded == ["dense_search_unavailable"]
+    assert result.hits and result.hits[0].chunk.heading.endswith("ERR_TUNNEL_4012")
+    assert all(h.dense_rank is None for h in result.hits)
+    with pytest.raises(RuntimeError):  # dense-only mode has nothing to fall back to
+        HybridRetriever(index).search("ERR_TUNNEL_4012", mode="dense")
+
+
+def test_healthy_search_reports_nothing_degraded(retriever):
+    assert retriever.search("ERR_TUNNEL_4012 certificate").degraded == []

@@ -1,0 +1,32 @@
+[
+ {
+  "question": "How do I fix ERR_TUNNEL_4099?",
+  "answerable": false,
+  "why": "VPN docs cover 4012/4013 only"
+ },
+ {
+  "question": "What does SQLSTATE 23599 mean?",
+  "answerable": false,
+  "why": "neighbouring codes 23505/23514 exist; 23599 does not"
+ },
+ {
+  "question": "How much does the VPN cost per month?",
+  "answerable": false,
+  "why": "VPN docs exist, no prices anywhere"
+ },
+ {
+  "question": "How do I fix a pod stuck in ImagePullBackOff?",
+  "answerable": true,
+  "why": "CORRECTED 2026-09-27: first labelled unanswerable because the word never appears, but 'My pod stays waiting' covers image-pull failures (check the name, the registry, docker pull)"
+ },
+ {
+  "question": "How do I configure a HorizontalPodAutoscaler?",
+  "answerable": false,
+  "why": "k8s docs exist, no HPA page"
+ },
+ {
+  "question": "Can I deploy to production on a Saturday?",
+  "answerable": true,
+  "why": "derivable: windows are Monday to Thursday"
+ }
+]
