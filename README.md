@@ -24,7 +24,8 @@ Work in progress, built one step at a time. The description above is the target 
 - [x] Hybrid retrieval: weighted Reciprocal Rank Fusion of both searches (`hyrag/retrieval.py`), then a local cross-encoder reranker (`hyrag/rerank.py`, ms-marco-MiniLM-L6-v2, pinned revision) that keeps the best 5 of the fused 20. Audited: [docs/phase2-audit.md](docs/phase2-audit.md)
 - [x] Grounded generation with citation verification and confidence scoring (`hyrag/answer.py` is the single entry point: answered / partial / unverified / not found). Design and measurements: [docs/phase3.md](docs/phase3.md)
 - [ ] Evaluation suite and chunking comparison
-- [ ] FastAPI service, dashboard, Docker
+- [x] FastAPI service (`hyrag/api.py`): `/v1/ask`, `/v1/documents`, `/v1/ingest`, health/readiness, OpenAPI docs. Details: [docs/phase5.md](docs/phase5.md)
+- [ ] Dashboard and Docker
 
 ## Try it
 
@@ -44,6 +45,15 @@ python -m hyrag.rerank          # download the reranker model once (~88 MB); it 
 python try_rerank.py            # hybrid search + reranking on real questions
 python try_ask.py "How do I fix ERR_TUNNEL_4012?"   # the full pipeline (also needs GROQ_API_KEY)
 ```
+
+Run the API (after the steps above):
+
+```bash
+uvicorn hyrag.api:app --port 8000          # docs at http://localhost:8000/docs
+curl -X POST localhost:8000/v1/ask -H "Content-Type: application/json" -d '{"question": "How do I fix ERR_TUNNEL_4012?"}'
+```
+
+Set `HYRAG_ADMIN_KEY` to enable uploads (`POST /v1/ingest` with header `X-API-Key`), and `HYRAG_API_KEY` to require a key for questions.
 
 Heads-up on size: `requirements.txt` pulls in PyTorch for the reranker (a ~124 MB CPU wheel on Windows/macOS; on Linux, install the CPU build from https://download.pytorch.org/whl/cpu or pip fetches the multi-GB CUDA one). Loading the reranker takes ~10-13 s and ~590 MB of RAM, so a server should load it once at startup.
 

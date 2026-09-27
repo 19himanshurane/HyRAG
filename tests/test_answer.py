@@ -24,7 +24,8 @@ class FakeRetriever:
         self.hits, self.degraded = hits, degraded
         self.index = type("Index", (), {"version": lambda _self: version})()
 
-    def search(self, question):
+    def search(self, question, mode="hybrid"):
+        self.last_mode = mode
         if not question.strip():
             raise ValueError("empty query")
         return Retrieval(list(self.hits), list(self.degraded))
@@ -142,7 +143,7 @@ from hyrag.http import DeadlineExceeded  # noqa: E402
 
 
 class BrokenRetriever(FakeRetriever):
-    def search(self, question):
+    def search(self, question, mode="hybrid"):
         raise RuntimeError("index unavailable")
 
 
@@ -246,3 +247,19 @@ def test_daily_quota_exhaustion_has_its_own_codes():
     assert r.code == "error.quota_exhausted" and "daily usage limit" in r.message
     r = ask("q?", FakeRetriever([VPN]), FakeChat("Renew it [1]."), FakeJudge(fail=QuotaExhausted("daily limit reached")))
     assert r.code == "unchecked.quota_exhausted"
+
+
+def test_mode_and_retrieved_passages_are_reported():
+    retriever = FakeRetriever([VPN, NIST])
+    r = ask("How do I fix ERR_TUNNEL_4012?", retriever, FakeChat("Renew it [1]."), FakeJudge(), mode="dense")
+    assert retriever.last_mode == "dense" and r.mode == "dense"
+    assert [p.source for p in r.retrieved] == ["vpn-setup.md", "nist.pdf"]
+    assert r.retrieved[0].rerank_score == 8.0 and r.retrieved[0].relevance > 0.99
+    assert json.loads(json.dumps(r.to_dict()))["retrieved"][0]["section"] == "VPN > Error 4012"
+
+
+def test_cache_keeps_hybrid_and_dense_answers_apart():
+    cache, writer = AnswerCache(), FakeChat("Renew it [1].")
+    ask("q?", FakeRetriever([VPN]), writer, FakeJudge(), cache=cache, mode="hybrid")
+    ask("q?", FakeRetriever([VPN]), writer, FakeJudge(), cache=cache, mode="dense")
+    assert len(writer.calls) == 2

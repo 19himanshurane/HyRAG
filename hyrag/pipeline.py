@@ -31,6 +31,13 @@ class Pipeline:
             self._index(doc)
         return docs
 
+    def ingest_one(self, path: Path, *, root: Path) -> Document:
+        """Parse, store, chunk and index ONE file in this process (no worker pool): for a web server, where
+        spawning worker processes per upload is slow and fragile. Raises if the file can't be ingested."""
+        doc = self.store.ingest_file(path, root=root)
+        self._index(doc)
+        return doc
+
     def delete(self, source: str) -> None:
         """Remove a document from the store AND the index, so it can never be retrieved or cited again."""
         self.store.delete(source)

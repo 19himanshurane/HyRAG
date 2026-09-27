@@ -62,7 +62,7 @@ def test_identifiers_are_kept_whole_and_split_into_parts():
 
 def test_typography_is_folded_so_typed_queries_match():  # audit G7
     assert tokenize("don’t use “smart” quotes – ever") == tokenize("don't use \"smart\" quotes - ever")
-    assert tokenize("no break") == ["no", "break"]
+    assert tokenize("no\u00a0break") == ["no", "break"]
     assert tokenize("the ﬁle") == ["file"]  # NFKC turns the ﬁ ligature into f + i
 
 

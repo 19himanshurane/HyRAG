@@ -11,6 +11,7 @@ several calls in a row.
 """
 import contextvars
 import logging
+import re
 import time
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
@@ -31,6 +32,15 @@ class DeadlineExceeded(TimeoutError):
 class QuotaExhausted(RuntimeError):
     """A per-DAY limit (tokens or requests per day) is used up. Retrying in seconds cannot help: Groq's own
     retry hint was 7-8 minutes when the judge model's 200,000 tokens/day ran out (measured 2026-09-28)."""
+
+
+_ACCOUNT_IDS = re.compile(r"\b(org|proj|user|acct)_[A-Za-z0-9]{6,}")
+
+
+def provider_text(resp: httpx.Response, limit: int = 300) -> str:
+    """A provider's error body, shortened and with account identifiers removed: these messages end up in logs
+    and in the `reason` of API responses. (Groq's 429 text names the organization id; it was reaching clients.)"""
+    return _ACCOUNT_IDS.sub(lambda m: f"{m.group(1)}_<redacted>", resp.text[:limit])
 
 
 def _is_daily_limit(resp: httpx.Response) -> bool:
@@ -86,7 +96,7 @@ def post_json(client: httpx.Client, url: str, payload: dict, *, what: str, attem
         else:
             reason = f"HTTP {resp.status_code}"
         if resp is not None and _is_daily_limit(resp):
-            raise QuotaExhausted(f"{what}: daily limit reached: {resp.text[:300]}")
+            raise QuotaExhausted(f"{what}: daily limit reached: {provider_text(resp)}")
         if resp is None or resp.status_code == 429 or resp.status_code >= 500:
             if attempt < attempts - 1:
                 wait = retry_wait(resp, attempt)
@@ -98,7 +108,7 @@ def post_json(client: httpx.Client, url: str, payload: dict, *, what: str, attem
                 time.sleep(wait)
             continue
         if resp.is_error:
-            raise httpx.HTTPStatusError(f"{what} failed: HTTP {resp.status_code}: {resp.text[:500]}",
+            raise httpx.HTTPStatusError(f"{what} failed: HTTP {resp.status_code}: {provider_text(resp, 500)}",
                                         request=resp.request, response=resp)
         return resp.json()
     raise RuntimeError(f"{what} failed after {attempts} attempts")

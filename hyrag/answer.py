@@ -68,6 +68,20 @@ class SourceRef:
 
 
 @dataclass
+class RetrievedPassage:
+    """One passage retrieval handed to the writer, with how each search ranked it (for the dashboard)."""
+    source: str
+    section: str
+    page: int | None
+    text: str
+    relevance: float | None       # 0..1, calibrated (see hyrag.confidence)
+    rerank_score: float | None    # the reranker's raw logit
+    fused_rank: int | None        # position after fusion, before reranking
+    dense_rank: int | None        # position in meaning search (None: not found by it)
+    sparse_rank: int | None       # position in keyword search (None: not found by it)
+
+
+@dataclass
 class Response:
     question: str
     status: str                   # answered | partial | unverified | unchecked | not_found | error
@@ -86,6 +100,8 @@ class Response:
     degraded: list[str] = field(default_factory=list)            # parts that had to be skipped
     claim_counts: dict[str, int] = field(default_factory=dict)   # citation-check outcomes by status
     search_queries: list[str] = field(default_factory=list)      # rewritten queries, when the question was rewritten
+    mode: str = "hybrid"                                         # hybrid | dense | sparse retrieval
+    retrieved: list[RetrievedPassage] = field(default_factory=list)  # the passages the writer saw, ranked
     request_id: str = ""
     timings_ms: dict[str, float] = field(default_factory=dict)   # retrieve, generate, verify, score, total
     usage: dict[str, int] = field(default_factory=dict)          # requests and tokens per model
@@ -121,8 +137,8 @@ class AnswerCache:
         self._lock = threading.Lock()
 
     @staticmethod
-    def key(question: str, index_version) -> tuple:
-        return (" ".join(question.casefold().split()), index_version)
+    def key(question: str, index_version, mode: str = "hybrid") -> tuple:
+        return (" ".join(question.casefold().split()), index_version, mode)
 
     def get(self, key) -> Response | None:
         with self._lock:
@@ -150,6 +166,14 @@ def _ref(hit: FusedHit, n: int | None = None) -> SourceRef:
                      round(relevance, 3) if relevance is not None else None, n)
 
 
+def _passage(hit: FusedHit) -> RetrievedPassage:
+    c, relevance = hit.chunk, hit_relevance(hit)
+    return RetrievedPassage(c.source, c.heading, c.page if c.page not in (None, -1) else None, c.text,
+                            round(relevance, 3) if relevance is not None else None,
+                            round(hit.rerank_score, 3) if hit.rerank_score is not None else None,
+                            hit.fused_rank, hit.dense_rank, hit.sparse_rank)
+
+
 def _pointers(hits: list[FusedHit]) -> tuple[list[SourceRef], list[str]]:
     """What was found (the closest sections) and which documents are worth opening by hand."""
     related = [h for h in hits if (hit_relevance(h) or 0.0) >= SUGGEST_MIN_RELEVANCE]
@@ -173,16 +197,17 @@ def _not_found(question: str, hits: list[FusedHit], code: str, reason: str) -> R
 
 def ask(question: str, retriever, writer, judge, gate: float = RETRIEVAL_GATE,
         budget_seconds: float = DEFAULT_BUDGET_SECONDS, cache: AnswerCache | None = None,
-        show_unchecked: bool = True) -> Response:
+        show_unchecked: bool = True, mode: str = "hybrid") -> Response:
     """Answer `question` from the indexed documents, or say honestly why not. Never raises for an outage or a
     timeout (those become `error` / `unchecked` responses); raises ValueError for a blank or over-long question.
 
-    retriever: HybridRetriever (with a reranker); writer: the answering model; judge: the checking model."""
+    retriever: HybridRetriever (with a reranker); writer: the answering model; judge: the checking model.
+    mode: "hybrid" (default), or "dense" / "sparse" to run one search alone (the dashboard's comparison)."""
     t0 = time.perf_counter()
     request_id = uuid.uuid4().hex[:12]
     key = None
     if cache is not None:
-        key = AnswerCache.key(question, retriever.index.version())
+        key = AnswerCache.key(question, retriever.index.version(), mode)
         hit = cache.get(key)
         if hit is not None:
             response = dataclasses.replace(hit, request_id=request_id, cached=True, usage={},
@@ -199,7 +224,7 @@ def ask(question: str, retriever, writer, judge, gate: float = RETRIEVAL_GATE,
         return now
 
     with deadline(budget_seconds):
-        response = _run(question, retriever, w, j, gate, show_unchecked, lap, t0)
+        response = _run(question, retriever, w, j, gate, show_unchecked, lap, t0, mode)
     response.request_id = request_id
     response.timings_ms = {**timings, "total": round((time.perf_counter() - t0) * 1000, 1)}
     response.usage = {**response.usage, "writer_requests": w.requests, "writer_tokens": w.tokens,
@@ -210,9 +235,9 @@ def ask(question: str, retriever, writer, judge, gate: float = RETRIEVAL_GATE,
     return response
 
 
-def _run(question, retriever, writer, judge, gate, show_unchecked, lap, t0) -> Response:
+def _run(question, retriever, writer, judge, gate, show_unchecked, lap, t0, mode="hybrid") -> Response:
     try:
-        retrieval = retriever.search(question)
+        retrieval = retriever.search(question, mode=mode)
     except ValueError:
         raise  # a bad question is the caller's to fix
     except Exception as e:
@@ -226,6 +251,8 @@ def _run(question, retriever, writer, judge, gate, show_unchecked, lap, t0) -> R
     since = lap("retrieve", t0)
     response = _answer(question, retrieval, writer, judge, gate, show_unchecked, lap, since)
     response.search_queries = list(getattr(retrieval, "queries", []) or [])
+    response.mode = mode
+    response.retrieved = [_passage(h) for h in retrieval.hits]
     response.usage = dict(getattr(retrieval, "usage", {}) or {})  # ask() adds the writer and judge counts
     return response
 

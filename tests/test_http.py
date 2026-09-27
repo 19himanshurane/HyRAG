@@ -87,3 +87,15 @@ def test_a_per_minute_limit_is_still_retried(slept):
                httpx.Response(200, json={"ok": 1})]
     assert post_json(client(lambda r: replies.pop(0)), "https://x", {}, what="t") == {"ok": 1}
     assert slept == [2.0]
+
+
+def test_provider_account_ids_never_reach_error_messages(slept):
+    from hyrag.http import QuotaExhausted
+    body = {"error": {"message": "Rate limit reached for model `m` in organization `org_01kzw17tkyeztb9kdr8wg14dqe` "
+                                 "on tokens per day (TPD): Limit 200000"}}
+    with pytest.raises(QuotaExhausted) as e:
+        post_json(client(lambda r: httpx.Response(429, json=body)), "https://x", {}, what="t")
+    assert "org_01kzw" not in str(e.value) and "org_<redacted>" in str(e.value)
+    with pytest.raises(httpx.HTTPStatusError) as e2:
+        post_json(client(lambda r: httpx.Response(401, json={"error": "bad key for proj_ABCDEF123"})), "https://x", {}, what="t")
+    assert "proj_ABCDEF123" not in str(e2.value)

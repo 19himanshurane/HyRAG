@@ -43,7 +43,7 @@ def test_inline_markup_is_stripped_but_identifiers_survive():
 
 
 def test_utf8_bom_does_not_hide_first_heading():
-    doc = load_document("bom.md", "﻿# Setup Guide\n\nInstall it.".encode("utf-8"))
+    doc = load_document("bom.md", "\ufeff# Setup Guide\n\nInstall it.".encode("utf-8"))
     assert doc.sections[0].heading == "Setup Guide"
 
 

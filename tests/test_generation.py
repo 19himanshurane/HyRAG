@@ -63,7 +63,7 @@ def test_parse_citations_valid_invalid_and_first_use_order():
     ("unique_violation error【1†L5-L6】【4†L9-L11】", "unique_violation error [1][4]"),
     ("not allowed on Fridays【1】.", "not allowed on Fridays [1]."),
     ("see [2†L3] and 【1, 3】", "see [2] and [1, 3]"),
-    ("run `nimbus‑vpn --renew‑cert`", "run `nimbus-vpn --renew-cert`"),
+    ("run `nimbus\u2011vpn --renew\u2011cert`", "run `nimbus-vpn --renew-cert`"),
     ("years 2019–2020 — fine [1]", "years 2019–2020 — fine [1]"),  # real dashes untouched
 ])
 def test_normalize_answer(raw, expected):

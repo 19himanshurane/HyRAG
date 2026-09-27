@@ -107,6 +107,8 @@ def main() -> int:
         path = args.resume
         split, strategy, runs, limit = header["split"], header["strategy"], header["runs"], header.get("limit", 0)
         done = {(r["run"], r["id"]) for r in done_rows}
+    elif args.check_grader:  # grades known answers only: no results file
+        split, strategy, runs, limit, path, done = "dev", args.strategy, 0, args.limit, None, set()
     else:
         split, strategy, runs, limit = args.split, args.strategy, args.runs, args.limit
         RESULTS.mkdir(parents=True, exist_ok=True)

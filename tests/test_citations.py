@@ -82,7 +82,7 @@ def test_quote_in_passage(quote, found):
 
 
 def test_quote_matching_ignores_lookalike_hyphens():
-    assert quote_in_passage("run nimbus‑vpn --renew‑cert", "Then run nimbus-vpn --renew-cert.")
+    assert quote_in_passage("run nimbus\u2011vpn --renew\u2011cert", "Then run nimbus-vpn --renew-cert.")
 
 
 # ----- verify(): the judge is a fake with scripted verdicts -----

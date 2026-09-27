@@ -120,9 +120,9 @@ def probe_inline_code_comment() -> None:
 
 def probe_unicode() -> None:
     """6. Characters a typed query won't match exactly (input to the Step 3 tokenizer)."""
-    suspects = {"ﬁ": "fi ligature", "ﬂ": "fl ligature", "­": "soft hyphen", " ": "no-break space",
-                "​": "zero-width space", "’": "curly apostrophe", "“": "curly quote", "–": "en dash"}
-    dangerous = {"ﬁ", "ﬂ", "­", "​"}
+    suspects = {"ﬁ": "fi ligature", "ﬂ": "fl ligature", "\u00ad": "soft hyphen", "\u00a0": "no-break space",
+                "\u200b": "zero-width space", "’": "curly apostrophe", "“": "curly quote", "–": "en dash"}
+    dangerous = {"ﬁ", "ﬂ", "\u00ad", "\u200b"}
     counts: Counter = Counter()
     for root in (Path("corpus"), Path("sample_docs")):
         for p in list_corpus_files(root):

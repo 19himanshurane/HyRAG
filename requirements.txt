@@ -6,6 +6,9 @@ httpx>=0.27
 python-dotenv>=1.0
 chromadb>=1.5       # vector store (Apache-2.0)
 rank-bm25>=0.2.2    # keyword scoring (Apache-2.0)
+fastapi>=0.115           # HTTP API (MIT)
+uvicorn>=0.30            # ASGI server that runs it (BSD-3-Clause)
+python-multipart>=0.0.9  # file uploads for /v1/ingest (Apache-2.0)
 sentence-transformers>=6.1  # reranker: cross-encoder (Apache-2.0). Pulls in PyTorch (BSD-style): the
                             # PyPI wheel is CPU-only on Windows/macOS (~124 MB) but CUDA on Linux (GBs);
                             # for a CPU Docker image install torch from https://download.pytorch.org/whl/cpu
