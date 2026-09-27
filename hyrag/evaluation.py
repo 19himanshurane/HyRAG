@@ -133,7 +133,8 @@ def faithfulness(answer_text: str, hits: list[FusedHit], judge, verified: set[st
     supported = len(claims) - len(rest)
     if rest:
         together = "\n\n".join(h.chunk.text_for_search() for h in hits)
-        verdicts = judge_batch([(c, 1) for c in rest], {1: together}, judge)
+        sources = "; ".join(dict.fromkeys(h.chunk.source for h in hits))  # as the pipeline's own check sees them
+        verdicts = judge_batch([(c, 1) for c in rest], {1: together}, judge, {1: sources})
         if all(v.verdict == "error" for v in verdicts):
             return None
         supported += sum(v.verdict == "supported" for v in verdicts)

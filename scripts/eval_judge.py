@@ -50,22 +50,24 @@ def main() -> None:
                 group = pairs[k:k + batch]
                 # each pair gets its own passage number, even when two pairs share a passage text
                 texts = {n: p["passage"] for n, p in enumerate(group, 1)}
-                verdicts += judge_batch([(p["claim"], n) for n, p in enumerate(group, 1)], texts, judge)
+                sources = {n: p.get("source", "") for n, p in enumerate(group, 1)}  # as verify() passes them
+                verdicts += judge_batch([(p["claim"], n) for n, p in enumerate(group, 1)], texts, judge, sources)
         else:
-            verdicts = [judge_pair(p["claim"], p["passage"], judge) for p in pairs]
+            verdicts = [judge_pair(p["claim"], p["passage"], judge, p.get("source", "")) for p in pairs]
         requests = chat.requests_made
     for p, j in zip(pairs, verdicts):
         confusion[(p["label"], j.verdict)] += 1
         if j.verdict != p["label"]:
             mistakes.append(f"  #{p['id']:>2} {p['label']:>11} -> {j.verdict:<11} ({p['note']}) {j.reason[:90]}")
     n = len(pairs)
+    n_supported = sum(p["label"] == "supported" for p in pairs)
     correct = sum(v for (label, got), v in confusion.items() if label == got)
     false_support = sum(v for (label, got), v in confusion.items() if label != "supported" and got == "supported")
     missed = sum(v for (label, got), v in confusion.items() if label == "supported" and got != "supported")
     unverified = sum(v for (_, got), v in confusion.items() if got in ("unverified", "error"))
     mode = f"batch {batch}" if batch else "one pair per call"
-    print(f"{model} ({mode}): exact {correct}/{n}, FALSE SUPPORT {false_support}/{n - 16}, missed support "
-          f"{missed}/16, unverified/error {unverified}, {judge.calls} calls, {judge.tokens} tokens "
+    print(f"{model} ({mode}): exact {correct}/{n}, FALSE SUPPORT {false_support}/{n - n_supported}, missed support "
+          f"{missed}/{n_supported}, unverified/error {unverified}, {judge.calls} calls, {judge.tokens} tokens "
           f"({judge.tokens / n:.0f}/pair), {time.perf_counter() - t0:.0f}s, {requests} HTTP requests")
     print("\n".join(mistakes))
 
