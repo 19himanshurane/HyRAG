@@ -25,7 +25,8 @@ Work in progress, built one step at a time. The description above is the target 
 - [x] Grounded generation with citation verification and confidence scoring (`hyrag/answer.py` is the single entry point: answered / partial / unverified / not found). Design and measurements: [docs/phase3.md](docs/phase3.md)
 - [ ] Evaluation suite and chunking comparison
 - [x] FastAPI service (`hyrag/api.py`): `/v1/ask`, `/v1/documents`, `/v1/ingest`, health/readiness, OpenAPI docs. Details: [docs/phase5.md](docs/phase5.md)
-- [ ] Dashboard and Docker
+- [x] Dashboard (`dashboard/`, Streamlit): answer with clickable citations, ranked retrieved passages, confidence by dimension, hybrid vs dense-only side by side. A thin client of the API. Details and speed measurements: [docs/phase5.md](docs/phase5.md)
+- [ ] Docker Compose and seed script
 
 ## Try it
 
@@ -51,6 +52,12 @@ Run the API (after the steps above):
 ```bash
 uvicorn hyrag.api:app --port 8000          # docs at http://localhost:8000/docs
 curl -X POST localhost:8000/v1/ask -H "Content-Type: application/json" -d '{"question": "How do I fix ERR_TUNNEL_4012?"}'
+```
+
+Run the dashboard (with the API running; in its own environment: `pip install -r dashboard/requirements.txt`):
+
+```bash
+HYRAG_API_URL=http://localhost:8000 streamlit run dashboard/app.py   # opens http://localhost:8501
 ```
 
 Set `HYRAG_ADMIN_KEY` to enable uploads (`POST /v1/ingest` with header `X-API-Key`), and `HYRAG_API_KEY` to require a key for questions.

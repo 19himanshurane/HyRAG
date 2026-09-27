@@ -1,0 +1,2 @@
+streamlit>=1.40   # dashboard UI (Apache-2.0)
+httpx>=0.27       # calls the HyRAG API (BSD-3-Clause)

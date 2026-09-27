@@ -13,9 +13,10 @@ sentence-transformers>=6.1  # reranker: cross-encoder (Apache-2.0). Pulls in PyT
                             # PyPI wheel is CPU-only on Windows/macOS (~124 MB) but CUDA on Linux (GBs);
                             # for a CPU Docker image install torch from https://download.pytorch.org/whl/cpu
 
-# dev: generates the sample PDF and test PDFs; runs the test suite
+# dev: generates the sample PDF and test PDFs; runs the test suite (incl. the dashboard)
 fpdf2>=2.7
 pytest>=8
+streamlit>=1.40         # dashboard tests drive the real page (dashboard/requirements.txt is the runtime list)
 
 # For exact, reproducible versions (parsing output and eval numbers depend on them):
 #   pip install -r requirements-lock.txt
