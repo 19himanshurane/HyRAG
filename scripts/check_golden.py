@@ -1,6 +1,7 @@
 """Check the golden set's answer key against the real documents, then assign (once) and lock the dev/test split.
 
 Usage (from the repo root): PYTHONPATH=. python scripts/check_golden.py
+                            PYTHONPATH=. python scripts/check_golden.py --relock "reason"
 
 Checks, all against data/processed (the parsed corpus):
 - every evidence quote occurs word for word in its source document, and the named section exists there;
@@ -15,6 +16,7 @@ import json
 import random
 import re
 import sys
+import time
 from collections import Counter
 from pathlib import Path
 
@@ -23,6 +25,7 @@ from hyrag.citations import quote_in_passage
 GOLDEN = Path("eval/golden_set.json")
 SEED = 20260928
 TEST_SHARE = 0.6  # most questions are held out: the test score is the one we report
+RELOCK_REASON = sys.argv[sys.argv.index("--relock") + 1] if "--relock" in sys.argv else ""
 
 
 def words(text: str) -> set[str]:
@@ -83,8 +86,21 @@ def main() -> int:
         GOLDEN.write_text(json.dumps(data, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
         print("split assigned and locked")
     elif data.get("test_fingerprint") != fingerprint(items):
-        problems.append("the TEST questions changed after the split was locked (questions, answers or evidence): "
-                        "results on this set are no longer a clean held-out measurement")
+        if RELOCK_REASON:
+            test_runs = sorted(Path("eval/results").glob("*-test-*.jsonl"))
+            if test_runs:  # the whole point of the lock: never change test items after seeing test results
+                problems.append(f"refusing to relock: test results already exist ({test_runs[0].name})")
+            else:
+                data.setdefault("lock_history", []).append({"fingerprint": data.get("test_fingerprint"),
+                                                            "replaced_on": time.strftime("%Y-%m-%d"),
+                                                            "reason": RELOCK_REASON})
+                data["test_fingerprint"] = fingerprint(items)
+                GOLDEN.write_text(json.dumps(data, indent=1, ensure_ascii=False) + chr(10), encoding="utf-8")
+                print("relocked (no test results existed); reason recorded in lock_history")
+        else:
+            problems.append("the TEST questions changed after the split was locked (questions, answers or evidence): "
+                            "results on this set are no longer a clean held-out measurement "
+                            "(if no test results exist yet: --relock \"reason\")")
 
     counts = Counter((it["type"], it.get("split")) for it in items)
     print(f"{len(items)} items: " + ", ".join(f"{t} {counts[(t, 'dev')]} dev / {counts[(t, 'test')]} test"

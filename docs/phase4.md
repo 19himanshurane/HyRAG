@@ -136,3 +136,25 @@ Measured with the real rewriter and reranker (retrieval only, no judge):
 - **Risk:** carried by the writer's refusal and citation checks, which held here.
 
 The held-out test set confirms or refutes this.
+
+## Checking the grader on real answers, and the rubric rule it led to (2026-09-28)
+
+The grader passed a synthetic check (69/69 answers of known quality), but real answers are subtler. The first 11 real dev answers were reviewed by hand (`scripts/review_grader.py`):
+
+| Outcome | Questions |
+|---|---|
+| agree | G02, G09, G11, G14, G17, G20; also G07 and G23, but on those two the grader marked a fact "present" that the answer never states ("CSF 2.0", "authentication_timeout"): too lenient on a detail |
+| **disagree: grader too strict** | **G01, G12, G15**: correct answers marked incomplete |
+
+**Agreement on the overall verdict: 8/11 (73%).**
+
+**All 3 disagreements were faults in my answer key, not the grader:**
+- G12 ("Will restarting the kubelet kill the pods?"): a key fact required "use kubectl drain", which the question never asked.
+- G15: a key fact required "leave an admin note", which the question never asked.
+- G01: two key facts restated each other.
+
+**Rule, applied to every item (dev and test):** `key_facts` are only what the question asks, and all of them are required for "correct". Supporting details move to `extra_facts` (kept as context, not required). 24 of 47 items changed; multi-part questions keep every part they ask.
+
+**The test split was relocked with the reason recorded** (`lock_history` in the golden set). This was legitimate because no test result existed yet. `scripts/check_golden.py --relock "reason"` now **refuses** to relock once any test result exists (verified with a dummy test-results file). So "don't tune on test" is enforced by the tooling, not left to discipline.
+
+The 11 answers graded under the old rubric are discarded. The dev run restarts under the new rubric, and a fresh human review of its verdicts gives the reported grader agreement.

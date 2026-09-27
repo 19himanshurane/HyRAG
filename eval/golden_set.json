@@ -15,8 +15,7 @@
    "question": "Is the risk of people sharing their login something specific to syncable authenticators?",
    "answer": "No. Any authenticator can be shared by a user who is determined to share it, including passwords, OTPs, out-of-band authenticators and push-based approvals; it is not unique to syncable authenticators.",
    "key_facts": [
-    "not unique to syncable authenticators",
-    "any authenticator can be shared by a determined user"
+    "not unique to syncable authenticators: the sharing risk applies to any authenticator"
    ],
    "evidence": [
     {
@@ -25,7 +24,10 @@
      "quote": "Any authenticator can be shared by a user who is determined to share it."
     }
    ],
-   "split": "dev"
+   "split": "dev",
+   "extra_facts": [
+    "passwords, OTPs, out-of-band and push approvals can all be shared"
+   ]
   },
   {
    "id": "G02",
@@ -34,8 +36,7 @@
    "question": "Why should people use a different password for every website?",
    "answer": "To avoid password stuffing attacks, where an attacker uses a password compromised on one site to get into the user's accounts on other sites.",
    "key_facts": [
-    "password stuffing",
-    "a password compromised on one site is used on other sites"
+    "a password compromised on one site can be used by an attacker on the user's other sites"
    ],
    "evidence": [
     {
@@ -44,7 +45,10 @@
      "quote": "attacker uses a compromised password from one site to access the"
     }
    ],
-   "split": "dev"
+   "split": "dev",
+   "extra_facts": [
+    "called password stuffing"
+   ]
   },
   {
    "id": "G03",
@@ -53,8 +57,7 @@
    "question": "What has to happen to biometric samples once they have been used to update a user's templates?",
    "answer": "They must be erased immediately after the adaptation (or consented research) data has been derived, and a time limit for adaptation must be enforced.",
    "key_facts": [
-    "erased immediately",
-    "after the adaptation data is derived"
+    "erased immediately after the adaptation (or research) data has been derived"
    ],
    "evidence": [
     {
@@ -63,7 +66,8 @@
      "quote": "SHALL be erased immediately after any adaptation or research data has been derived"
     }
    ],
-   "split": "test"
+   "split": "test",
+   "extra_facts": []
   },
   {
    "id": "G04",
@@ -72,8 +76,7 @@
    "question": "How do syncable authenticators stop a fake login page from reusing what they produce?",
    "answer": "They create a key pair whose use is constrained to the domain (website or relying party) it was created for, so a falsified page cannot capture and reuse the authenticator output.",
    "key_facts": [
-    "key pair bound to the domain / relying party it was created for",
-    "a fake page cannot reuse the output"
+    "the key pair is bound to the domain / relying party it was created for"
    ],
    "evidence": [
     {
@@ -82,7 +85,10 @@
      "quote": "whose use is constrained to the domain in which it was created"
     }
    ],
-   "split": "test"
+   "split": "test",
+   "extra_facts": [
+    "so a fake page cannot reuse the output"
+   ]
   },
   {
    "id": "G05",
@@ -109,8 +115,7 @@
    "question": "Does a digital signature keep the signed data confidential?",
    "answer": "No. Digital signatures provide authenticity, integrity protection and non-repudiation support, but not confidentiality or replay attack protection.",
    "key_facts": [
-    "no confidentiality",
-    "provides authenticity, integrity and non-repudiation"
+    "no, it does not provide confidentiality"
    ],
    "evidence": [
     {
@@ -119,7 +124,10 @@
      "quote": "but not confidentiality or replay attack protection"
     }
    ],
-   "split": "test"
+   "split": "test",
+   "extra_facts": [
+    "provides authenticity, integrity and non-repudiation"
+   ]
   },
   {
    "id": "G07",
@@ -128,8 +136,7 @@
    "question": "What is NIST SP 800-61 Revision 3 meant to help organizations do?",
    "answer": "Incorporate cybersecurity incident response recommendations and considerations throughout their cybersecurity risk management activities, as described by the NIST CSF 2.0.",
    "key_facts": [
-    "incident response integrated into cybersecurity risk management",
-    "CSF 2.0"
+    "integrate incident response into their cybersecurity risk management"
    ],
    "evidence": [
     {
@@ -151,7 +158,10 @@
     }
    ],
    "split": "dev",
-   "notes": "Evidence corrected 2026-09-28 (dev): the Introduction's 1.1 Purpose and Scope states the same purpose almost word for word; the first answer key listed only the Abstract, so a correct retrieval was scored as a miss. The Appendix C change log also states it (the document's focus shifted to exactly this)."
+   "notes": "Evidence corrected 2026-09-28 (dev): the Introduction's 1.1 Purpose and Scope states the same purpose almost word for word; the first answer key listed only the Abstract, so a correct retrieval was scored as a miss. The Appendix C change log also states it (the document's focus shifted to exactly this).",
+   "extra_facts": [
+    "based on the NIST CSF 2.0"
+   ]
   },
   {
    "id": "G08",
@@ -198,8 +208,7 @@
    "question": "What is a probe in Kubernetes?",
    "answer": "A diagnostic the kubelet performs periodically on a container, either by running code in it or making a network request; based on the results Kubernetes can restart unhealthy containers or stop sending traffic to ones that are not ready.",
    "key_facts": [
-    "periodic diagnostic by the kubelet on a container",
-    "used to restart unhealthy containers or stop traffic to unready ones"
+    "a diagnostic the kubelet performs periodically on a container"
    ],
    "evidence": [
     {
@@ -208,7 +217,10 @@
      "quote": "A probe is a diagnostic performed periodically by the kubelet on a container."
     }
    ],
-   "split": "test"
+   "split": "test",
+   "extra_facts": [
+    "used to restart unhealthy containers or stop traffic to unready ones"
+   ]
   },
   {
    "id": "G11",
@@ -235,8 +247,7 @@
    "question": "Will restarting the kubelet on a node kill the pods running there?",
    "answer": "No. Pods and their containers keep running while the kubelet restarts; to stop the pods on a node, use kubectl drain.",
    "key_facts": [
-    "pods keep running",
-    "use kubectl drain to stop them"
+    "no: the pods keep running during the kubelet restart"
    ],
    "evidence": [
     {
@@ -245,7 +256,10 @@
      "quote": "Pods (and their containers) continue to run even during the restart"
     }
    ],
-   "split": "dev"
+   "split": "dev",
+   "extra_facts": [
+    "use kubectl drain to stop them"
+   ]
   },
   {
    "id": "G13",
@@ -254,8 +268,7 @@
    "question": "Who counts as an incident responder at GitLab?",
    "answer": "Anyone who contributes to the technical investigation and resolution of an incident; the EOC team is usually the primary responder, but any team member with relevant expertise may be called on.",
    "key_facts": [
-    "anyone who contributes to investigating and resolving the incident",
-    "EOC usually primary, others with expertise can be called"
+    "anyone who contributes to the technical investigation and resolution"
    ],
    "evidence": [
     {
@@ -264,7 +277,10 @@
      "quote": "An Incident Responder is anyone who contributes to the technical investigation and resolution of an incident."
     }
    ],
-   "split": "test"
+   "split": "test",
+   "extra_facts": [
+    "the EOC is usually primary; others with expertise can be called"
+   ]
   },
   {
    "id": "G14",
@@ -294,8 +310,7 @@
    "answer": "Yes. If wider user impact is established during an S1 or S2 incident, the EOC has authority to block users without further permission, leaving an admin note that links the incident and explains why.",
    "key_facts": [
     "yes, during S1/S2 incidents with wider user impact",
-    "without further permission",
-    "leave an admin note linking the incident"
+    "without further permission"
    ],
    "evidence": [
     {
@@ -304,7 +319,10 @@
      "quote": "as EOC you have the authority - without requiring further permission - to Block Users"
     }
    ],
-   "split": "dev"
+   "split": "dev",
+   "extra_facts": [
+    "leave an admin note linking the incident"
+   ]
   },
   {
    "id": "G16",
@@ -331,8 +349,7 @@
    "question": "Is there a maximum amount of paid time off a GitLab team member can take in a year?",
    "answer": "No set limit, as long as it is coordinated with the manager and there is a coverage plan; but more than 25 consecutive calendar days needs special permission from the manager, People Business Partner and Absence Management Team.",
    "key_facts": [
-    "no specific yearly limit",
-    "more than 25 consecutive calendar days needs special permission"
+    "no specific yearly limit"
    ],
    "evidence": [
     {
@@ -341,7 +358,10 @@
      "quote": "GitLab does not set a specific limit on the amount of PTO a team member can take per year."
     }
    ],
-   "split": "dev"
+   "split": "dev",
+   "extra_facts": [
+    "more than 25 consecutive calendar days needs special permission"
+   ]
   },
   {
    "id": "G18",
@@ -388,8 +408,7 @@
    "question": "What does temp_file_limit control in PostgreSQL, and what is it set to by default?",
    "answer": "The maximum disk space one process can use for temporary files (sort/hash files, held cursors); a transaction that exceeds it is cancelled. The default, -1, means no limit.",
    "key_facts": [
-    "maximum disk space for a process's temporary files",
-    "exceeding it cancels the transaction",
+    "maximum disk space a process can use for temporary files",
     "default -1 = no limit"
    ],
    "evidence": [
@@ -399,7 +418,10 @@
      "quote": "Specifies the maximum amount of disk space that a process can use for temporary files"
     }
    ],
-   "split": "dev"
+   "split": "dev",
+   "extra_facts": [
+    "a transaction exceeding it is cancelled"
+   ]
   },
   {
    "id": "G21",
@@ -408,9 +430,7 @@
    "question": "How does a Pod get the credentials it needs to pull an image from a private registry?",
    "answer": "Through imagePullSecrets: a list of references to Secrets in the same namespace holding the registry password, which the kubelet uses to pull the private image for the Pod.",
    "key_facts": [
-    "imagePullSecrets",
-    "Secret in the same namespace",
-    "kubelet uses it to pull the image"
+    "imagePullSecrets referencing a Secret with the registry credentials"
    ],
    "evidence": [
     {
@@ -419,7 +439,11 @@
      "quote": "The kubelet uses this information to pull a private image on behalf of your Pod."
     }
    ],
-   "split": "test"
+   "split": "test",
+   "extra_facts": [
+    "the Secret must be in the same namespace",
+    "the kubelet uses it to pull the image"
+   ]
   },
   {
    "id": "G22",
@@ -428,8 +452,7 @@
    "question": "Can image pull secrets be added to pods automatically instead of in every Pod spec?",
    "answer": "Yes: reference them from a ServiceAccount, and Pods created with that ServiceAccount (or with it by default) get its imagePullSecrets.",
    "key_facts": [
-    "reference them from a ServiceAccount",
-    "pods using that ServiceAccount inherit them"
+    "yes: reference them from a ServiceAccount, and pods using it inherit them"
    ],
    "evidence": [
     {
@@ -438,7 +461,8 @@
      "quote": "will get their imagePullSecrets field set to that of the service account"
     }
    ],
-   "split": "test"
+   "split": "test",
+   "extra_facts": []
   },
   {
    "id": "G23",
@@ -447,8 +471,7 @@
    "question": "How long does PostgreSQL give a client to finish authenticating before it drops the connection?",
    "answer": "authentication_timeout, one minute (1m) by default.",
    "key_facts": [
-    "authentication_timeout",
-    "one minute default"
+    "one minute by default"
    ],
    "evidence": [
     {
@@ -457,7 +480,10 @@
      "quote": "The default is one minute (1m)."
     }
    ],
-   "split": "dev"
+   "split": "dev",
+   "extra_facts": [
+    "the setting is authentication_timeout"
+   ]
   },
   {
    "id": "G24",
@@ -466,8 +492,7 @@
    "question": "What does the md5_password_warnings setting do?",
    "answer": "It controls whether a WARNING about MD5 password deprecation is issued when CREATE ROLE or ALTER ROLE sets an MD5-encrypted password. It is on by default.",
    "key_facts": [
-    "warning about MD5 password deprecation",
-    "on by default"
+    "issues a warning about MD5 password deprecation when an MD5 password is set"
    ],
    "evidence": [
     {
@@ -476,7 +501,10 @@
      "quote": "Controls whether a WARNING about MD5 password deprecation is produced"
     }
    ],
-   "split": "test"
+   "split": "test",
+   "extra_facts": [
+    "on by default"
+   ]
   },
   {
    "id": "G25",
@@ -485,8 +513,7 @@
    "question": "The pod debugging steps didn't solve my problem. What should I look at next?",
    "answer": "Follow the Debugging Service instructions: check the Service is running and has Endpoints, the Pods are actually serving, DNS works, iptables rules are installed and kube-proxy is behaving; the troubleshooting document has more.",
    "key_facts": [
-    "Debugging Service document",
-    "Service, Endpoints, DNS, iptables, kube-proxy"
+    "follow the Service debugging guide: check the Service, its Endpoints, DNS, iptables/kube-proxy"
    ],
    "evidence": [
     {
@@ -495,7 +522,8 @@
      "quote": "follow the instructions in Debugging Service document"
     }
    ],
-   "split": "test"
+   "split": "test",
+   "extra_facts": []
   },
   {
    "id": "G26",
@@ -504,8 +532,7 @@
    "question": "Does binding a pod to a hostPort limit where it can be scheduled?",
    "answer": "Yes. There are only a limited number of places such a pod can be scheduled; usually hostPort is unnecessary and a Service should be used to expose the pod instead.",
    "key_facts": [
-    "limited places it can be scheduled",
-    "use a Service instead where possible"
+    "yes: only a limited number of places it can be scheduled"
    ],
    "evidence": [
     {
@@ -514,7 +541,10 @@
      "quote": "When you bind a Pod to a hostPort there are a limited number of places that pod can be scheduled"
     }
    ],
-   "split": "test"
+   "split": "test",
+   "extra_facts": [
+    "use a Service instead where possible"
+   ]
   },
   {
    "id": "G27",
@@ -560,8 +590,7 @@
    "question": "What do the first two characters of a PostgreSQL error code tell you?",
    "answer": "The class of the error; the last three characters identify the specific condition within that class.",
    "key_facts": [
-    "error class",
-    "last three = specific condition"
+    "the class of the error"
    ],
    "evidence": [
     {
@@ -570,7 +599,10 @@
      "quote": "the first two characters of an error code denote a class of errors"
     }
    ],
-   "split": "dev"
+   "split": "dev",
+   "extra_facts": [
+    "the last three characters identify the specific condition"
+   ]
   },
   {
    "id": "G30",
@@ -579,8 +611,7 @@
    "question": "How should I open a new security issue in GitLab's projects?",
    "answer": "Follow the Creating New Security Issues process, which covers the labels to use and the confidential flag.",
    "key_facts": [
-    "Creating New Security Issues process",
-    "labels and the confidential flag"
+    "follow the Creating New Security Issues process"
    ],
    "evidence": [
     {
@@ -589,7 +620,10 @@
      "quote": "follow the Creating New Security Issues process for using labels and the confidential flag"
     }
    ],
-   "split": "test"
+   "split": "test",
+   "extra_facts": [
+    "it covers labels and the confidential flag"
+   ]
   },
   {
    "id": "G31",
@@ -833,9 +867,8 @@
    "question": "An abusive user is causing a GitLab incident. What can the engineer on call do about the account, and how should the follow-up security issue be filed?",
    "answer": "During an S1/S2 incident with wider user impact the EOC can block the user without further permission (leaving an admin note linking the incident) and report abusive accounts to Trust and Safety. Security issues should follow the Creating New Security Issues process, with the right labels and the confidential flag.",
    "key_facts": [
-    "EOC can block users during S1/S2 without further permission",
-    "report abuse to Trust and Safety",
-    "security issue: labels + confidential flag"
+    "the EOC can block the user during S1/S2 without further permission",
+    "security issues: follow the process with labels and the confidential flag"
    ],
    "evidence": [
     {
@@ -849,7 +882,10 @@
      "quote": "follow the Creating New Security Issues process for using labels and the confidential flag"
     }
    ],
-   "split": "dev"
+   "split": "dev",
+   "extra_facts": [
+    "report abusive accounts to Trust and Safety"
+   ]
   },
   {
    "id": "G42",
@@ -882,9 +918,8 @@
    "question": "Compare the vacation policies at Nimbus and GitLab.",
    "answer": "Nimbus gives full-time employees 24 days of paid annual leave per year with up to 5 unused days carried over. GitLab has Flexible PTO with no set yearly limit, but more than 25 consecutive calendar days needs special permission.",
    "key_facts": [
-    "Nimbus: 24 days, up to 5 carried over",
-    "GitLab: flexible, no set limit",
-    "GitLab: over 25 consecutive days needs special permission"
+    "Nimbus: 24 days a year, up to 5 carried over",
+    "GitLab: flexible PTO with no set limit"
    ],
    "evidence": [
     {
@@ -898,7 +933,10 @@
      "quote": "GitLab does not set a specific limit on the amount of PTO a team member can take per year."
     }
    ],
-   "split": "test"
+   "split": "test",
+   "extra_facts": [
+    "GitLab: over 25 consecutive days needs special permission"
+   ]
   },
   {
    "id": "G44",
@@ -907,9 +945,8 @@
    "question": "Which SQLSTATE does PostgreSQL return for a wrong password, and which setting decides how passwords are hashed?",
    "answer": "28P01 (invalid_password). Password hashing is set by password_encryption, which defaults to scram-sha-256 (md5 is the other option).",
    "key_facts": [
-    "28P01 invalid_password",
-    "password_encryption",
-    "default scram-sha-256"
+    "28P01 (invalid_password)",
+    "the password_encryption setting"
    ],
    "evidence": [
     {
@@ -923,7 +960,10 @@
      "quote": "The default is scram-sha-256."
     }
    ],
-   "split": "test"
+   "split": "test",
+   "extra_facts": [
+    "default scram-sha-256"
+   ]
   },
   {
    "id": "G45",
@@ -1143,8 +1183,8 @@
    "question": "How much time off can I take?",
    "answer": "Depends on the company: Nimbus gives 24 days of annual leave a year (up to 5 carried over); GitLab's Flexible PTO has no set limit, with special permission needed beyond 25 consecutive days.",
    "key_facts": [
-    "Nimbus: 24 days",
-    "GitLab: no set limit, special permission over 25 consecutive days"
+    "Nimbus: 24 days a year",
+    "GitLab: no set limit"
    ],
    "evidence": [
     {
@@ -1158,7 +1198,10 @@
      "quote": "GitLab does not set a specific limit on the amount of PTO a team member can take per year."
     }
    ],
-   "split": "test"
+   "split": "test",
+   "extra_facts": [
+    "GitLab: special permission over 25 consecutive days"
+   ]
   },
   {
    "id": "G58",
@@ -1201,5 +1244,13 @@
    "split": "dev"
   }
  ],
- "test_fingerprint": "fa9d05146c78e8c6"
+ "test_fingerprint": "527ec1ac8e0f0baa",
+ "rubric_rule": "key_facts are only what the question asks (all are required for 'correct'); supporting details are extra_facts (context, not required). Applied to every item on 2026-09-28 after a dev review found correct answers marked incomplete for omitting details the question never asked for.",
+ "lock_history": [
+  {
+   "fingerprint": "fa9d05146c78e8c6",
+   "replaced_on": "2026-09-27",
+   "reason": "Rubric rule applied to every item before any test run: key_facts are only what the question asks; supporting details moved to extra_facts. Decided on a dev review where all 3 grader disagreements were answer-key faults (G01, G12, G15)."
+  }
+ ]
 }
