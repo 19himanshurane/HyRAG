@@ -158,3 +158,11 @@ The grader passed a synthetic check (69/69 answers of known quality), but real a
 **The test split was relocked with the reason recorded** (`lock_history` in the golden set). This was legitimate because no test result existed yet. `scripts/check_golden.py --relock "reason"` now **refuses** to relock once any test result exists (verified with a dummy test-results file). So "don't tune on test" is enforced by the tooling, not left to discipline.
 
 The 11 answers graded under the old rubric are discarded. The dev run restarts under the new rubric, and a fresh human review of its verdicts gives the reported grader agreement.
+
+## Evaluation throughput on the free plan (2026-09-28)
+
+Both Groq models have a **daily token limit**, and a day of evaluation work exhausts both:
+- **gpt-oss-20b** (judge and grader): 200,000 tokens/day, measured from its 429 message. Each refill so far allowed about 11 evaluated questions.
+- **gpt-oss-120b** (writer): also exhausted today, during a grader check.
+
+To spread the load, the grader model is now configurable (`scripts/run_eval.py --grader-model`), so grading can run on a different daily budget from the pipeline's judge. gpt-oss-120b as grader agreed with the known grade in **31/31** of the synthetic cases it completed before its own quota ran out. The other 31 cases failed on quota, not on grading. **The check must be completed before switching**, and because 120b also writes the answers, grader agreement on real answers must be re-measured for it (a model grading its own family's output).

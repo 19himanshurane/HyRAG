@@ -93,6 +93,8 @@ def main() -> int:
     ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--budget", type=float, default=180.0)
     ap.add_argument("--check-grader", action="store_true")
+    ap.add_argument("--grader-model", default="",
+                    help="grade with this model instead of the judge model (a separate daily token budget)")
     ap.add_argument("--resume", type=Path)
     ap.add_argument("--summarize", type=Path)
     args = ap.parse_args()
@@ -119,7 +121,9 @@ def main() -> int:
     if limit:
         items = items[:limit]
 
-    with judge_client() as grader:
+    grader_client = (GroqChat(args.grader_model, reasoning_effort="low", max_completion_tokens=2048)
+                     if args.grader_model else judge_client())
+    with grader_client as grader:
         if args.check_grader:
             check_grader(items, grader)
             return 0
