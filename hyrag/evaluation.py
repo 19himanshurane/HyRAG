@@ -72,11 +72,14 @@ EXPECTED_TEXT = {
 # ----- retrieval relevance: exact text, no model -----
 
 def evidence_found(evidence: list[dict], hits: list[FusedHit]) -> list[int | None]:
-    """For each evidence item, the 1-based rank of the first retrieved passage containing its quote (None if absent)."""
+    """For each evidence item, the 1-based rank of the first retrieved passage containing its quote, or the quote of
+    any of its `alternatives` (a document that states the same thing in two places), else None."""
     ranks = []
     for ev in evidence:
+        options = [ev] + ev.get("alternatives", [])
         rank = next((i for i, h in enumerate(hits, 1)
-                     if ev["source"] == h.chunk.source and quote_in_passage(ev["quote"], h.chunk.text_for_search())), None)
+                     if any(o["source"] == h.chunk.source and quote_in_passage(o["quote"], h.chunk.text_for_search())
+                            for o in options)), None)
         ranks.append(rank)
     return ranks
 

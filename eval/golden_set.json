@@ -135,10 +135,23 @@
     {
      "source": "security/nist-sp-800-61r3-incident-response.pdf",
      "section": "Abstract",
-     "quote": "incorporating cybersecurity incident response recommendations and considerations throughout their cybersecurity risk management activities"
+     "quote": "incorporating cybersecurity incident response recommendations and considerations throughout their cybersecurity risk management activities",
+     "alternatives": [
+      {
+       "source": "security/nist-sp-800-61r3-incident-response.pdf",
+       "section": "1.1. Purpose and Scope",
+       "quote": "seeks to help organizations incorporate cybersecurity incident response"
+      },
+      {
+       "source": "security/nist-sp-800-61r3-incident-response.pdf",
+       "section": "Appendix C. Change Log",
+       "quote": "recommendations and considerations for incorporating cybersecurity incident response considerations"
+      }
+     ]
     }
    ],
-   "split": "dev"
+   "split": "dev",
+   "notes": "Evidence corrected 2026-09-28 (dev): the Introduction's 1.1 Purpose and Scope states the same purpose almost word for word; the first answer key listed only the Abstract, so a correct retrieval was scored as a miss. The Appendix C change log also states it (the document's focus shifted to exactly this)."
   },
   {
    "id": "G08",

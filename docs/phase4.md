@@ -44,3 +44,31 @@ Three steps from the brief: (1) a golden question set, (2) automated metrics run
 - **I wrote all 60 questions.** Random section sampling limits *which* topics I picked, but not *how* I phrased them. Questions from someone who has not seen the documents would test more realistically. The file is designed so they can be added (new ids, run the checker).
 - 60 questions, 36 in test: a difference of one or two answers is noise. Step 2 reports spreads, not single numbers.
 - **Parser observation** (from the random draw): PostgreSQL pages keep their version-navigation line ("Supported Versions: Current (18) / 17 …") as section text. It's page furniture, like the release banner removed in Phase 1. It stays for now because it is the only source for G19; to revisit with the chunking comparison.
+
+---
+
+## Step 3a (2026-09-28): chunking strategies compared on retrieval (dev, no LLM)
+
+**Code:** `scripts/build_index.py --strategy …` (one index per strategy, same 800-char target size) and `scripts/compare_chunking.py` (evidence found by exact quote in the retrieved chunks; the local reranker; no Groq). **Result file:** `eval/results/chunking-retrieval-dev.json`. **Dev split only**: picking a strategy is tuning.
+
+| Strategy | Chunks | Median chars | recall@5 | hit@5 | all@5 | recall@20 | MRR |
+|---|---|---|---|---|---|---|---|
+| fixed | 884 | 800 | 0.78 | 0.89 | 0.78 | 0.91 | 0.67 |
+| **structure** | 1,266 | 528 | **0.83** | **0.94** | **0.83** | **0.96** | **0.91** |
+| semantic | 1,307 | 471 | 0.83 | 0.94 | 0.83 | 0.91 | 0.86 |
+
+(18 answerable dev questions, 23 evidence quotes: one quote is 0.04.)
+
+- **Structure vs fixed:** in all 6 questions where they differ, structure ranks the evidence as high or higher (by chance about 1 in 64). Fixed-size chunks cut passages mid-way, so the evidence is diluted or split.
+- **Structure vs semantic:** no meaningful difference (G07 rank 1 vs 5, and one quote in the top 20). Semantic also costs more to build (93 embedding requests and 77 s here).
+- **So far structure is the default to keep**; the end-to-end comparison (answer quality) is Step 3b.
+
+**Answer-key corrections found on the way (dev only):**
+- G07 listed only the Abstract as evidence. The document states its purpose three times (the Abstract, 1.1 Purpose and Scope, and the Appendix C change log), so a correct retrieval was scored as a miss.
+- Evidence items can now list `alternatives`, and any one counts. **Disclosure:** the change-log alternative was noticed while reading *structure's* results. It is a genuine answer passage, but the way it was found favoured structure; without G07, structure still leads on rank in the other 5 disagreements.
+- **Retrieval scores are a lower bound** wherever a document repeats itself and the answer key names only one place.
+
+**Finding for the gate (not chunking):**
+- G38 ("I'm working from home and want to push a change to production on Wednesday afternoon. What do I need?") scores **−5.80** on the reranker for the right section under every strategy. That is below the −3 gate, so `ask()` would answer *not found* without asking the model.
+- The gate was calibrated on short, direct questions; conversational phrasing scores lower. This is the M3 risk (a threshold tuned on one question style), caught by the golden set.
+- The VPN rule G38 also needs is never retrieved: the question never says "VPN" (a multi-hop retrieval limit).

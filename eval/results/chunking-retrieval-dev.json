@@ -1,0 +1,247 @@
+{
+ "split": "dev",
+ "metrics": {
+  "fixed": {
+   "chunks": 884,
+   "median_chars": 800.0,
+   "recall@5": 0.782608695652174,
+   "hit@5": 0.8888888888888888,
+   "all@5": 0.7777777777777778,
+   "recall@20": 0.9130434782608695,
+   "MRR": 0.6685185185185185
+  },
+  "structure": {
+   "chunks": 1266,
+   "median_chars": 528.5,
+   "recall@5": 0.8260869565217391,
+   "hit@5": 0.9444444444444444,
+   "all@5": 0.8333333333333334,
+   "recall@20": 0.9565217391304348,
+   "MRR": 0.9074074074074074
+  },
+  "semantic": {
+   "chunks": 1307,
+   "median_chars": 471,
+   "recall@5": 0.8260869565217391,
+   "hit@5": 0.9444444444444444,
+   "all@5": 0.8333333333333334,
+   "recall@20": 0.9130434782608695,
+   "MRR": 0.8629629629629629
+  }
+ },
+ "per_question": {
+  "G01": {
+   "fixed": [
+    2
+   ],
+   "structure": [
+    1
+   ],
+   "semantic": [
+    1
+   ]
+  },
+  "G02": {
+   "fixed": [
+    null
+   ],
+   "structure": [
+    1
+   ],
+   "semantic": [
+    1
+   ]
+  },
+  "G07": {
+   "fixed": [
+    2
+   ],
+   "structure": [
+    1
+   ],
+   "semantic": [
+    5
+   ]
+  },
+  "G09": {
+   "fixed": [
+    5
+   ],
+   "structure": [
+    1
+   ],
+   "semantic": [
+    1
+   ]
+  },
+  "G11": {
+   "fixed": [
+    2
+   ],
+   "structure": [
+    1
+   ],
+   "semantic": [
+    1
+   ]
+  },
+  "G12": {
+   "fixed": [
+    1
+   ],
+   "structure": [
+    1
+   ],
+   "semantic": [
+    1
+   ]
+  },
+  "G14": {
+   "fixed": [
+    1
+   ],
+   "structure": [
+    1
+   ],
+   "semantic": [
+    1
+   ]
+  },
+  "G15": {
+   "fixed": [
+    1
+   ],
+   "structure": [
+    1
+   ],
+   "semantic": [
+    1
+   ]
+  },
+  "G17": {
+   "fixed": [
+    1
+   ],
+   "structure": [
+    1
+   ],
+   "semantic": [
+    1
+   ]
+  },
+  "G20": {
+   "fixed": [
+    1
+   ],
+   "structure": [
+    1
+   ],
+   "semantic": [
+    1
+   ]
+  },
+  "G23": {
+   "fixed": [
+    1
+   ],
+   "structure": [
+    1
+   ],
+   "semantic": [
+    1
+   ]
+  },
+  "G29": {
+   "fixed": [
+    1
+   ],
+   "structure": [
+    1
+   ],
+   "semantic": [
+    1
+   ]
+  },
+  "G31": {
+   "fixed": [
+    1
+   ],
+   "structure": [
+    1
+   ],
+   "semantic": [
+    1
+   ]
+  },
+  "G33": {
+   "fixed": [
+    1
+   ],
+   "structure": [
+    1
+   ],
+   "semantic": [
+    1
+   ]
+  },
+  "G36": {
+   "fixed": [
+    3,
+    null
+   ],
+   "structure": [
+    3,
+    null
+   ],
+   "semantic": [
+    3,
+    null
+   ]
+  },
+  "G37": {
+   "fixed": [
+    2,
+    4
+   ],
+   "structure": [
+    1,
+    3
+   ],
+   "semantic": [
+    1,
+    3
+   ]
+  },
+  "G38": {
+   "fixed": [
+    null,
+    2,
+    2
+   ],
+   "structure": [
+    null,
+    1,
+    1
+   ],
+   "semantic": [
+    null,
+    1,
+    1
+   ]
+  },
+  "G41": {
+   "fixed": [
+    null,
+    null
+   ],
+   "structure": [
+    null,
+    null
+   ],
+   "semantic": [
+    null,
+    null
+   ]
+  }
+ }
+}

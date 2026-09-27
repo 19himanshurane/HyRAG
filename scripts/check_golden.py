@@ -40,7 +40,7 @@ def main() -> int:
     if len(ids) != len(set(ids)):
         problems.append("duplicate ids")
     for it in items:
-        for ev in it.get("evidence", []):
+        for ev in [e for top in it.get("evidence", []) for e in [top] + top.get("alternatives", [])]:
             src = ev["source"]
             if src not in docs:
                 problems.append(f"{it['id']}: unknown source {src}")

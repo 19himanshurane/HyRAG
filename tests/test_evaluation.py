@@ -88,3 +88,10 @@ def test_summary_metrics():
 def test_spread_reports_mean_and_range():
     out = spread([{"a": 0.5, "b": None}, {"a": 1.0, "b": None}])
     assert out == {"a": {"mean": 0.75, "min": 0.5, "max": 1.0}}
+
+
+def test_an_alternative_evidence_passage_counts():
+    hits = [hit("This publication seeks to help organizations incorporate incident response.", source="nist.pdf")]
+    ev = [{"source": "nist.pdf", "quote": "assist organizations with incorporating",
+           "alternatives": [{"source": "nist.pdf", "quote": "seeks to help organizations incorporate"}]}]
+    assert evidence_found(ev, hits) == [1]
