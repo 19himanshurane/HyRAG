@@ -72,3 +72,17 @@ Three steps from the brief: (1) a golden question set, (2) automated metrics run
 - G38 ("I'm working from home and want to push a change to production on Wednesday afternoon. What do I need?") scores **−5.80** on the reranker for the right section under every strategy. That is below the −3 gate, so `ask()` would answer *not found* without asking the model.
 - The gate was calibrated on short, direct questions; conversational phrasing scores lower. This is the M3 risk (a threshold tuned on one question style), caught by the golden set.
 - The VPN rule G38 also needs is never retrieved: the question never says "VPN" (a multi-hop retrieval limit).
+
+### The gate across strategies (dev and calibration questions, no LLM)
+
+The retrieval gate (rerank logit −3) was calibrated on **structure** chunks. The same questions under each strategy:
+
+| Strategy | Dev answerable blocked | Calibration: lowest answerable | Calibration: highest unanswerable | Gap for the gate? |
+|---|---|---|---|---|
+| structure | 1/18 (G38) | +0.08 | −5.83 | yes, wide |
+| semantic | 1/18 (G38) | −1.05 | −4.00 | yes, narrower |
+| **fixed** | 1/18 (G38) | **−8.73** | −4.96 | **none**: an answerable question scores below unanswerable ones |
+
+Under fixed-size chunks the reranker's confidence no longer separates answerable from unanswerable questions, so no single gate could work well for it. Step 3b therefore compares the strategies with the same gate: that is fair as a product outcome, and the report says so.
+
+Moving the gate to rescue G38 (−5.80) would also admit the most plausible unanswerable calibration question (−5.83): that would be tuning on one dev question. The fix belongs in retrieval (for example rewriting conversational questions into search queries), decided with the full end-to-end numbers.
