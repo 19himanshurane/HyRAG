@@ -1,0 +1,91 @@
+# HyRAG: vector store, one-shot seed, API, dashboard.
+#   cp .env.example .env    # then fill in MISTRAL_API_KEY and GROQ_API_KEY
+#   docker compose up -d --build
+#   dashboard: http://localhost:8501    API docs: http://localhost:8000/docs
+# Start order is enforced: chroma healthy -> seed finished OK -> api ready -> dashboard.
+
+name: hyrag
+
+x-logging: &logging  # the default json-file log grows forever: cap it
+  driver: json-file
+  options: { max-size: "10m", max-file: "3" }
+
+services:
+  chroma:
+    image: chromadb/chroma:1.5.9  # must match the chromadb client in requirements-lock.txt
+    volumes:
+      - chroma-data:/data
+    healthcheck:  # the image has no curl: bash's /dev/tcp asks for the heartbeat
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/8000 && printf 'GET /api/v2/heartbeat HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n' >&3 && head -1 <&3 | grep -q ' 200 '"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    restart: unless-stopped
+    logging: *logging
+    # not published: only the API and the seed talk to it, over the compose network
+
+  seed:  # indexes corpus/ and sample_docs/; re-running it is cheap (unchanged chunks are not re-embedded)
+    build: .
+    image: hyrag-api:local
+    command: ["python", "-m", "hyrag.seed"]
+    env_file:
+      - path: .env
+        required: true
+    environment:
+      HYRAG_CHROMA_URL: http://chroma:8000
+    volumes:
+      - hyrag-data:/app/data
+    depends_on:
+      chroma: { condition: service_healthy }
+    init: true
+    restart: "no"
+    logging: *logging
+
+  api:
+    image: hyrag-api:local
+    env_file:
+      - path: .env
+        required: true
+    environment:
+      HYRAG_CHROMA_URL: http://chroma:8000
+    volumes:
+      - hyrag-data:/app/data
+    ports:
+      - "127.0.0.1:8000:8000"  # localhost only; put a TLS reverse proxy in front to expose it
+    depends_on:
+      chroma: { condition: service_healthy }
+      seed: { condition: service_completed_successfully }
+    healthcheck:  # /ready: keys set, index not empty, reranker loaded (503 with reasons otherwise)
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/ready', timeout=5)"]
+      interval: 10s
+      timeout: 6s
+      retries: 3
+      start_period: 90s
+    init: true
+    stop_grace_period: 70s  # let an in-flight answer (60 s budget) finish on shutdown
+    restart: unless-stopped
+    logging: *logging
+
+  dashboard:
+    build:
+      context: .
+      dockerfile: dashboard/Dockerfile
+    image: hyrag-dashboard:local
+    environment:
+      HYRAG_API_URL: http://api:8000
+      HYRAG_API_KEY: ${HYRAG_API_KEY:-}  # only needed if the API requires a key
+    ports:
+      - "127.0.0.1:8501:8501"
+    depends_on:
+      api: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8501/_stcore/health', timeout=5)"]
+      interval: 10s
+      timeout: 6s
+      retries: 3
+    restart: unless-stopped
+    logging: *logging
+
+volumes:
+  hyrag-data:   # chunk table (source of truth), parsed documents, embedding cache
+  chroma-data:  # vectors

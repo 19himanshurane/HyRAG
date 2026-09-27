@@ -17,6 +17,7 @@ import threading
 import unicodedata
 from dataclasses import dataclass
 from pathlib import Path
+from urllib.parse import urlsplit
 
 import numpy as np
 from rank_bm25 import BM25Okapi
@@ -26,6 +27,12 @@ from hyrag.dedup import NearDuplicateIndex
 from hyrag.loader import Document
 
 log = logging.getLogger(__name__)
+
+# A Chroma server that stops answering must not hang searches (its calls run under the index's state lock).
+# The chromadb HTTP client is built with NO timeout, so one is set on it here. 30 s covers loading every
+# vector after a write (~1,300 x 1024 floats as JSON, well under a second on a local network).
+CHROMA_TIMEOUT_SECONDS = 30.0
+CHROMA_CONNECT_SECONDS = 5.0
 
 # ---------------------------------------------------------------------------
 # Tokenizer: decides which words can match. Documents and queries go through the same function.
@@ -125,12 +132,39 @@ _CHUNK_TABLE = ", ".join(f"{c} {t}" for c, t in zip(_COLUMNS, (
     "TEXT PRIMARY KEY", "TEXT NOT NULL", "TEXT", "TEXT", "INTEGER", "TEXT", "INTEGER", "TEXT", "INTEGER")))
 
 
+def _chroma_client(data_dir: Path, url: str | None):
+    import chromadb
+    import httpx
+
+    settings = chromadb.Settings(anonymized_telemetry=False)
+    if not url:
+        return chromadb.PersistentClient(path=str(data_dir / "chroma"), settings=settings)
+    parts = urlsplit(url)
+    if parts.scheme not in ("http", "https") or not parts.hostname:
+        raise ValueError(f"Chroma URL must look like http://host:port, got {url!r}")
+    # The client's own first heartbeat has no timeout either, so a server that accepts connections but never
+    # answers would hang startup: check it here first, with one. Unreachable -> fails now, not on a search.
+    base = f"{parts.scheme}://{parts.netloc}"
+    try:
+        httpx.get(f"{base}/api/v2/heartbeat", timeout=CHROMA_CONNECT_SECONDS).raise_for_status()
+    except httpx.HTTPError as e:
+        raise ConnectionError(f"Chroma at {base} is not answering ({type(e).__name__})") from e
+    client = chromadb.HttpClient(host=parts.hostname, port=parts.port or (443 if parts.scheme == "https" else 8000),
+                                 ssl=parts.scheme == "https", settings=settings)
+    session = getattr(getattr(client, "_server", None), "_session", None)
+    if not isinstance(session, httpx.Client):  # a chromadb upgrade moved it: refuse to run with no timeout
+        raise RuntimeError("cannot set a timeout on the chromadb HTTP client (its internals changed)")
+    session.timeout = httpx.Timeout(CHROMA_TIMEOUT_SECONDS, connect=CHROMA_CONNECT_SECONDS)
+    return client
+
+
 class ChunkIndex:
     """All chunks of ONE chunking strategy, searchable by meaning (Chroma) and by keywords (BM25)."""
 
     def __init__(self, embedder: Embedder, data_dir: Path = Path("data/index"), strategy: str = "structure",
-                 dedup: bool = True):
-        import chromadb
+                 dedup: bool = True, chroma_url: str | None = None):
+        """chroma_url (e.g. "http://chroma:8000"): use a Chroma server instead of the embedded store in
+        data_dir/chroma. The chunk table stays in data_dir either way: it is the source of truth."""
 
         self.embedder = embedder
         self.strategy = strategy
@@ -147,8 +181,7 @@ class ChunkIndex:
                         "similarity REAL)")
         self.db.execute("CREATE INDEX IF NOT EXISTS duplicates_of ON duplicates (duplicate_of)")
         self._near: NearDuplicateIndex | None = None
-        client = chromadb.PersistentClient(path=str(data_dir / "chroma"),
-                                           settings=chromadb.Settings(anonymized_telemetry=False))
+        client = _chroma_client(data_dir, chroma_url)
         # embedding_function=None: we always pass our own Mistral vectors. (With a function set, Chroma would
         # silently embed any text we forgot to give a vector for with a different model.)
         self.collection = client.get_or_create_collection(

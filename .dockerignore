@@ -1,0 +1,14 @@
+# Never in an image: secrets, local data and environments, work in progress.
+.env
+.env.*
+.venv/
+data/
+_draft/
+brag-output/
+.git/
+**/__pycache__/
+**/*.pyc
+*.log
+.pytest_cache/
+.vscode/
+.idea/

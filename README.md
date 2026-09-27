@@ -26,9 +26,18 @@ Work in progress, built one step at a time. The description above is the target 
 - [ ] Evaluation suite and chunking comparison
 - [x] FastAPI service (`hyrag/api.py`): `/v1/ask`, `/v1/documents`, `/v1/ingest`, health/readiness, OpenAPI docs. Details: [docs/phase5.md](docs/phase5.md)
 - [x] Dashboard (`dashboard/`, Streamlit): answer with clickable citations, ranked retrieved passages, confidence by dimension, hybrid vs dense-only side by side. A thin client of the API. Details and speed measurements: [docs/phase5.md](docs/phase5.md)
-- [ ] Docker Compose and seed script
+- [x] Docker Compose (`docker-compose.yml`): Chroma server, one-shot seed job (`hyrag/seed.py`), API, dashboard, with health checks and start order. Failure drills and measurements: [docs/phase5.md](docs/phase5.md)
 
-## Try it
+## Run it with Docker
+
+```bash
+cp .env.example .env               # fill in MISTRAL_API_KEY and GROQ_API_KEY
+docker compose up -d --build       # first build ~13 min; first start indexes the documents (~1 min)
+```
+
+Dashboard: http://localhost:8501. API docs: http://localhost:8000/docs. Stop with `docker compose down` (add `-v` to delete the index too).
+
+## Try it (local Python)
 
 ```bash
 python -m venv .venv

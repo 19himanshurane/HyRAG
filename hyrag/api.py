@@ -21,6 +21,7 @@ Configuration (environment):
   HYRAG_ADMIN_KEY        required for /v1/ingest; unset = ingestion disabled
   HYRAG_CORS_ORIGINS     comma-separated origins allowed to call the API from a browser (the dashboard)
   HYRAG_MAX_UPLOAD_MB    per-file upload limit (default 20, never above the loader's 50)
+  HYRAG_CHROMA_URL       a Chroma server (e.g. http://chroma:8000); unset = embedded store in HYRAG_DATA_DIR
 """
 import hmac
 import logging
@@ -55,6 +56,7 @@ class Settings:
     admin_key: str = ""
     cors_origins: list[str] = field(default_factory=list)
     max_upload_bytes: int = 20 * 1024 * 1024
+    chroma_url: str = ""
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -64,7 +66,8 @@ class Settings:
                    budget_seconds=float(os.environ.get("HYRAG_BUDGET_SECONDS", DEFAULT_BUDGET_SECONDS)),
                    api_key=os.environ.get("HYRAG_API_KEY", ""), admin_key=os.environ.get("HYRAG_ADMIN_KEY", ""),
                    cors_origins=[o.strip() for o in os.environ.get("HYRAG_CORS_ORIGINS", "").split(",") if o.strip()],
-                   max_upload_bytes=min(int(mb * 1024 * 1024), MAX_FILE_BYTES))
+                   max_upload_bytes=min(int(mb * 1024 * 1024), MAX_FILE_BYTES),
+                   chroma_url=os.environ.get("HYRAG_CHROMA_URL", ""))
 
 
 @dataclass
@@ -102,8 +105,10 @@ def build_services(settings: Settings) -> Services:
     problems = [f"{k} is not set" for k in ("MISTRAL_API_KEY", "GROQ_API_KEY") if not os.environ.get(k)]
     if problems:
         raise RuntimeError("; ".join(problems))  # nothing can work without the keys: fail loudly at startup
-    embedder, writer, judge = MistralEmbedder(), GroqChat(), judge_client()
-    index = ChunkIndex(embedder, data_dir=settings.data_dir / "index", strategy=settings.strategy)
+    embedder = MistralEmbedder(cache_path=settings.data_dir / "embeddings.sqlite")  # with the data, not the cwd
+    writer, judge = GroqChat(), judge_client()
+    index = ChunkIndex(embedder, data_dir=settings.data_dir / "index", strategy=settings.strategy,
+                       chroma_url=settings.chroma_url or None)
     if index.count() == 0:
         problems.append(f"the {settings.strategy!r} index is empty: run the seed/ingest step")
     scorer = CrossEncoderScorer()

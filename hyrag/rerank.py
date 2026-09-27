@@ -26,6 +26,7 @@ log = logging.getLogger(__name__)
 MODEL = "cross-encoder/ms-marco-MiniLM-L6-v2"
 # Pinned: a new upload of the model would otherwise change every score (and every eval number) silently.
 REVISION = "233902d25c440f23af6f7d6e94d2946bac0bee0a"
+ALLOW_PATTERNS = ["*.json", "*.txt", "model.safetensors", "README.md"]
 RETRY_LOAD_AFTER_SECONDS = 60  # after a failed load, fail fast instead of re-trying it on every request
 
 
@@ -46,7 +47,9 @@ def download(model: str = MODEL, revision: str = REVISION) -> str:
     """Fetch the pinned model into the local Hugging Face cache (the one step that uses the network)."""
     from huggingface_hub import snapshot_download
 
-    return snapshot_download(model, revision=revision)
+    # Only what the PyTorch cross-encoder loads. The repo also holds .bin, Flax, ONNX and OpenVINO copies of
+    # the same weights: fetching everything took 806 MB instead of ~90 MB in the Docker image.
+    return snapshot_download(model, revision=revision, allow_patterns=ALLOW_PATTERNS)
 
 
 class CrossEncoderScorer:
