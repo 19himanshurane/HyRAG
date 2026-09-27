@@ -238,3 +238,11 @@ class _Failing:
 
     def complete(self, messages):
         raise self.error
+
+
+def test_daily_quota_exhaustion_has_its_own_codes():
+    from hyrag.http import QuotaExhausted
+    r = ask("q?", FakeRetriever([VPN]), _Failing(QuotaExhausted("daily limit reached")), FakeJudge())
+    assert r.code == "error.quota_exhausted" and "daily usage limit" in r.message
+    r = ask("q?", FakeRetriever([VPN]), FakeChat("Renew it [1]."), FakeJudge(fail=QuotaExhausted("daily limit reached")))
+    assert r.code == "unchecked.quota_exhausted"

@@ -120,16 +120,24 @@ def grade_behaviour(item: dict, response_text: str, grader) -> dict:
         return {"acceptable": None, "reason": f"grader failed: {type(e).__name__}: {str(e)[:150]}"}
 
 
-def faithfulness(answer_text: str, hits: list[FusedHit], judge) -> float | None:
-    """Share of the answer's claims supported by ANY retrieved passage (all passages given as one text)."""
+def faithfulness(answer_text: str, hits: list[FusedHit], judge, verified: set[str] = frozenset()) -> float | None:
+    """Share of the answer's claims supported by ANY retrieved passage (all passages given as one text).
+
+    Claims the pipeline already verified against their own citation (`verified`) are supported by definition,
+    so only the others are sent to the judge. Sending every claim with all five passages made this the most
+    expensive part of an evaluation on a 200,000 tokens/day plan (docs/phase4.md)."""
     claims = [c.text for c in split_claims(answer_text) if c.kind != "gap"]
     if not claims or not hits:
         return None
-    together = "\n\n".join(h.chunk.text_for_search() for h in hits)
-    verdicts = judge_batch([(c, 1) for c in claims], {1: together}, judge)
-    if all(v.verdict == "error" for v in verdicts):
-        return None
-    return sum(v.verdict == "supported" for v in verdicts) / len(claims)
+    rest = [c for c in claims if c not in verified]
+    supported = len(claims) - len(rest)
+    if rest:
+        together = "\n\n".join(h.chunk.text_for_search() for h in hits)
+        verdicts = judge_batch([(c, 1) for c in rest], {1: together}, judge)
+        if all(v.verdict == "error" for v in verdicts):
+            return None
+        supported += sum(v.verdict == "supported" for v in verdicts)
+    return supported / len(claims)
 
 
 # ----- one question -----
@@ -184,7 +192,7 @@ def evaluate_item(item: dict, retriever, writer, judge, grader, budget_seconds: 
         if text:
             rec.correctness = grade_correctness(item, text, grader)
             rec.graded_draft = r.answer is None
-            rec.faithfulness = faithfulness(text, top5, judge)
+            rec.faithfulness = faithfulness(text, top5, judge, set(r.verified_claims))
             if r.answer:  # citation accuracy of what the reader sees, from ask()'s own check (no extra request)
                 judged = sum(r.claim_counts.get(k, 0) for k in ("supported", "partial", "unsupported"))
                 if judged:

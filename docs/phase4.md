@@ -86,3 +86,30 @@ The retrieval gate (rerank logit −3) was calibrated on **structure** chunks. T
 Under fixed-size chunks the reranker's confidence no longer separates answerable from unanswerable questions, so no single gate could work well for it. Step 3b therefore compares the strategies with the same gate: that is fair as a product outcome, and the report says so.
 
 Moving the gate to rescue G38 (−5.80) would also admit the most plausible unanswerable calibration question (−5.83): that would be tuning on one dev question. The fix belongs in retrieval (for example rewriting conversational questions into search queries), decided with the full end-to-end numbers.
+
+---
+
+## Step 2 (in progress): running the evaluation, and what running it revealed
+
+The first dev run (24 questions × 3) was stopped after about an hour, having scored only 9 questions. Diagnosing it took three hypotheses, and **the first two were wrong**:
+
+1. *"It hung because I rebuilt the index from another process at the same time."* **Wrong.** A later run hung with no other process touching the index.
+2. *"It is hitting the 8,000 tokens-per-minute limit."* **Wrong.** The per-minute budget refills in under a second, as the headers show. A client-side pacing layer was written on this theory, then **removed**, because it fixed a problem that wasn't happening.
+3. **Right:** a stack dump from a watchdog showed the process sleeping in a retry. Groq's own 429 message named the limit: **200,000 tokens per day** on the judge model, used up by the day's evaluation work (judge comparisons, grader validation, partial runs).
+
+What changed as a result:
+- **`scripts/run_eval.py` is crash-safe.**
+  - Every scored question is appended to a `.jsonl` file at once; `--resume` continues a stopped run; `--summarize` rebuilds the report from the file.
+  - A `faulthandler` watchdog prints every thread's stack if a question runs far past its budget (this is what found the real cause).
+  - If the daily quota runs out, the run stops **without** saving that question and prints the resume command.
+  - The first version saved results only at the end, so an hour of work was lost.
+- **Daily-limit 429s fail fast** (`QuotaExhausted`) instead of being retried every 60 s. `ask()` has codes for them.
+- **Faithfulness only checks claims the pipeline has not already verified** against their citation (those are supported by definition). For a fully verified answer that means no extra request.
+- **The production capacity figure was corrected** in docs/phase3-audit.md (~115 checked questions per day, not ~475).
+
+**Budget for evaluation from here:** one dev run of 24 questions costs roughly 60–90k judge tokens, so about 2 runs fit in a day. Runs are scheduled against that budget: resume when the rolling daily window has refilled.
+
+Early observations from the 9 questions scored before the stop (to re-check in the full run, not conclusions):
+- G12 and G15 graded not fully correct.
+- G14's grading failed.
+- G09 was withheld as unverified although its draft was correct.

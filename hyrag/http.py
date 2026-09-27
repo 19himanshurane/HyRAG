@@ -28,6 +28,16 @@ class DeadlineExceeded(TimeoutError):
     """The request's time budget ran out before this call could finish."""
 
 
+class QuotaExhausted(RuntimeError):
+    """A per-DAY limit (tokens or requests per day) is used up. Retrying in seconds cannot help: Groq's own
+    retry hint was 7-8 minutes when the judge model's 200,000 tokens/day ran out (measured 2026-09-28)."""
+
+
+def _is_daily_limit(resp: httpx.Response) -> bool:
+    text = resp.text.lower()
+    return resp.status_code == 429 and ("per day" in text or "(tpd)" in text or "(rpd)" in text)
+
+
 @contextmanager
 def deadline(seconds: float) -> Iterator[None]:
     """Budget every HTTP call inside the block to finish within `seconds` in total (nested budgets: the
@@ -75,6 +85,8 @@ def post_json(client: httpx.Client, url: str, payload: dict, *, what: str, attem
             resp, reason = None, type(e).__name__
         else:
             reason = f"HTTP {resp.status_code}"
+        if resp is not None and _is_daily_limit(resp):
+            raise QuotaExhausted(f"{what}: daily limit reached: {resp.text[:300]}")
         if resp is None or resp.status_code == 429 or resp.status_code >= 500:
             if attempt < attempts - 1:
                 wait = retry_wait(resp, attempt)

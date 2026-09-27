@@ -38,7 +38,7 @@ from dataclasses import asdict, dataclass, field
 from hyrag.citations import verify
 from hyrag.confidence import Confidence, hit_relevance, passages_confidence, score_answer
 from hyrag.generation import generate
-from hyrag.http import DeadlineExceeded, deadline
+from hyrag.http import DeadlineExceeded, QuotaExhausted, deadline
 from hyrag.retrieval import FusedHit
 
 log = logging.getLogger(__name__)
@@ -236,10 +236,12 @@ def _run(question, retriever, writer, judge, gate, show_unchecked, lap, t0) -> R
         answer = generate(question, hits, writer)
     except Exception as e:
         log.exception("answer generation failed")
-        timeout = isinstance(e, DeadlineExceeded)
+        code = ("error.timeout" if isinstance(e, DeadlineExceeded) else
+                "error.quota_exhausted" if isinstance(e, QuotaExhausted) else "error.writer_unavailable")
         closest, documents = _pointers(hits)
-        return Response(question, "error", "error.timeout" if timeout else "error.writer_unavailable",
-                        "The answering service is unavailable right now." + _suggest(documents),
+        return Response(question, "error", code,
+                        ("The daily usage limit of the answering service is reached." if code == "error.quota_exhausted"
+                         else "The answering service is unavailable right now.") + _suggest(documents),
                         f"answer generation failed: {type(e).__name__}: {str(e)[:200]}",
                         closest=closest, check_manually=documents, degraded=degraded)
     since = lap("generate", since)
@@ -275,8 +277,10 @@ def _run(question, retriever, writer, judge, gate, show_unchecked, lap, t0) -> R
     flagged = [c.claim.text for c in report.flagged]
     if any(c.status == "unchecked" for c in report.checks):
         timeout = any("DeadlineExceeded" in e for e in report.judge_errors)
+        quota = any("QuotaExhausted" in e for e in report.judge_errors)
         return Response(
-            question, "unchecked", "unchecked.timeout" if timeout else "unchecked.checker_unavailable",
+            question, "unchecked",
+            "unchecked.quota_exhausted" if quota else "unchecked.timeout" if timeout else "unchecked.checker_unavailable",
             "This answer could not be checked against its sources" + (" in time" if timeout else
             " (the checking service is unavailable)") + ". Verify the cited sources before relying on it.",
             "judge failed: " + "; ".join(sorted(set(report.judge_errors)))[:300],
@@ -296,7 +300,7 @@ def _run(question, retriever, writer, judge, gate, show_unchecked, lap, t0) -> R
         message = (message + " " if message else "") + "(Search ran in keyword-only mode.)"
     return Response(question, status, status, message, f"confidence {confidence.score} ({confidence.level})",
                     answer=answer.text, confidence=confidence, sources=sources, flagged_claims=flagged,
-                    not_covered=not_covered, degraded=degraded, claim_counts=counts)
+                    verified_claims=verified, not_covered=not_covered, degraded=degraded, claim_counts=counts)
 
 
 def _log(r: Response) -> None:

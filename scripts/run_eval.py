@@ -2,13 +2,21 @@
 
 Usage (from the repo root):
   PYTHONPATH=. python scripts/run_eval.py --check-grader            # is the grader trustworthy? (dev items)
-  PYTHONPATH=. python scripts/run_eval.py --split dev --runs 3       # score the pipeline, spread over 3 runs
+  PYTHONPATH=. python scripts/run_eval.py --split dev --runs 2       # score the pipeline, spread over runs
+  PYTHONPATH=. python scripts/run_eval.py --resume eval/results/<name>.jsonl   # continue a stopped run
+  PYTHONPATH=. python scripts/run_eval.py --summarize eval/results/<name>.jsonl
   options: --strategy structure|fixed|semantic   --limit N   --budget SECONDS
-Results: eval/results/<time>-<split>-<strategy>.json (every record + per-run summaries + spread).
+
+Crash-safe: every question's record is appended to eval/results/<time>-<split>-<strategy>.jsonl the moment it
+is scored (one JSON object per line, flushed), and "started <id>" is printed before each question, so a hang
+is visible at once and a stopped run loses nothing. (The first version wrote results only at the end; a run
+hung on question 10 after an hour and everything was lost.) Do not rebuild an index while a run reads it.
 
 Cost: per question ~1 writer + ~4 checker/grader requests. The judge model's plan allows 1,000 requests/day.
 """
 import argparse
+import dataclasses
+import faulthandler
 import json
 import sys
 import time
@@ -16,13 +24,14 @@ from pathlib import Path
 
 from hyrag.citations import judge_client
 from hyrag.embeddings import MistralEmbedder
-from hyrag.evaluation import evaluate_item, grade_correctness, spread, summarize, to_json
+from hyrag.evaluation import Record, evaluate_item, grade_correctness, spread, summarize
 from hyrag.index import ChunkIndex
 from hyrag.llm import GroqChat
 from hyrag.rerank import CrossEncoderScorer
 from hyrag.retrieval import HybridRetriever
 
 GOLDEN = Path("eval/golden_set.json")
+RESULTS = Path("eval/results")
 
 
 def load(split: str) -> list[dict]:
@@ -54,6 +63,28 @@ def check_grader(items: list[dict], grader) -> None:
     print("\n".join(rows))
 
 
+def read_jsonl(path: Path) -> tuple[dict, list[dict]]:
+    lines = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+    return lines[0], lines[1:]  # header, records
+
+
+def report(path: Path) -> None:
+    header, rows = read_jsonl(path)
+    by_run: dict[int, list[Record]] = {}
+    fields = {f.name for f in dataclasses.fields(Record)}
+    for row in rows:
+        by_run.setdefault(row["run"], []).append(Record(**{k: v for k, v in row.items() if k in fields}))
+    summaries = [summarize(recs) for _, recs in sorted(by_run.items())]
+    complete = [len(recs) for recs in by_run.values()]
+    print(f"{path}: {header['split']} / {header['strategy']}, {len(summaries)} run(s), questions per run {complete}")
+    for key, v in spread(summaries).items():
+        print(f"  {key:34} mean {v['mean']:<7} range {v['min']}..{v['max']}")
+    out = path.with_suffix(".summary.json")
+    out.write_text(json.dumps({"header": header, "summaries": summaries, "spread": spread(summaries)}, indent=1),
+                   encoding="utf-8")
+    print(f"saved {out}")
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--split", default="dev", choices=["dev", "test", "all"])
@@ -62,41 +93,66 @@ def main() -> int:
     ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--budget", type=float, default=180.0)
     ap.add_argument("--check-grader", action="store_true")
+    ap.add_argument("--resume", type=Path)
+    ap.add_argument("--summarize", type=Path)
     args = ap.parse_args()
-    if args.split == "test" and not args.check_grader:
+    if args.summarize:
+        report(args.summarize)
+        return 0
+
+    if args.resume:
+        header, done_rows = read_jsonl(args.resume)
+        path = args.resume
+        split, strategy, runs, limit = header["split"], header["strategy"], header["runs"], header.get("limit", 0)
+        done = {(r["run"], r["id"]) for r in done_rows}
+    else:
+        split, strategy, runs, limit = args.split, args.strategy, args.runs, args.limit
+        RESULTS.mkdir(parents=True, exist_ok=True)
+        path = RESULTS / f"{time.strftime('%Y%m%d-%H%M%S')}-{split}-{strategy}.jsonl"
+        header = {"split": split, "strategy": strategy, "runs": runs, "limit": limit, "budget": args.budget,
+                  "started": time.strftime("%Y-%m-%d %H:%M:%S")}
+        path.write_text(json.dumps(header) + "\n", encoding="utf-8")
+        done = set()
+    if split == "test" and not args.check_grader:
         print("Scoring the held-out TEST split. Results must not be used to tune anything.", file=sys.stderr)
-    items = load("dev" if args.check_grader else args.split)
-    if args.limit:
-        items = items[:args.limit]
+    items = load("dev" if args.check_grader else split)
+    if limit:
+        items = items[:limit]
 
     with judge_client() as grader:
         if args.check_grader:
             check_grader(items, grader)
             return 0
         with MistralEmbedder() as emb, GroqChat() as writer, judge_client() as judge:
-            index = ChunkIndex(emb, strategy=args.strategy)
+            index = ChunkIndex(emb, strategy=strategy)
             if index.count() == 0:
-                raise SystemExit(f"no index for strategy {args.strategy!r}: build it first")
+                raise SystemExit(f"no index for strategy {strategy!r}: build it first")
             retriever = HybridRetriever(index, reranker=CrossEncoderScorer())
-            runs, summaries = [], []
-            for run in range(args.runs):
-                records = []
+            print(f"writing to {path}", flush=True)
+            for run in range(1, runs + 1):
                 for n, it in enumerate(items, 1):
+                    if (run, it["id"]) in done:
+                        continue
+                    print(f"run {run} {n:>2}/{len(items)} started {it['id']} {time.strftime('%H:%M:%S')}", flush=True)
+                    # Watchdog: if one question runs far past its budget, print every thread's stack (repeating),
+                    # so a hang shows exactly where it is instead of silence.
+                    faulthandler.dump_traceback_later(args.budget + 60, repeat=True, file=sys.stderr)
                     rec = evaluate_item(it, retriever, writer, judge, grader, budget_seconds=args.budget)
-                    records.append(rec)
-                    print(f"run {run + 1} {n:>2}/{len(items)} {it['id']} {it['type']:<9} {rec.status or rec.error[:40]:<11}"
+                    faulthandler.cancel_dump_traceback_later()
+                    # A daily quota running out mid-run makes this record an outage result, not a quality one:
+                    # don't save it; stop, and resume the run once the quota has refilled.
+                    trail = json.dumps(dataclasses.asdict(rec))
+                    if "quota_exhausted" in trail or "QuotaExhausted" in trail:
+                        print(f"daily quota exhausted at {it['id']}: stopped without saving it. Resume later with:\n"
+                              f"  PYTHONPATH=. python scripts/run_eval.py --resume {path}", flush=True)
+                        report(path)
+                        return 2
+                    with path.open("a", encoding="utf-8") as f:  # one line per question, on disk at once
+                        f.write(json.dumps({"run": run, **dataclasses.asdict(rec)}, ensure_ascii=False) + "\n")
+                    print(f"run {run} {n:>2}/{len(items)} {it['id']} {it['type']:<9} {rec.status or rec.error[:40]:<11}"
                           f" correct={rec.correctness and rec.correctness['correct']} behaviour="
-                          f"{rec.behaviour and rec.behaviour['acceptable']}", flush=True)
-                summaries.append(summarize(records))
-                runs.append(to_json(records))
-    result = {"split": args.split, "strategy": args.strategy, "runs": args.runs, "questions": len(items),
-              "summaries": summaries, "spread": spread(summaries), "records": runs}
-    out = Path("eval/results") / f"{time.strftime('%Y%m%d-%H%M%S')}-{args.split}-{args.strategy}.json"
-    out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(json.dumps(result, indent=1, ensure_ascii=False), encoding="utf-8")
-    print(f"\nsaved {out}")
-    for key, v in result["spread"].items():
-        print(f"  {key:34} mean {v['mean']:<7} range {v['min']}..{v['max']}")
+                          f"{rec.behaviour and rec.behaviour['acceptable']} {rec.seconds}s", flush=True)
+    report(path)
     return 0
 
 

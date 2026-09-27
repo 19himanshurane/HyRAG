@@ -95,3 +95,19 @@ def test_an_alternative_evidence_passage_counts():
     ev = [{"source": "nist.pdf", "quote": "assist organizations with incorporating",
            "alternatives": [{"source": "nist.pdf", "quote": "seeks to help organizations incorporate"}]}]
     assert evidence_found(ev, hits) == [1]
+
+
+def test_faithfulness_only_asks_about_claims_not_already_verified():
+    class Judge:
+        def __init__(self): self.calls = []
+        def complete(self, messages, json_schema=None):
+            self.calls.append(messages[1]["content"])
+            return ChatResult(json.dumps({"checks": [{"id": 1, "quote": "Renew the certificate", "verdict": "supported",
+                                                      "reason": ""}]}), "fake", "stop", 1, 1, 0, 0.0)
+    from hyrag.evaluation import faithfulness
+    hits = [hit("Renew the certificate in the portal.")]
+    judge = Judge()
+    assert faithfulness("Open settings. Renew it [1].", hits, judge, verified={"Open settings. Renew it."}) == 1.0
+    assert judge.calls == []  # everything was already verified (as the pipeline reports it): no request
+    assert faithfulness("Renew it. The gateway rejected you.", hits, judge, verified=set()) is not None
+    assert len(judge.calls) == 1

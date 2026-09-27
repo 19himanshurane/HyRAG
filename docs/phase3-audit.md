@@ -55,11 +55,17 @@ python -m pytest -q
 
 ## Hard limits (plan, not code)
 
-These come from this Groq account's free on-demand tier (read from response headers and error messages, 2026-09-27):
-- **8,000 tokens/min per model.** With ~1,100 writer tokens and ~1,700 judge tokens per question, that means **about 4.8 fully checked questions per minute** for all users together.
-- **1,000 requests/day per model.** With ~2.1 judge requests per question, that means **about 475 checked questions per day**.
+This Groq account is on the free on-demand tier. The limits below come from its response headers and error messages (2026-09-27/28):
 
-Code can't raise either limit. The options are the answer cache (repeats are free), a paid tier, or self-hosting. The response's `usage` field and the log line make it possible to monitor both.
+- **Tokens per DAY, the binding limit:** `openai/gpt-oss-20b` (the judge) allows **200,000 tokens/day**. This was only discovered when the evaluation ran it dry ("Rate limit reached … tokens per day (TPD): Limit 200000, Used 199675 … try again in 7m9s"). At ~1,700 judge tokens per question, that is **about 115 fully checked questions per day**.
+  - The writer model (gpt-oss-120b) uses ~1,100 tokens per question; its daily token limit has not been observed yet.
+  - **Correction:** this report first said "about 475 checked questions per day", computed from the 1,000 requests/day limit. The token limit binds long before the request limit.
+- **Tokens per minute:** 8,000 per model, which allows about 4.8 checked questions per minute in bursts.
+- **Requests per day:** 1,000 per model.
+
+When a daily limit is reached, the client now fails at once with `QuotaExhausted`. `ask()` reports `error.quota_exhausted` (writer) or `unchecked.quota_exhausted` (judge) instead of retrying every 60 s against a limit that refills over minutes to hours.
+
+Code can't raise these limits. The options are the answer cache (repeats are free), a paid tier, or self-hosting. The response's `usage` field and the log line make them possible to monitor.
 
 ## Known limits
 - **The judge's quoting is noisy on long answers:** the caregiver-policy answer (6 claims) scored high once and medium or low in other runs, depending on which claim the judge doubted. It fails safe (withheld or flagged, never falsely verified). Phase 4 must measure how often a *correct* answer is withheld.

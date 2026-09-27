@@ -65,3 +65,25 @@ def test_retries_still_work_inside_a_generous_budget(slept):
     with deadline(60):
         assert post_json(client(lambda r: replies.pop(0)), "https://x", {}, what="t") == {"ok": 1}
     assert slept == [1.0]
+
+
+def test_a_daily_limit_fails_fast_instead_of_retrying(slept):
+    from hyrag.http import QuotaExhausted
+    calls = []
+    body = {"error": {"message": "Rate limit reached for model `m` on tokens per day (TPD): Limit 200000, Used 199675. "
+                                 "Please try again in 7m9.84s.", "code": "rate_limit_exceeded"}}
+
+    def handler(request):
+        calls.append(1)
+        return httpx.Response(429, json=body, headers={"Retry-After": "430"})
+
+    with pytest.raises(QuotaExhausted, match="daily limit"):
+        post_json(client(handler), "https://x", {}, what="Groq chat request")
+    assert calls == [1] and slept == []  # one request, no pointless waits
+
+
+def test_a_per_minute_limit_is_still_retried(slept):
+    replies = [httpx.Response(429, json={"error": {"message": "on tokens per minute (TPM)"}}, headers={"Retry-After": "2"}),
+               httpx.Response(200, json={"ok": 1})]
+    assert post_json(client(lambda r: replies.pop(0)), "https://x", {}, what="t") == {"ok": 1}
+    assert slept == [2.0]
