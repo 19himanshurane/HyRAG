@@ -49,6 +49,8 @@ def show(r) -> None:
     if r.status in ("unverified", "unchecked"):
         for claim in r.verified_claims:
             print(f"   verified anyway: {claim[:100]}")
+    if r.search_queries:
+        print(f"   searched as: {' | '.join(r.search_queries)}")
     if r.degraded:
         print(f"   degraded: {', '.join(r.degraded)}")
     u = r.usage
@@ -68,7 +70,7 @@ def main() -> None:
         index = ChunkIndex(emb)
         if index.count() == 0:
             raise SystemExit("data/index is empty: run python try_index.py first")
-        retriever = HybridRetriever(index, reranker=CrossEncoderScorer())
+        retriever = HybridRetriever(index, reranker=CrossEncoderScorer(), rewriter=writer)
         for q in questions:
             r = ask(q, retriever, writer, judge)
             print(json.dumps(r.to_dict(), indent=1, ensure_ascii=False)) if as_json else show(r)

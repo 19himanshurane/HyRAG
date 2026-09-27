@@ -36,7 +36,7 @@ def services():
     emb, writer, judge = MistralEmbedder(), GroqChat(), judge_client()
     index = ChunkIndex(emb)
     _need(index.count() > 0, "data/index is empty: python try_index.py")
-    retriever = HybridRetriever(index, reranker=CrossEncoderScorer())
+    retriever = HybridRetriever(index, reranker=CrossEncoderScorer(), rewriter=writer)
     retriever.search("warm up the reranker")  # load the model once, outside any time budget
     yield {"emb": emb, "writer": writer, "judge": judge, "retriever": retriever}
     emb.close(), writer.close(), judge.close()

@@ -49,6 +49,10 @@ class RetrievalConfig:
     rrf_k: int = 60
     top_k: int = 20            # how many fused results to return (the reranker's input size)
     rerank_top_n: int = 5      # how many the reranker keeps (what the LLM will see in Phase 3)
+    # With a rewriter: a question whose best rerank logit is below this is rewritten into focused search
+    # queries (hyrag/rewrite.py). The same value as the answer gate (hyrag.answer.RETRIEVAL_GATE = logit -3):
+    # exactly the questions that would otherwise be refused get a second chance.
+    rewrite_below_logit: float = -3.0
 
     def __post_init__(self):
         # Fail when the config is built, not deep inside Chroma or as a silently inverted ranking.
@@ -115,7 +119,7 @@ def rerank(query: str, hits: list[FusedHit], scorer: Scorer, top_n: int) -> list
 
 class HybridRetriever:
     def __init__(self, index: ChunkIndex, config: RetrievalConfig = RetrievalConfig(),
-                 reranker: Scorer | None = None):
+                 reranker: Scorer | None = None, rewriter=None):
         # Checked here, not in RetrievalConfig: without a reranker, rerank_top_n is unused and a small top_k is fine.
         if reranker is not None and config.rerank_top_n > config.top_k:
             raise ValueError(f"rerank_top_n ({config.rerank_top_n}) can't exceed top_k ({config.top_k}): "
@@ -123,6 +127,7 @@ class HybridRetriever:
         self.index = index
         self.config = config
         self.reranker = reranker
+        self.rewriter = rewriter  # a chat model (hyrag.llm.GroqChat) for query rewriting, or None
 
     def retrieve(self, query: str, mode: Mode = "hybrid", rerank_results: bool = True) -> list[FusedHit]:
         """Ranked candidates for `query`. mode="dense" / "sparse" run one search alone (same output shape),
@@ -131,7 +136,27 @@ class HybridRetriever:
         return self.search(query, mode, rerank_results).hits
 
     def search(self, query: str, mode: Mode = "hybrid", rerank_results: bool = True) -> "Retrieval":
-        """Like retrieve(), but also reports which parts had to be skipped (`degraded`).
+        """Like retrieve(), but also reports which parts had to be skipped (`degraded`) and, when the question
+        was rewritten, the search queries used (`queries`)."""
+        first = self._search_one(query, mode, rerank_results)
+        c = self.config
+        top = first.hits[0].rerank_score if first.hits else None
+        if (self.rewriter is None or mode != "hybrid" or not rerank_results or top is None
+                or top >= c.rewrite_below_logit):
+            return first
+        from hyrag.rewrite import rewrite_query  # imported here: only questions that need it pay for it
+
+        usage: dict[str, int] = {}
+        queries = rewrite_query(query, self.rewriter, usage)
+        if not queries:
+            return Retrieval(first.hits, first.degraded + ["query_rewrite_failed"], usage=usage)
+        results = [self._search_one(q[:MAX_QUERY_CHARS], mode, rerank_results) for q in queries]
+        degraded = sorted(set(first.degraded).union(*(r.degraded for r in results)))
+        return Retrieval(merge_rewritten([r.hits for r in results] + [first.hits], c.rerank_top_n), degraded, queries,
+                         usage)
+
+    def _search_one(self, query: str, mode: Mode = "hybrid", rerank_results: bool = True) -> "Retrieval":
+        """One search: dense + sparse, fused, reranked.
 
         Meaning search needs the Mistral API for the query embedding; keyword search and the reranker run
         locally. So in hybrid mode an embedding failure (outage, rate limit, time budget) degrades to keyword
@@ -180,3 +205,25 @@ class HybridRetriever:
 class Retrieval:
     hits: list[FusedHit]
     degraded: list[str] = field(default_factory=list)  # parts skipped: dense_search_unavailable, rerank_unavailable
+    queries: list[str] = field(default_factory=list)   # the rewritten search queries, when the question was rewritten
+    usage: dict[str, int] = field(default_factory=dict)  # rewrite_requests / rewrite_tokens
+
+
+def merge_rewritten(ranked_lists: list[list[FusedHit]], top_n: int) -> list[FusedHit]:
+    """Merge the results of several search queries into one top_n.
+
+    Each query's best hit is guaranteed a place first (a multi-hop question needs evidence for EVERY part: one
+    query alone found either the deploy rules or the VPN rule, never both), then the rest by reranker score.
+    A chunk found by several queries appears once, with its best score. Scores come from the query that
+    found the chunk, so the answer gate sees how well the best focused query matched."""
+    best: dict[str, FusedHit] = {}
+    for hits in ranked_lists:
+        for h in hits:
+            kept = best.get(h.chunk.chunk_id)
+            if kept is None or (h.rerank_score or float("-inf")) > (kept.rerank_score or float("-inf")):
+                best[h.chunk.chunk_id] = h
+    score = lambda h: h.rerank_score if h.rerank_score is not None else float("-inf")
+    leaders = {hits[0].chunk.chunk_id for hits in ranked_lists[:-1] if hits}  # each rewritten query's best
+    first = sorted((best[cid] for cid in leaders), key=score, reverse=True)
+    rest = sorted((h for cid, h in best.items() if cid not in leaders), key=score, reverse=True)
+    return (first + rest)[:top_n]

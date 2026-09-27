@@ -85,6 +85,7 @@ class Response:
     draft: str | None = None                      # model text withheld from `answer`
     degraded: list[str] = field(default_factory=list)            # parts that had to be skipped
     claim_counts: dict[str, int] = field(default_factory=dict)   # citation-check outcomes by status
+    search_queries: list[str] = field(default_factory=list)      # rewritten queries, when the question was rewritten
     request_id: str = ""
     timings_ms: dict[str, float] = field(default_factory=dict)   # retrieve, generate, verify, score, total
     usage: dict[str, int] = field(default_factory=dict)          # requests and tokens per model
@@ -201,7 +202,7 @@ def ask(question: str, retriever, writer, judge, gate: float = RETRIEVAL_GATE,
         response = _run(question, retriever, w, j, gate, show_unchecked, lap, t0)
     response.request_id = request_id
     response.timings_ms = {**timings, "total": round((time.perf_counter() - t0) * 1000, 1)}
-    response.usage = {"writer_requests": w.requests, "writer_tokens": w.tokens,
+    response.usage = {**response.usage, "writer_requests": w.requests, "writer_tokens": w.tokens,
                       "judge_requests": j.requests, "judge_tokens": j.tokens}
     if cache is not None:
         cache.put(key, response)
@@ -223,6 +224,13 @@ def _run(question, retriever, writer, judge, gate, show_unchecked, lap, t0) -> R
                         "Search is unavailable right now. Please try again shortly.",
                         f"retrieval failed: {type(e).__name__}: {str(e)[:200]}")
     since = lap("retrieve", t0)
+    response = _answer(question, retrieval, writer, judge, gate, show_unchecked, lap, since)
+    response.search_queries = list(getattr(retrieval, "queries", []) or [])
+    response.usage = dict(getattr(retrieval, "usage", {}) or {})  # ask() adds the writer and judge counts
+    return response
+
+
+def _answer(question, retrieval, writer, judge, gate, show_unchecked, lap, since) -> Response:
     hits, degraded = retrieval.hits, retrieval.degraded
 
     relevance, signal = passages_confidence(hits)

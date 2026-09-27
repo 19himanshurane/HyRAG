@@ -127,7 +127,7 @@ def main() -> int:
             index = ChunkIndex(emb, strategy=strategy)
             if index.count() == 0:
                 raise SystemExit(f"no index for strategy {strategy!r}: build it first")
-            retriever = HybridRetriever(index, reranker=CrossEncoderScorer())
+            retriever = HybridRetriever(index, reranker=CrossEncoderScorer(), rewriter=writer)
             print(f"writing to {path}", flush=True)
             for run in range(1, runs + 1):
                 for n, it in enumerate(items, 1):

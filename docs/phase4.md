@@ -113,3 +113,26 @@ Early observations from the 9 questions scored before the stop (to re-check in t
 - G12 and G15 graded not fully correct.
 - G14's grading failed.
 - G09 was withheld as unverified although its draft was correct.
+
+## Query rewriting for questions the gate would refuse (dev, 2026-09-28)
+
+**Code:** `hyrag/rewrite.py` and `HybridRetriever(rewriter=...)`. A question whose best rerank logit is below −3 (the answer gate) is rewritten by the writer model into 1–3 focused search queries (strict JSON). Each query is retrieved separately; each query's best hit is guaranteed a place in the top 5, then the rest fill by score. Only questions that would otherwise be refused pay for it (one writer request). If the rewrite fails, the original results are kept (`degraded: query_rewrite_failed`). `Response.search_queries` shows what was searched. **Tests:** `tests/test_rewrite.py`.
+
+Measured with the real rewriter and reranker (retrieval only, no judge):
+
+| Question set | Gate result: without → with rewriting |
+|---|---|
+| dev answerable (18) | 1 blocked → **0 blocked**: G38 rescued |
+| dev unanswerable (4) | G45, G46 stay blocked; G50, G54 passed already |
+| calibration unanswerable (10) | 10 blocked → **7 blocked**: laptop request, Slack password and on-call pay now reach the writer |
+
+- **Did the next layer hold?** The writer refused all three newly admitted unanswerable questions with the exact "not found" sentence, **6 of 6 runs**.
+- **G38 is now answered correctly and cited:** team-lead approval within the Monday–Thursday 10:00–16:00 UTC window, "which includes Wednesday afternoon".
+- **Still missed:** G38's VPN requirement. The model folded it into "remote access policy for production deployment" instead of a separate query. Not tuned away: fitting the prompt to one dev question would be overfitting. It is documented as a limit, and multi-hop coverage is measured on test.
+
+**Decision:** on by default in every entry point (`try_ask.py`, `scripts/run_eval.py`, the live smoke test).
+- **Benefit:** a wrongly refused answerable question is now answered.
+- **Cost:** ~2 extra writer requests for questions below the gate.
+- **Risk:** carried by the writer's refusal and citation checks, which held here.
+
+The held-out test set confirms or refutes this.
