@@ -84,6 +84,7 @@ class Response:
     check_manually: list[str] = field(default_factory=list)      # documents worth opening
     draft: str | None = None                      # model text withheld from `answer`
     degraded: list[str] = field(default_factory=list)            # parts that had to be skipped
+    claim_counts: dict[str, int] = field(default_factory=dict)   # citation-check outcomes by status
     request_id: str = ""
     timings_ms: dict[str, float] = field(default_factory=dict)   # retrieve, generate, verify, score, total
     usage: dict[str, int] = field(default_factory=dict)          # requests and tokens per model
@@ -254,6 +255,9 @@ def _run(question, retriever, writer, judge, gate, show_unchecked, lap, t0) -> R
         return r
 
     verified = [c.claim.text for c in report.checks if c.status == "supported"]
+    counts: dict[str, int] = {}
+    for c in report.checks:
+        counts[c.status] = counts.get(c.status, 0) + 1
     unsupported = [c.claim.text for c in report.checks if c.status == "unsupported"]
     if answer.ungrounded or unsupported:
         cited = [answer.passages[n - 1] for n in answer.citations] or hits
@@ -265,7 +269,7 @@ def _run(question, retriever, writer, judge, gate, show_unchecked, lap, t0) -> R
             "the answer cites nothing" if answer.ungrounded else
             "citation check failed: " + "; ".join(unsupported)[:300],
             confidence=confidence, verified_claims=verified, closest=closest, check_manually=documents,
-            draft=answer.text, degraded=degraded)
+            draft=answer.text, degraded=degraded, claim_counts=counts)
 
     sources = [_ref(answer.passages[n - 1], n) for n in answer.citations]
     flagged = [c.claim.text for c in report.flagged]
@@ -278,7 +282,7 @@ def _run(question, retriever, writer, judge, gate, show_unchecked, lap, t0) -> R
             "judge failed: " + "; ".join(sorted(set(report.judge_errors)))[:300],
             answer=answer.text if show_unchecked else None, draft=None if show_unchecked else answer.text,
             confidence=confidence, sources=sources, flagged_claims=flagged, verified_claims=verified,
-            degraded=degraded)
+            degraded=degraded, claim_counts=counts)
 
     not_covered = [p["part"] for p in confidence.completeness_parts if p["status"] != "answered"]
     status = "partial" if not_covered else "answered"
@@ -292,7 +296,7 @@ def _run(question, retriever, writer, judge, gate, show_unchecked, lap, t0) -> R
         message = (message + " " if message else "") + "(Search ran in keyword-only mode.)"
     return Response(question, status, status, message, f"confidence {confidence.score} ({confidence.level})",
                     answer=answer.text, confidence=confidence, sources=sources, flagged_claims=flagged,
-                    not_covered=not_covered, degraded=degraded)
+                    not_covered=not_covered, degraded=degraded, claim_counts=counts)
 
 
 def _log(r: Response) -> None:

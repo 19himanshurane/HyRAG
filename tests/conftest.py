@@ -55,3 +55,19 @@ def nist_61r3():
 def pytest_configure(config):
     # Tests that load the real reranker model (~20 s: PyTorch import + load). Skip with: pytest -m "not model"
     config.addinivalue_line("markers", "model: loads a real ML model from the local cache")
+    # Tests that call the real Groq / Mistral APIs. Never part of a plain `pytest` run (they cost quota and
+    # depend on the network): run them before a deploy with `pytest --live`.
+    config.addinivalue_line("markers", "live: calls the real Groq and Mistral APIs (run with --live)")
+
+
+def pytest_addoption(parser):
+    parser.addoption("--live", action="store_true", help="also run the live smoke tests against the real APIs")
+
+
+def pytest_collection_modifyitems(config, items):
+    if config.getoption("--live"):
+        return
+    skip = pytest.mark.skip(reason="live smoke test: run with --live")
+    for item in items:
+        if "live" in item.keywords:
+            item.add_marker(skip)
