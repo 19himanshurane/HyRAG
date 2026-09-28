@@ -87,5 +87,22 @@ def test_plain_markdown_without_components_is_unchanged():
     assert strip_components(plain) == plain
 
 
+def test_a_component_wrapping_a_code_block_is_still_removed():  # code review: its tag leaked into the index
+    page = "Intro\n\n<MultiLanguage>\n\n```js\nx = 1\n```\n\n</MultiLanguage>\n\n<Tab.Panel>\n\n```py\ny\n```\n</Tab.Panel>\n"
+    out = strip_components(page)
+    assert "MultiLanguage" not in out and "Tab.Panel" not in out
+    assert "```js\nx = 1\n```" in out  # the code itself is untouched
+
+
+def test_bare_html_named_placeholders_survive():  # code review: "<source>" was deleted from any Markdown
+    for line in ("kubectl cp <source> <dest>", "Pick a <table> name and a <code> value", "Press <b> then <a>."):
+        assert strip_components(line + "\n") == line + "\n"
+
+
+def test_real_html_tags_still_go():
+    out = strip_components('Line one<br>line two, <b>bold</b>, <a href="x">link</a>, <img src="p.png"/>\n')
+    assert out == "Line one\nline two, bold, link, \n\n"
+
+
 def test_curly_apostrophes_survive_as_text():
     assert "don’t need an invite" in text_of("t.md", "Teammates don’t need an invite.\n")

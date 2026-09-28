@@ -12,7 +12,7 @@ log = logging.getLogger(__name__)
 
 SUPPORTED = {".md", ".mdx", ".txt", ".html", ".htm", ".pdf"}
 # Bump whenever parsing output changes: stored documents parsed by an older version get re-parsed.
-PARSER_VERSION = "2026-09-23.3"
+PARSER_VERSION = "2026-09-28.1"  # Markdown: MDX/JSX components and HTML tags stripped
 # Refuse inputs that would take minutes and gigabytes (measured: ~90 ms and ~0.1 MB per PDF page).
 MAX_FILE_BYTES = 50 * 1024 * 1024
 MAX_PDF_PAGES = 2000
@@ -87,10 +87,9 @@ def split_front_matter(text: str) -> tuple[str | None, str]:
 
 
 # ----- MDX / JSX components (PostHog's handbook) -----
-# A component is <Capitalized ...>: a React element on the website, never text a reader sees as such. What it
-# renders to is known for the few that carry words; the rest either wrap text (keep the text) or show media
-# (drop them). An uppercase <NAME> placeholder in prose is NOT a component: it has no attributes, doesn't close
-# itself and has no </NAME>, so it is left alone.
+# Components (<Capitalized ...>) are React elements on the website. A few carry words we can recover; the rest
+# either wrap text, which is kept, or show media, which is dropped. An uppercase <NAME> placeholder has no
+# attributes, doesn't close itself and has no </NAME>, so it's left alone.
 _COMPONENT_TEXT = {
     "TeamMember": lambda a: a.get("name", ""),               # <TeamMember name="Lottie Coxon" /> -> Lottie Coxon
     "SmallTeam": lambda a: f"{a['slug']} team" if a.get("slug") else "",  # <SmallTeam slug="website" />
@@ -101,18 +100,24 @@ _OPENING = re.compile(r"<([A-Z][\w.]*)(\s[^<>]*?)?\s*>", re.S)
 _CLOSING = re.compile(r"</([A-Z][\w.]*)\s*>")
 _IMPORT = re.compile(r"""^import\s.+?\sfrom\s+['"][^'"]+['"];?[ \t]*\n?""", re.M)
 _JSX_COMMENT = re.compile(r"\{/\*.*?\*/\}", re.S)
-# Real HTML tag names only (a Markdown page may use them for layout); <name-of-pod>-style placeholders survive.
-_HTML_BLOCK = ("p|div|li|ul|ol|tr|table|thead|tbody|colgroup|col|details|summary|fieldset|legend|blockquote|h[1-6]"
-               "|pre|br|hr|img|iframe|object|video|source|figure|figcaption")
-_HTML_INLINE = "strong|em|b|i|u|span|a|code|sup|sub|td|th|small|mark|kbd"
-_HTML_TAG = re.compile(rf"</?(?:({_HTML_BLOCK})|({_HTML_INLINE}))(?:\s[^<>]*)?/?>", re.I)
+# Real HTML tag names only (a Markdown page may use them for layout). The same test as for components decides
+# whether one is really a tag: it has attributes, closes itself, or its closing tag is on the page. So a bare
+# <source> or <table> in prose ("kubectl cp <source> <dest>") is a placeholder and survives. <br> and <hr> are
+# always layout.
+_HTML_BLOCK = {"p", "div", "li", "ul", "ol", "tr", "table", "thead", "tbody", "colgroup", "col", "details", "summary",
+               "fieldset", "legend", "blockquote", "h1", "h2", "h3", "h4", "h5", "h6", "pre", "br", "hr", "img", "iframe",
+               "object", "video", "source", "figure", "figcaption"}
+_HTML_INLINE = {"strong", "em", "b", "i", "u", "span", "a", "code", "sup", "sub", "td", "th", "small", "mark", "kbd"}
+_HTML_TAG = re.compile(r"<(/?)([A-Za-z][A-Za-z0-9]*)(\s[^<>]*?)?\s*(/?)>")
+_ALWAYS_LAYOUT = {"br", "hr"}
 _INLINE_CODE = re.compile(r"(`+)(?!`).+?(?<!`)\1(?!`)")
 _MASK = chr(0xE000)  # private-use character: marks a masked inline code span while tags are cleaned
 
 
-def _strip_components(prose: str) -> str:
-    """Clean one stretch of Markdown that holds no fenced code. Inline code keeps its tags: `<CalloutBox>` in
-    a style guide is an example, not layout."""
+def _strip_components(prose: str, closed: set[str]) -> str:
+    """Clean one stretch of Markdown that holds no fenced code. `closed`: every tag name with a closing tag
+    anywhere on the page (a component can open before a code block and close after it). Inline code keeps its
+    tags: `<CalloutBox>` in a style guide is an example, not layout."""
     spans: list[str] = []
 
     def mask(m: re.Match) -> str:
@@ -129,39 +134,52 @@ def _strip_components(prose: str) -> str:
 
     def opening(m: re.Match) -> str:
         name, attrs = m.group(1), m.group(2) or ""
-        if "=" not in attrs and f"</{name}" not in prose:
+        if "=" not in attrs and name not in closed:
             return m.group(0)  # <NAME>: a placeholder, not a component
         title = dict(_ATTR.findall(attrs)).get("title", "") if name == "CalloutBox" else ""
         return f"\n{title}\n" if title else ""
 
+    def html(m: re.Match) -> str:
+        closing, name, attrs, self_closed = m.group(1), m.group(2).lower(), m.group(3) or "", m.group(4)
+        if name not in _HTML_BLOCK and name not in _HTML_INLINE:
+            return m.group(0)
+        if not (closing or self_closed or "=" in attrs or name in _ALWAYS_LAYOUT or name in closed):
+            return m.group(0)  # <source>: a placeholder, not a tag
+        return "\n" if name in _HTML_BLOCK else ""
+
     prose = _SELF_CLOSING.sub(self_closing, prose)
     prose = _OPENING.sub(opening, prose)
     prose = _CLOSING.sub("", prose)
-    prose = _HTML_TAG.sub(lambda m: "\n" if m.group(1) else "", prose)
+    prose = _HTML_TAG.sub(html, prose)
     return re.sub(f"{_MASK}(\\d+){_MASK}", lambda m: spans[int(m.group(1))], prose)
 
 
 def strip_components(text: str) -> str:
     """Remove MDX imports, JSX components and HTML tags from Markdown, outside fenced code blocks."""
-    out: list[str] = []
+    parts: list[tuple[bool, str]] = []  # (is prose, text), in order
     prose: list[str] = []
     fence: str | None = None
     for line in text.splitlines(keepends=True):
         m = re.match(r"^\s*(`{3,}|~{3,})", line)
         if fence is None:
             if m:
-                out.append(_strip_components("".join(prose)))
+                parts.append((True, "".join(prose)))
                 prose.clear()
                 fence = m.group(1)
-                out.append(line)
+                parts.append((False, line))
             else:
                 prose.append(line)
             continue
-        out.append(line)
+        parts.append((False, line))
         if m and m.group(1)[0] == fence[0] and len(m.group(1)) >= len(fence) and line.strip() == m.group(1):
             fence = None
-    out.append(_strip_components("".join(prose)))
-    return "".join(out)
+    parts.append((True, "".join(prose)))
+    # Closing tags of the whole page (prose only, inline code aside): components are named case-sensitively,
+    # HTML tags are not.
+    closers = [n for is_prose, t in parts if is_prose for n in re.findall(r"</([A-Za-z][\w.]*)\s*>",
+                                                                             _INLINE_CODE.sub("", t))]
+    closed = set(closers) | {n.lower() for n in closers}
+    return "".join(_strip_components(t, closed) if is_prose else t for is_prose, t in parts)
 
 
 _SHORTCODE = re.compile(r"\{\{[<%]\s*(/?)([\w-]+)(.*?)\s*[>%]\}\}", re.S)
@@ -250,7 +268,7 @@ def parse_markdown(text: str, title: str) -> list[Section]:
             open_fence = fence.group(1)
             continue  # drop the fence line itself (and its language tag), keep the code inside it
         if open_fence is not None:
-            # CommonMark: only a line of the SAME fence character, at least as long, closes the block.
+            # CommonMark: only the same fence character, at least as many of them, closes the block.
             closes = fence and fence.group(1)[0] == open_fence[0] and len(fence.group(1)) >= len(open_fence) \
                 and line.strip() == fence.group(1)
             if closes:
@@ -407,7 +425,7 @@ class PdfLine:
     x1: float  # right end of the line
     text: str
     size: float  # most common font size on the line
-    bold: bool   # True only if EVERY character is bold ("Note: some text" is not)
+    bold: bool   # True only if every character is bold ("Note: some text" is not)
     segments: list[str]  # the line split wherever characters are > 3 font-sizes apart (table columns, tabs)
 
 
@@ -415,7 +433,7 @@ _NUMBERED_HEADING = re.compile(r"^(?:Appendix\s+[A-Z]\b\.?|(\d+(?:\.\d+)*)\.?)\s
 _DOT_LEADERS = re.compile(r"(?:\.\s?){5,}")                     # table of contents: "Intro ......... 3"
 _TABLE_CONTINUED = re.compile(r"^\(?continued (?:on next|from previous) page\)?$", re.I)
 _CAPTION = re.compile(r"^(?:Fig\.|Figure|Table)\s*\d", re.I)
-_BULLET_ONLY = re.compile(r"^[o•◦▪▫‣∙·]$")  # a bullet symbol on its own line ("-" is NOT here: in tables it means "n/a")
+_BULLET_ONLY = re.compile(r"^[o•◦▪▫‣∙·]$")  # a bullet on its own line ("-" isn't one: in tables it means "n/a")
 _SECTION_NUMBER = re.compile(r"(?:\d+(?:\.\d+)*\.?|Appendix\s+[A-Z]\.?)")
 _ROMAN_PAGE = re.compile(r"\b[ivxlc]+\b$", re.I)                # front-matter page numbers: ii, iv, xii
 # Standard document parts: always top-level, never children of the section before them.
@@ -557,8 +575,8 @@ def parse_pdf(data: bytes, title: str) -> list[Section]:
 
 
 def pdf_sections_from_lines(lines: list[PdfLine], page_count: int, title: str) -> list[Section]:
-    """Everything after reading: needs ALL lines of the document (running headers are found by
-    comparing pages; body size and line spacing are document-wide statistics)."""
+    """Everything after reading. Needs all of the document's lines: running headers are found by comparing
+    pages, and body size and line spacing are measured over the whole document."""
     import statistics
 
     lines = [l for l in _drop_running_headers(lines, page_count) if not _TABLE_CONTINUED.match(l.text)]
@@ -572,8 +590,8 @@ def pdf_sections_from_lines(lines: list[PdfLine], page_count: int, title: str) -
     body_size = size_weight.most_common(1)[0][0]
     # Where full lines of text end; a heading line reaching it probably wrapped onto the next line.
     right_edge = statistics.quantiles([l.x1 for l in lines], n=10)[-1] if len(lines) > 1 else lines[0].x1
-    # The document's normal gap between two lines of the same paragraph. A paragraph break is a gap
-    # clearly bigger than THIS document's normal spacing (fixed thresholds break on loosely spaced PDFs).
+    # A paragraph break is a gap clearly bigger than this document's usual line gap. Fixed thresholds broke on
+    # loosely spaced PDFs.
     gaps = [b.top - a.bottom for a, b in zip(lines, lines[1:])
             if a.page == b.page and 0 <= b.top - a.bottom < 2 * body_size]
     normal_gap = statistics.median(gaps) if gaps else 0.0
@@ -625,8 +643,8 @@ def pdf_sections_from_lines(lines: list[PdfLine], page_count: int, title: str) -
         if new_page and buffer and buffer[-1].rstrip().endswith((".", "!", "?", ":")):
             # A new page usually starts a new section (so each section has one page number)...
             close_section()
-        # ...but a sentence cut off by the page break stays in one piece. Its section keeps the page
-        # where the passage STARTS, which is where a reader following the citation should look.
+        # ...but a sentence split by a page break stays in one piece, under the page where it starts, which is
+        # where someone following the citation should look.
         if not buffer:
             buffer_page = line.page
         elif line.page == prev.page and line.top - prev.bottom > paragraph_gap:
@@ -663,8 +681,7 @@ def load_document(filename: str, data: bytes) -> Document:
 
 
 def _check_file_size(path: Path) -> None:
-    """Refuse an oversized file BEFORE reading it: checking len(bytes) afterwards means a 5 GB file
-    is already in memory by the time we say no."""
+    """Refuse an oversized file before reading it; checking afterwards means a 5 GB file is already in memory."""
     size = path.stat().st_size
     if size > MAX_FILE_BYTES:
         raise ValueError(f"{path.name!r} is {size:,} bytes; the limit is {MAX_FILE_BYTES:,}")
