@@ -1,19 +1,15 @@
-"""Score the whole pipeline on the golden set (eval/golden_set.json).
+"""Score the pipeline on the golden set (eval/golden_set.json). Per question:
 
-Per question, four measures from the brief plus what the Phase 3 audit asked for (docs/phase4.md):
-- retrieval relevance: did the retrieved passages contain the evidence quote? Measured by exact text
-  (quote_in_passage), so it works for every chunking strategy: top 5 (what the writer sees) and the
-  top 20 fused candidates before reranking (what the reranker had to choose from). No model involved.
-- answer correctness: a grader model checks each KEY FACT of the reference answer (present / missing /
-  contradicted). Graded against listed facts rather than "does it look right".
-- faithfulness: is every claim supported by SOME retrieved passage (not only the one it cites)?
-- citation accuracy: the share of the answer's cited claims that the Phase 3 checker verified.
-- behaviour: no-answer questions must be refused, not invented; ambiguous ones must be clarified or
-  answered for each reading, labelled.
-- withheld answers: when an answerable question gets no answer (unverified / unchecked / not found),
-  was the withheld draft actually right? That is the cost of the safety layers (audit M4).
+- retrieval: is the evidence quote in the top 5 passages, and in the top 20 before reranking? Checked by text,
+  so it works for any chunking strategy, and needs no model.
+- correctness: a grader model marks each key fact of the reference answer present, missing or contradicted.
+- faithfulness: is every claim supported by some retrieved passage, not just the one it cites?
+- citation accuracy: the share of cited claims that passed the pipeline's own check.
+- behaviour: no-answer questions must be refused; ambiguous ones answered per reading or clarified.
+- withheld answers: when an answerable question got no answer, was the held-back draft right after all?
+  That's what the safety checks cost.
 
-The grader is a model too: it is sanity-checked before its scores are trusted (scripts/run_eval.py --check-grader).
+The grader is a model too, so check it first (scripts/run_eval.py --check-grader).
 """
 import json
 import statistics
@@ -122,11 +118,10 @@ def grade_behaviour(item: dict, response_text: str, grader) -> dict:
 
 
 def faithfulness(answer_text: str, hits: list[FusedHit], judge, verified: set[str] = frozenset()) -> float | None:
-    """Share of the answer's claims supported by ANY retrieved passage (all passages given as one text).
+    """Share of the answer's claims supported by any retrieved passage.
 
-    Claims the pipeline already verified against their own citation (`verified`) are supported by definition,
-    so only the others are sent to the judge. Sending every claim with all five passages made this the most
-    expensive part of an evaluation on a 200,000 tokens/day plan (docs/phase4.md)."""
+    Claims already verified against their own citation count as supported and aren't sent again: judging every
+    claim against all five passages was the most expensive part of an evaluation on a daily token budget."""
     claims = [c.text for c in split_claims(answer_text) if c.kind != "gap"]
     if not claims or not hits:
         return None
@@ -249,7 +244,7 @@ def summarize(records: list[Record]) -> dict:
 
 
 def spread(summaries: list[dict]) -> dict:
-    """Mean and range of every numeric metric over repeated runs (audit M4: never report one run)."""
+    """Mean and range of every numeric metric over repeated runs. One run is never the whole story."""
     out = {}
     for key in summaries[0]:
         vals = [s[key] for s in summaries if isinstance(s[key], (int, float))]

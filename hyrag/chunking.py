@@ -226,7 +226,7 @@ def chunk_semantic(
         return []
     vectors = embedder.embed(flat)
 
-    # Similarity between each unit and the next one IN THE SAME SECTION (sections never merge).
+    # Similarity between each unit and the next one in the same section (sections never merge).
     sims_per_section, i = [], 0
     for units in per_section:
         v = vectors[i : i + len(units)]

@@ -1,8 +1,8 @@
-"""Human review of the grader's verdicts on REAL answers: how often does a person agree with it?
+"""Record whether a person agrees with the grader's verdicts on real answers.
 
-The grader passed a synthetic check (69/69 answers of known quality), but real answers are subtler: a first look
-found it marking a correct answer "missing" a key fact the answer had said in other words (G01, docs/phase4.md).
-An evaluation is only as good as its grader, so its agreement with a human is measured and reported.
+The grader passed a synthetic check (69/69), but real answers are harder: a first look found it marking a fact
+"missing" that the answer had stated in other words. The evaluation is only as good as the grader, so its
+agreement with a human gets measured and reported.
 
 Usage (from the repo root):
   PYTHONPATH=. python scripts/review_grader.py show  eval/results/<run>.jsonl      # print each graded answer

@@ -1,11 +1,8 @@
-"""Two searchable indexes over the same chunks, kept in sync:
+"""Meaning search (vectors in ChromaDB) and keyword search (BM25) over the same chunks.
 
-- dense  (ChromaDB): nearest embedding vectors -> finds text that MEANS the same as the question
-- sparse (BM25):     keyword scoring            -> finds text containing the question's exact words
-
-One source of truth: a SQLite `chunks` table. Chroma is reconciled against it and BM25 is rebuilt from it,
-so the two indexes can never disagree about which chunks exist. `check_sync()` proves it; `repair()` fixes
-Chroma if a crash ever left it behind.
+A SQLite `chunks` table is the source of truth. BM25 is rebuilt from it and Chroma is reconciled against it,
+so the two can't disagree about which chunks exist. check_sync() compares them; repair() fixes Chroma after a
+crash between the two writes.
 """
 import functools
 import json
@@ -35,10 +32,10 @@ CHROMA_TIMEOUT_SECONDS = 30.0
 CHROMA_CONNECT_SECONDS = 5.0
 
 # ----- collections: each company's documents, searched on their own -----
-# One index can hold several companies' documents, but a question must be answered from ONE company's only:
-# measured, "How much paid time off do I get per year?" drew GitLab, Nimbus and PostHog passages into one top 5.
-# A document's collection is the first folder of its source when that folder is a named collection
-# ("posthog/handbook/people/time-off.md" -> "posthog"); everything else is the demo set.
+# One index can hold several companies' documents, but each question is answered from one company's only.
+# Mixed, "How much paid time off do I get per year?" pulled GitLab, Nimbus and PostHog passages into one top 5.
+# A document's collection is its first folder if that's a named collection ("posthog/handbook/..." is
+# "posthog"); everything else is the demo set.
 NAMED_COLLECTIONS = ("posthog",)
 DEFAULT_COLLECTION = "demo"
 COLLECTIONS = (DEFAULT_COLLECTION, *NAMED_COLLECTIONS)
@@ -57,7 +54,7 @@ def check_collection(collection: str | None) -> None:
 # Tokenizer: decides which words can match. Documents and queries go through the same function.
 # ---------------------------------------------------------------------------
 
-# Typography a typed query won't contain (audit G7): fold it so "don’t" matches "don't".
+# Fold typography nobody types, so "don’t" in a document matches "don't" in a question.
 _FOLD = str.maketrans({"‘": "'", "’": "'", "“": '"', "”": '"', "–": "-", "—": "-"})
 # A word, or an identifier joined by _ - . ("err_tunnel_4012", "nimbus-deploy", "800-63b", "3.1.3.1").
 _TOKEN = re.compile(r"[a-z0-9]+(?:[_\-.][a-z0-9]+)*")
@@ -178,7 +175,7 @@ def _chroma_client(data_dir: Path, url: str | None):
 
 
 class ChunkIndex:
-    """All chunks of ONE chunking strategy, searchable by meaning (Chroma) and by keywords (BM25)."""
+    """All chunks of one chunking strategy, searchable by meaning (Chroma) and by keywords (BM25)."""
 
     def __init__(self, embedder: Embedder, data_dir: Path = Path("data/index"), strategy: str = "structure",
                  dedup: bool = True, chroma_url: str | None = None):
@@ -365,11 +362,10 @@ class ChunkIndex:
             return self._nearest(qv, k, collection)
 
     def _nearest(self, qv: np.ndarray, k: int, collection: str | None = None) -> list[Hit]:
-        """EXACT cosine top-k over every stored vector. Chroma's HNSW index is approximate, and on this
-        corpus it missed 1-2 of the true top 10 for 3 of 6 test questions, differently in each process
-        (docs/phase2-audit.md, S6). A matrix product over 1,266 x 1024 floats takes ~0.25 ms and is exact
-        and deterministic. Chroma stays the vector store; past ~100k chunks (~400 MB of float32) switch back to
-        an approximate index with a tuned ef_search and measured recall."""
+        """Exact cosine top-k over every stored vector. Chroma's approximate HNSW search missed 1-2 of the true
+        top 10 for half the test questions, and differently each run; a plain matrix product is exact and takes
+        well under a millisecond here. Past ~100k chunks (~400 MB of vectors) an approximate index makes sense
+        again, with its recall measured."""
         self._drop_stale_caches()
         ids, matrix, labels = self._vector_matrix()
         if not ids:  # emptied while we were embedding
@@ -381,8 +377,8 @@ class ChunkIndex:
         sims = matrix @ (qv / norm)
         eligible = len(ids)
         if collection is not None:
-            # Mask BEFORE taking the top k: filtering afterwards would let other companies' chunks crowd
-            # this company's out of the k slots. The remaining scores are exactly what they were.
+            # Mask before taking the top k, or other companies' chunks could fill all k slots. The scores
+            # that remain don't change.
             inside = labels == collection
             sims = np.where(inside, sims, -np.inf)
             eligible = int(inside.sum())

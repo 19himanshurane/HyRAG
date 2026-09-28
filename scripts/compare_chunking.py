@@ -1,5 +1,5 @@
-"""Compare the three chunking strategies on RETRIEVAL (Phase 4 Step 3a). No LLM calls: evidence is found by exact
-quote in the retrieved chunks, and the reranker runs locally. Dev split only: choosing a strategy is tuning.
+"""Compare the three chunking strategies on retrieval alone. No LLM calls: evidence is found by its exact quote,
+and the reranker runs locally. Dev split only, since picking a strategy is tuning.
 
 Usage (from the repo root): PYTHONPATH=. python scripts/compare_chunking.py [--split dev]
 Needs each strategy's index (scripts/build_index.py --strategy ...).
@@ -7,7 +7,7 @@ Needs each strategy's index (scripts/build_index.py --strategy ...).
 Metrics per strategy, over the answerable questions' evidence quotes:
 - recall@5: share of evidence quotes found in the top 5 (what the writer sees);
 - hit@5: share of questions with at least one evidence quote in the top 5;
-- all@5: share of questions with ALL their evidence in the top 5 (multi-hop needs both documents);
+- all@5: share of questions with all of their evidence in the top 5 (multi-hop needs both documents);
 - recall@20: share found among the top 20 fused candidates before reranking (what the reranker had to work with);
 - MRR: mean of 1/rank of the first evidence quote in the top 5 (0 when absent).
 A quote split across two chunks counts as missing: that is a real cost of a strategy that cuts mid-passage.

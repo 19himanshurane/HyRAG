@@ -1,13 +1,9 @@
-"""Citation verification: does the passage an answer cites actually SUPPORT the sentence it is attached to?
+"""Check that each cited passage actually supports the sentence citing it.
 
-1. split_claims: the answer becomes sentences ("claims"), each with the passage numbers it cites. A citation
-   written after the full stop ("...reconnect. [1]") belongs to the sentence before it.
-2. judge_pair: an LLM judge reads ONE claim and ONE cited passage and answers, as strict JSON,
-   supported / partial / unsupported plus the exact passage words it relied on (`quote`).
-3. The quote is checked in code: a "supported" verdict whose quote is not really in the passage is not
-   trusted (the judge can hallucinate too). It counts as "unverified".
-4. verify: per claim, a claim is supported if at least one cited passage fully supports it. A claim whose
-   citations each support only part of it is judged once more against all its passages together.
+The answer is split into sentences ("claims") with the passages each one cites. A second model judges each
+claim against its passage and has to quote the words it relied on; the quote is then looked up in the passage,
+because the judge can make things up too. A claim passes if one of its passages fully supports it. If each
+only covers part of it, the claim is judged again against all of them together.
 """
 import json
 import re
@@ -19,12 +15,10 @@ from hyrag.llm import ChatResult
 
 VERDICTS = ("supported", "partial", "unsupported")
 
-# Judge model: openai/gpt-oss-20b (low reasoning effort). History, all measured on eval/judge_pairs.json:
-# qwen/qwen3.8-27b was chosen first (0/16 false support over 3 runs, a different family from the writer), but
-# on this Groq plan it has a 1,000 OUTPUT-tokens-per-minute limit and spends up to ~800 hidden tokens on a heavy
-# check: about one check a minute, so real answers kept ending "unchecked" (docs/phase3-audit.md). gpt-oss-20b:
-# 0/16 false support in 2 batched runs (31/32 exact), no output-rate limit, its own 8,000 tokens/min budget.
-# The price: it is the same family as the writer (gpt-oss-120b), so a shared blind spot is possible.
+# Qwen was the first choice (a different model family from the writer), but this Groq plan caps it at 1,000
+# output tokens a minute, which is about one check a minute, so real answers kept coming back "unchecked".
+# gpt-oss-20b had no false support on eval/judge_pairs.json either. The catch: it's the writer's family, so
+# they may share blind spots.
 JUDGE_MODEL = "openai/gpt-oss-20b"
 JUDGE_REASONING_EFFORT = "low"
 # Room for a batch of 8 checks with quotes and reasons plus the model's reasoning (5 checks: 516 tokens).
@@ -103,8 +97,8 @@ class Judgement:
 @dataclass
 class ClaimCheck:
     claim: Claim
-    # supported | partial | unsupported | uncited | gap | unchecked (the judge failed or ran out of time:
-    # NOT evidence that the claim is wrong, and not a pass either)
+    # supported | partial | unsupported | uncited | gap | unchecked. "unchecked" means the judge failed or ran
+    # out of time, which says nothing either way about the claim.
     status: str
     judgements: list[Judgement] = field(default_factory=list)
 
@@ -129,8 +123,7 @@ class CitationReport:
 
 
 def split_claims(text: str) -> list[Claim]:
-    # "Fridays. [1] Staging..." -> "Fridays [1]. Staging...": a citation after the full stop belongs to the
-    # sentence before it (without this, [1] was glued to the NEXT sentence).
+    # "Fridays. [1] Staging..." -> "Fridays [1]. Staging...", otherwise [1] gets attached to the next sentence.
     text = _TRAILING_CITATIONS.sub(r"\2\1", text)
     pieces: list[str] = []
     for line in text.splitlines():
@@ -157,12 +150,11 @@ def split_claims(text: str) -> list[Claim]:
 
 
 def _attach_to_next_citation(claims: list[Claim]) -> list[Claim]:
-    """Uncited sentences are verified together with the next cited sentence, against its citations.
+    """Check uncited sentences together with the next cited one, against its citations.
 
-    The model often cites once, at the end of a paragraph or after a command block ("Open X and click Renew.
-    Then run: ... [1]"), which left correct instructions "uncited". Merging does not assume support: the judge
-    checks the combined text, so an uncited sentence the passage doesn't back makes the claim "partial" and it
-    is still flagged. Uncited sentences with no cited sentence after them stay "uncited"."""
+    The model often cites once at the end of a paragraph or a command block, which left correct steps marked
+    "uncited". The judge still reads the merged text, so an unsupported sentence makes it "partial". Uncited
+    sentences at the very end stay "uncited"."""
     out: list[Claim] = []
     pending: list[Claim] = []
     for claim in claims:
@@ -185,17 +177,12 @@ def _norm(s: str) -> str:
 
 
 def quote_in_passage(quote: str, passage: str) -> bool:
-    """True if the quote occurs in the passage, ignoring case, whitespace/line breaks and look-alike characters.
-    A quote stitched from several places with "..." passes only if EVERY fragment occurs (judges do this when a
-    claim sums up several sentences; measured on eval/judge_pairs.json #20)."""
-    # Compared as WORD sequences: punctuation, list bullets and markdown don't count, the words do. A judge
-    # quoting two bullet points joins them without their "- " markers ("...image correct. Have you pushed..."),
-    # which a character match rejected: a correct, supported answer was withheld (docs/phase3.md, Step 4).
-    # Each SENTENCE of the quote is also its own fragment: judges join two real sentences that are not adjacent
-    # in the passage without marking the gap (measured: a correct max_connections answer was withheld, and
-    # eval/judge_pairs.json #27). Every quoted sentence must still appear word for word, so an invented sentence
-    # fails. (No minimum length: a first version demanded 4+ words and rejected correct table quotes like
-    # "23505 | unique_violation", which are naturally short.)
+    """True if the quote is in the passage, ignoring case, spacing and look-alike characters. A quote stitched
+    together with "..." passes only if every piece is there."""
+    # Words are compared, not characters, because judges drop list bullets when quoting two bullet points, and
+    # a character match rejected those correct quotes. Each sentence is also checked on its own, since judges
+    # join two sentences that aren't next to each other without marking the gap. An invented sentence still
+    # fails. There's no minimum length: table quotes like "23505 | unique_violation" are short and correct.
     words = " " + " ".join(re.findall(r"\w+", _norm(passage))) + " "
     pieces = re.split(r"\.\.\.|…|\[\.\.\.\]|(?<=[.!?])\s+", _norm(quote))
     fragments = [" ".join(re.findall(r"\w+", f)) for f in pieces]
@@ -204,15 +191,14 @@ def quote_in_passage(quote: str, passage: str) -> bool:
 
 
 def _attr(value: str) -> str:
-    # Inside a quoted attribute only a double quote (ends it) or "<" (starts a fake tag) could break the block.
+    # Only a double quote or "<" can break out of the attribute.
     return value.replace('"', "'").replace("<", "&lt;")
 
 
 def _block(passage: str, n: int | None = None, source: str = "") -> str:
-    """One passage for the judge, built like the writer's (hyrag.generation.format_passage): with its source,
-    and a document containing "</passage>" cannot close its block early and pose as instructions to the judge.
-    The writer sees each passage's source, so the judge must too: without it, "this publication" in a passage
-    could not be matched to the document a claim names, and correct answers were withheld (G09)."""
+    """A passage for the judge, formatted like the writer's (generation.format_passage), source included.
+    Without the source the judge couldn't tell which document "this publication" meant, and rejected correct
+    answers that named it."""
     body = re.sub(r"</?\s*passage", "(passage", passage, flags=re.IGNORECASE)
     attrs = (f' n="{n}"' if n is not None else "") + (f' source="{_attr(source)}"' if source else "")
     return f"<passage{attrs}>\n{body}\n</passage>"
@@ -240,9 +226,8 @@ def _check(verdict: str, quote: str, passage: str, reason: str) -> Judgement:
 
 def judge_batch(pairs: list[tuple[str, int]], passages: dict[int, str], judge,
                 sources: dict[int, str] | None = None) -> list[Judgement]:
-    """Judge several (claim, passage number) pairs in ONE request: the instructions and each passage are sent
-    once. One call per pair repeated ~300 tokens of instructions per claim, which made checking cost more
-    tokens than answering (docs/phase3-audit.md, H4). Every pair missing from the reply fails closed."""
+    """Judge several (claim, passage) pairs in one request. One request per pair repeated the instructions
+    every time, and checking cost more tokens than answering. A pair missing from the reply counts as an error."""
     used = sorted({n for _, n in pairs})
     blocks = "\n\n".join(_block(passages[n], n, (sources or {}).get(n, "")) for n in used)
     checks = "\n".join(f'<check id="{i}" passage="{n}">{claim}</check>' for i, (claim, n) in enumerate(pairs, 1))
@@ -286,8 +271,8 @@ def _passage_source(answer: GroundedAnswer, n: int) -> str:
 
 
 def verify(answer: GroundedAnswer, judge) -> CitationReport:
-    """Judge every (claim, cited passage) pair of `answer`: normally ONE judge request per answer (batches of
-    MAX_CHECKS_PER_CALL), plus one per claim whose citations each support only part of it."""
+    """Judge every (claim, cited passage) pair in `answer`. Usually one request per answer, plus one for each
+    claim whose citations only support part of it."""
     if answer.insufficient:  # "I couldn't find this in the documents." makes no claim to verify
         return CitationReport([], 0)
     claims = split_claims(answer.text)

@@ -1,6 +1,5 @@
-"""A thin client for the HyRAG HTTP API. The dashboard uses ONLY this: it never imports the `hyrag` package, so it
-runs in its own small container, and any other frontend (React, a CLI) could replace it without touching HyRAG.
-"""
+"""HTTP client for the HyRAG API. It's all the dashboard knows about HyRAG, so another frontend could replace
+the dashboard without touching the rest."""
 import time
 from dataclasses import dataclass
 

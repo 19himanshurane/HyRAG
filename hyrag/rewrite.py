@@ -1,11 +1,9 @@
-"""Query rewriting for questions retrieval can't match as asked.
+"""Rewrite a question that retrieval can't match as asked into 1-3 focused search queries.
 
-Measured on the golden dev set (docs/phase4.md): "I'm working from home and want to push a change to production
-on Wednesday afternoon. What do I need?" scored -5.80 on the reranker for the right section, below the -3 gate,
-so the system answered "not found" although the documents answer it. Rewritten by hand into search queries
-the same section scored +6 to +8, and only a separate query ("Do I need the VPN when working remotely?") found
-the VPN rule the question implies. So a low-scoring question is rewritten into 1-3 focused search queries, one
-per piece of information the answer needs, and each is retrieved on its own (HybridRetriever.search).
+"I'm working from home and want to push a change to production on Wednesday afternoon. What do I need?" scored
+-5.80 for the right section, under the gate, so it came back "not found" even though the documents answer it.
+As search queries the same section scored +6 to +8, and only a separate query about the VPN found the VPN rule
+the question implies. So each rewritten query covers one thing the answer needs and is searched on its own.
 """
 import json
 import logging

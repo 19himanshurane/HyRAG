@@ -1,20 +1,11 @@
-"""Hybrid retrieval: run meaning search and keyword search, then merge the two ranked lists with
-Reciprocal Rank Fusion (RRF).
+"""Hybrid retrieval: meaning search and keyword search, merged with Reciprocal Rank Fusion, then reranked.
 
-Why ranks and not scores: the two searches score on incompatible scales (cosine similarity 0..1 vs
-unbounded BM25 points), so adding scores is meaningless. RRF uses only each chunk's POSITION in each list:
+RRF adds weight / (rrf_k + rank) over the two lists. It uses ranks because cosine similarity and BM25 points
+aren't on comparable scales. rrf_k = 60 is the value from the original paper (Cormack et al., SIGIR 2009).
 
-    fused(chunk) = sum over lists of  weight / (rrf_k + rank)          (rank starts at 1)
-
-Agreement between the lists wins; a chunk found by only one list still counts. rrf_k = 60 comes from the
-original paper (Cormack, Clarke & Buettcher, SIGIR 2009) and damps the top ranks: 1/61 vs 1/62 is a small
-gap, so no single list's #1 dominates.
-
-Known limit, measured on our corpus: because only positions count, the SIZE of a gap is thrown away. For
-"How do I fix ERR_TUNNEL_4012?" BM25 prefers 4012 decisively (37.3 vs 17.1 points) while dense search puts
-4013 first by a hair; RRF sees only "each list has one of them first". That is the reranker's job:
-with a reranker set, the fused top `top_k` are re-scored by a cross-encoder (hyrag/rerank.py) and the best
-`rerank_top_n` returned.
+Ranks throw away how big a lead is. For "How do I fix ERR_TUNNEL_4012?" BM25 prefers 4012 by 37.3 to 17.1
+while meaning search puts 4013 first by a hair, and RRF only sees one first place each. The cross-encoder
+(rerank.py) re-scores the fused top_k to settle cases like that.
 """
 import logging
 from dataclasses import dataclass, field
@@ -29,8 +20,8 @@ log = logging.getLogger(__name__)
 
 Mode = Literal["hybrid", "dense", "sparse"]
 LISTS = ("dense", "sparse")  # the ranked lists fusion knows how to record on a FusedHit
-# A question, not a document. Longer input (a pasted log file) got a 400 from Mistral AFTER a paid request, and
-# the reranker would cut it to its 512-token window anyway. ~2,000 chars = 300-500 words.
+# Longer input (a pasted log file) got a 400 from Mistral after being billed, and the reranker only reads
+# 512 tokens anyway.
 MAX_QUERY_CHARS = 2000
 
 
@@ -42,20 +33,19 @@ class Scorer(Protocol):
 
 @dataclass(frozen=True)
 class RetrievalConfig:
-    dense_k: int = 10          # candidates taken from meaning search (brief: start with 10)
-    sparse_k: int = 10         # candidates taken from keyword search
-    dense_weight: float = 0.7  # brief's suggested starting point; tune on the evaluation set, not by hand
+    dense_k: int = 10          # candidates from meaning search
+    sparse_k: int = 10         # candidates from keyword search
+    dense_weight: float = 0.7  # tune these on the evaluation set, not by hand
     sparse_weight: float = 0.3
     rrf_k: int = 60
-    top_k: int = 20            # how many fused results to return (the reranker's input size)
-    rerank_top_n: int = 5      # how many the reranker keeps (what the LLM will see in Phase 3)
-    # With a rewriter: a question whose best rerank logit is below this is rewritten into focused search
-    # queries (hyrag/rewrite.py). The same value as the answer gate (hyrag.answer.RETRIEVAL_GATE = logit -3):
-    # exactly the questions that would otherwise be refused get a second chance.
+    top_k: int = 20            # fused results passed to the reranker
+    rerank_top_n: int = 5      # what the writer gets to see
+    # A question whose best rerank logit is below this gets rewritten into focused queries (rewrite.py). It's
+    # the same threshold as the answer gate, so the questions that would be refused get a second try.
     rewrite_below_logit: float = -3.0
 
     def __post_init__(self):
-        # Fail when the config is built, not deep inside Chroma or as a silently inverted ranking.
+        # Fail here rather than deep inside Chroma, or with a silently inverted ranking.
         for name in ("dense_k", "sparse_k", "top_k", "rerank_top_n"):
             if getattr(self, name) < 1:
                 raise ValueError(f"{name} must be at least 1, got {getattr(self, name)}")
@@ -120,7 +110,7 @@ def rerank(query: str, hits: list[FusedHit], scorer: Scorer, top_n: int) -> list
 class HybridRetriever:
     def __init__(self, index: ChunkIndex, config: RetrievalConfig = RetrievalConfig(),
                  reranker: Scorer | None = None, rewriter=None):
-        # Checked here, not in RetrievalConfig: without a reranker, rerank_top_n is unused and a small top_k is fine.
+        # Only matters with a reranker; without one, rerank_top_n is unused.
         if reranker is not None and config.rerank_top_n > config.top_k:
             raise ValueError(f"rerank_top_n ({config.rerank_top_n}) can't exceed top_k ({config.top_k}): "
                              f"the reranker only sees top_k candidates")
@@ -131,16 +121,13 @@ class HybridRetriever:
 
     def retrieve(self, query: str, mode: Mode = "hybrid", rerank_results: bool = True,
                  collection: str | None = None) -> list[FusedHit]:
-        """Ranked candidates for `query`. mode="dense" / "sparse" run one search alone (same output shape),
-        which is what the dashboard's hybrid-vs-dense comparison needs. With a reranker (and
-        rerank_results=True) the fused top_k are re-scored and the best rerank_top_n returned.
-        collection: search one company's documents only (hyrag.index.COLLECTIONS; None = all)."""
+        """Ranked candidates for `query`. mode "dense" or "sparse" runs one search alone, for the dashboard's
+        comparison. collection limits the search to one company's documents (None searches all)."""
         return self.search(query, mode, rerank_results, collection).hits
 
     def search(self, query: str, mode: Mode = "hybrid", rerank_results: bool = True,
                collection: str | None = None) -> "Retrieval":
-        """Like retrieve(), but also reports which parts had to be skipped (`degraded`) and, when the question
-        was rewritten, the search queries used (`queries`)."""
+        """Like retrieve(), plus what had to be skipped (`degraded`) and any rewritten queries (`queries`)."""
         check_collection(collection)  # before any paid call
         first = self._search_one(query, mode, rerank_results, collection)
         c = self.config
@@ -148,7 +135,7 @@ class HybridRetriever:
         if (self.rewriter is None or mode != "hybrid" or not rerank_results or top is None
                 or top >= c.rewrite_below_logit):
             return first
-        from hyrag.rewrite import rewrite_query  # imported here: only questions that need it pay for it
+        from hyrag.rewrite import rewrite_query
 
         usage: dict[str, int] = {}
         queries = rewrite_query(query, self.rewriter, usage)
@@ -163,9 +150,8 @@ class HybridRetriever:
                     collection: str | None = None) -> "Retrieval":
         """One search: dense + sparse, fused, reranked.
 
-        Meaning search needs the Mistral API for the query embedding; keyword search and the reranker run
-        locally. So in hybrid mode an embedding failure (outage, rate limit, time budget) degrades to keyword
-        search + reranking instead of failing the whole question, which it used to (docs/phase3-audit.md, H2)."""
+        Only meaning search needs the network (Mistral embeds the query), so if that fails in hybrid mode we
+        carry on with keyword search and the reranker instead of failing the question."""
         if mode not in get_args(Mode):
             raise ValueError(f"unknown mode {mode!r}; expected one of {get_args(Mode)}")
         if not query.strip():
@@ -181,7 +167,7 @@ class HybridRetriever:
         dense_w = c.dense_weight if mode == "hybrid" else float(mode == "dense")
         sparse_w = c.sparse_weight if mode == "hybrid" else float(mode == "sparse")
         lists: dict[str, tuple[list[Hit], float]] = {}
-        if dense_w > 0:  # a zero-weight list can't change the order: don't pay for its search (or API call)
+        if dense_w > 0:  # a zero-weight list can't change the order, so skip the API call
             try:
                 lists["dense"] = (self.index.search_dense(query, k=c.dense_k, collection=collection), dense_w)
             except Exception as e:
@@ -198,8 +184,8 @@ class HybridRetriever:
         try:
             return Retrieval(rerank(query, candidates, self.reranker, c.rerank_top_n), degraded)
         except Exception:
-            # The fused list is a good answer on its own: a broken reranker shouldn't take search down.
-            # rerank_score stays None on every hit, so callers (Phase 3 confidence) can see it wasn't reranked.
+            # The fused list is usable on its own, so a broken reranker shouldn't take search down.
+            # rerank_score stays None, which tells the confidence score nothing was reranked.
             log.exception("reranker failed; returning the fused top %d instead", c.rerank_top_n)
             for hit in candidates:
                 hit.rerank_score = None
@@ -215,12 +201,11 @@ class Retrieval:
 
 
 def merge_rewritten(ranked_lists: list[list[FusedHit]], top_n: int) -> list[FusedHit]:
-    """Merge the results of several search queries into one top_n.
+    """Merge several queries' results into one top_n.
 
-    Each query's best hit is guaranteed a place first (a multi-hop question needs evidence for EVERY part: one
-    query alone found either the deploy rules or the VPN rule, never both), then the rest by reranker score.
-    A chunk found by several queries appears once, with its best score. Scores come from the query that
-    found the chunk, so the answer gate sees how well the best focused query matched."""
+    Each query's best hit gets a place first, since a multi-part question needs evidence for every part (one
+    query alone found either the deploy rules or the VPN rule, never both). The rest follow by reranker score.
+    A chunk found twice keeps its best score."""
     best: dict[str, FusedHit] = {}
     for hits in ranked_lists:
         for h in hits:

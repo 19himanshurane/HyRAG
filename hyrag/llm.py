@@ -1,9 +1,7 @@
-"""A small Groq chat client (OpenAI-compatible API) using the same retry policy as the embedder.
+"""A small Groq chat client, with the same retry policy as the embedder.
 
-Default model: openai/gpt-oss-120b (open weights, Apache-2.0), the strongest chat model on this account's
-Groq plan (listed 2026-09-25). It is a reasoning model: it "thinks" before answering. The thinking comes back
-in a separate `reasoning` field and never reaches the answer text; reasoning_effort="low" keeps it short
-(12 reasoning tokens and 0.7 s on a small grounded question, measured).
+The default model, openai/gpt-oss-120b, was the strongest one on this Groq plan. It reasons before answering;
+the reasoning comes back in a separate field, and reasoning_effort="low" keeps it short.
 """
 import logging
 import os

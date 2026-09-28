@@ -1,13 +1,11 @@
-"""One retry policy for every outside API (Mistral embeddings, Groq chat), and one time budget per request.
+"""Retries and time budgets for the outside APIs (Mistral, Groq).
 
-429 (rate limited) and 5xx (provider-side trouble) and dropped connections are temporary: wait and retry,
-honouring the server's Retry-After when it sends one. Anything else (bad key, bad request) won't fix itself:
-fail at once, with the provider's error text in the message (it says WHAT was wrong).
+429s, 5xx errors and dropped connections are retried, honouring Retry-After. Anything else, like a bad key,
+fails straight away with the provider's own error text.
 
-Deadline: `with deadline(60):` gives every HTTP call made inside it (in this thread) a shared budget. Each
-attempt's timeout is cut to what is left, and no retry wait sleeps past the end. Without it, one Groq call
-could take 10.2 minutes (5 attempts x 120 s + backoff, measured in docs/phase3-audit.md) and a question makes
-several calls in a row.
+`with deadline(60):` shares one budget between every HTTP call inside it: each attempt's timeout shrinks to
+what's left, and no retry waits past the end. Without it a single Groq call could take ten minutes (5 attempts
+of 120 s plus backoff), and a question makes several calls.
 """
 import contextvars
 import logging

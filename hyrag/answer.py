@@ -1,29 +1,23 @@
-"""One call from question to a structured, honest response: retrieve -> gate -> answer -> verify -> score.
+"""ask(): question in, structured response out. Retrieve, gate, write, verify, score.
 
-Statuses (with a stable `code` a UI can translate):
-- answered    answered                              claims verified (some sentences may still be flagged)
-- partial     partial                               answers what the documents cover, names what they don't
-- unverified  unverified.unsupported_claim|ungrounded   a claim is unsupported, or nothing is cited. The text
-              is WITHHELD from `answer` and kept in `draft`; `verified_claims` lists the sentences that passed.
-- unchecked   unchecked.checker_unavailable|timeout  the checking model failed or the time budget ran out, so
-              the claims are neither verified nor refuted. Shown with a warning (show_unchecked=True) or withheld.
-- not_found   not_found.no_relevant_documents|model_found_nothing   retrieval below the gate (the model is
-              never called), or the model says the documents don't contain it
-- error       error.retrieval_unavailable|writer_unavailable|timeout   no answer could be produced
+Statuses, each with a stable `code` a UI can translate:
+- answered    answered                                  claims verified (some sentences may still be flagged)
+- partial     partial                                   answers what the documents cover, says what they don't
+- unverified  unverified.unsupported_claim|ungrounded   a claim isn't supported, or nothing is cited. The text is
+              kept out of `answer` (it's in `draft`); `verified_claims` has the sentences that passed.
+- unchecked   unchecked.checker_unavailable|timeout     the checker failed or time ran out, so nothing is known
+              either way. Shown with a warning if show_unchecked, otherwise withheld.
+- not_found   not_found.no_relevant_documents|model_found_nothing   below the retrieval gate (no model call), or
+              the model found nothing in the passages
+- error       error.retrieval_unavailable|writer_unavailable|timeout
 
-Production behaviour (docs/phase3-audit.md):
-- every question has a time budget (default 60 s) shared by all its network calls (hyrag.http.deadline);
-- an outage never escapes as an exception: the writer being down is `error`, the judge being down is
-  `unchecked` (not "unverified": an outage is not evidence that the answer is wrong), Mistral being down
-  degrades retrieval to keyword search (`degraded`);
-- each response carries a request id, per-step timings, requests and tokens, and is logged as one JSON line
-  (the question itself is not logged, only its length and a hash: questions can contain personal data);
-- an optional AnswerCache serves repeated questions until the index changes.
+Outages never raise. A writer outage is `error`; a checker outage is `unchecked`, not `unverified`, because an
+outage says nothing about whether the answer is right; a Mistral outage falls back to keyword search. Each
+question shares one time budget across its network calls, and is logged as one JSON line with the question
+hashed, not stored, since questions can contain personal data.
 
-Why three layers rather than one retrieval threshold (eval/near_miss_questions.json): a near miss can score
-HIGH retrieval: "How do I fix ERR_TUNNEL_4099?" (a code no document mentions) scored 0.90 because the
-4012/4013 pages look relevant. There the writer said "not found" itself; when a writer does improvise,
-citation verification is the layer that catches it.
+The retrieval gate alone isn't enough: "How do I fix ERR_TUNNEL_4099?" (a code no document mentions) scores
+0.90 because the 4012/4013 pages look relevant. The writer or the citation check has to catch those.
 """
 import dataclasses
 import hashlib
@@ -44,18 +38,15 @@ from hyrag.retrieval import FusedHit
 
 log = logging.getLogger(__name__)
 
-# Below this retrieval confidence the writer is not called. Calibration and near-miss sets (2026-09-26):
-# every question that got a correct answer scored >= 0.78 (the lowest: a two-part question); unanswerable
-# ones 0.00-0.34, except the near miss ERR_TUNNEL_4099 at 0.90 (why the gate is only the first layer).
-# 0.5 = the rerank logit -3, the centre of the measured gap. Tuned on those 26 questions: re-check on the
-# Phase 4 held-out set.
+# Below this the writer isn't called. Answerable calibration questions all scored 0.78 or more, unanswerable
+# ones 0.34 or less (apart from the ERR_TUNNEL_4099 near miss above). 0.5 is rerank logit -3, the middle of
+# that gap. Set on 26 questions, so it gets re-checked on the held-out evaluation set.
 RETRIEVAL_GATE = 0.5
-# A document is suggested for manual checking only if its best passage reaches this relevance. On the
-# unanswerable questions it keeps SQLSTATE 23599 -> the PostgreSQL error-code appendix (0.34) and the
-# Kubernetes pages for the autoscaler question (0.17), and drops everything for the printer (0.00).
+# Suggest a document to check by hand only above this. It keeps the PostgreSQL error-code appendix for an
+# unknown SQLSTATE (0.34) and drops everything for the office printer (0.00).
 SUGGEST_MIN_RELEVANCE = 0.1
 CLOSEST_SHOWN = 3
-# One question's total time. Measured: median 7.3 s, worst 40.5 s under rate limiting (18 live questions).
+# Median 7.3 s and worst 40.5 s under rate limiting, over 18 live questions.
 DEFAULT_BUDGET_SECONDS = 60.0
 
 

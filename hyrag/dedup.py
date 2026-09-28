@@ -1,15 +1,12 @@
-"""Near-duplicate detection for chunks, by TEXT, not by embedding.
+"""Near-duplicate chunks, found by comparing text rather than embeddings.
 
-Measured on the corpus (docs/phase1-audit.md has the method), cosine similarity of our embeddings is the
-wrong signal for "the same text twice":
-- it over-flags: 633 chunk pairs score > 0.95, almost all different sections of one document (median text
-  overlap 25%), because the embedded text starts with a long shared heading path;
-- it misses: NIST boilerplate copied word for word between two PDFs scores only 0.87-0.92, since each copy
-  sits under a different document title.
+Embedding similarity got this wrong both ways. 633 chunk pairs scored over 0.95 while sharing a median of 25%
+of their text (they start with the same long heading path), and NIST boilerplate copied word for word between
+two PDFs scored only 0.87-0.92 (different document titles above it).
 
-So two chunks are duplicates when their BODY texts share >= 90% of their 3-word sequences AND contain
-exactly the same "fact tokens" (numbers and identifiers). The second rule keeps bgwriter_flush_after and
-backend_flush_after apart: their descriptions are 91% identical, but they are different settings.
+Two chunks count as duplicates when their bodies share 90% of their 3-word sequences and contain exactly the
+same numbers and identifiers. The second rule keeps bgwriter_flush_after and backend_flush_after apart: their
+descriptions are 91% the same, but they're different settings.
 """
 import re
 import unicodedata

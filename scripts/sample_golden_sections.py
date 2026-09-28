@@ -1,5 +1,5 @@
-"""Pick the sections the golden set's lookup questions are written about, AT RANDOM (fixed seed), so the
-questions cover whatever the corpus holds rather than cases the author already knows work.
+"""Pick, at random with a fixed seed, the sections the golden set's lookup questions are written about. That way
+the questions cover what the documents hold, not the cases the author already knows work.
 
 Usage: python scripts/sample_golden_sections.py   -> eval/golden_sample.json (the draw, kept as a record)
 """

@@ -80,7 +80,7 @@ def fetch_posthog(client: httpx.Client) -> list[dict]:
 def main() -> None:
     import sys
 
-    if sys.argv[1:] == ["--posthog"]:  # add/refresh ONLY the PostHog pages; the other documents stay as they are
+    if sys.argv[1:] == ["--posthog"]:  # refresh only the PostHog pages; the rest stay as they are
         path = CORPUS / "manifest.json"
         kept = [e for e in json.loads(path.read_text(encoding="utf-8")) if not e["path"].startswith("posthog/")]
         with httpx.Client(follow_redirects=True, timeout=60, headers={"User-Agent": "HyRAG-corpus-fetch"}) as client:

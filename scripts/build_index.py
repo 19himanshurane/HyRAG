@@ -1,10 +1,9 @@
-"""Build (or update) the search index for one chunking strategy, for the Phase 4 comparison.
+"""Build or update the index for one chunking strategy.
 
 Usage (from the repo root): PYTHONPATH=. python scripts/build_index.py --strategy fixed|structure|semantic
-Each strategy gets its own chunk table and Chroma collection (data/index/chunks-<strategy>.*). All three use the
-same target size (800 characters); fixed and structure overlap 120, semantic cuts on topic changes without
-overlap (Phase 1). Parsing is cached by the document store and embeddings by the embedding cache, so a
-re-run only pays for text it has not embedded before.
+Each strategy has its own chunk table and Chroma collection (data/index/chunks-<strategy>.*). All aim for 800
+characters; fixed and structure overlap by 120, semantic cuts where the topic changes. Parsed documents and
+embeddings are cached, so a re-run only pays for text it hasn't embedded before.
 """
 import argparse
 import statistics

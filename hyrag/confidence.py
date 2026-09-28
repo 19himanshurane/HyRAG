@@ -1,17 +1,16 @@
-"""How much should a reader trust this answer? Three measured parts and one composite score.
+"""How much to trust an answer: three parts and an overall score.
 
-- retrieval: how relevant the best passage is, from the reranker's top score (a raw logit). The mapping below is
-  calibrated on eval/calibration_questions.json: 10 answerable and 10 unanswerable questions. The top logit
-  separated them completely (answerable +0.08..+9.40, unanswerable -5.83..-11.25), while meaning-search
-  similarity barely did (0.784+ vs 0.751-) and BM25 overlapped. The textbook sigmoid(logit) gave a correctly
-  answered table lookup (SQLSTATE 23505, logit 0.08) only 0.52, so the curve is centred in the measured gap.
-- citations: the share of the answer's claims that Step 2 verified (partial counts half). "The documents
-  don't cover X" sentences are honest gaps and are left out.
-- completeness: the judge splits the question into its parts and marks each answered / not covered (the answer
-  says the documents lack it) / missing (ignored).
+- retrieval: the reranker's top score, mapped to 0..1. On 10 answerable and 10 unanswerable calibration
+  questions the top logit separated the two groups completely (+0.08 and up vs -5.83 and down), which meaning
+  search similarity barely did. Plain sigmoid(logit) gave a correct table lookup at logit 0.08 only 0.52, so
+  the curve is centred in the gap instead.
+- citations: the share of claims that passed the citation check (partial counts half). Sentences saying the
+  documents don't cover something are left out.
+- completeness: the judge splits the question into parts and marks each answered, not covered (and the answer
+  says so), or missing.
 
-The composite is a weighted mean, then hard caps for red flags, so one bad sign can't be averaged away. The
-weights and caps are judgement calls, to be checked against human ratings in Phase 4.
+The overall score is a weighted mean with hard caps on top, so one bad sign can't be averaged away. The weights
+and caps are judgement calls that still need checking against human ratings.
 """
 import json
 import math
@@ -21,25 +20,23 @@ from hyrag.citations import CitationReport
 from hyrag.generation import GroundedAnswer
 from hyrag.retrieval import FusedHit
 
-# Calibration (eval/calibration_questions.json, 2026-09-25): centre in the gap between the lowest answerable
-# (+0.08) and the highest unanswerable (-5.83) top rerank logit; scale so the ends of that gap map to ~0.9 / ~0.1.
+# Centred between the lowest answerable (+0.08) and highest unanswerable (-5.83) logit, scaled so the two ends
+# of that gap land near 0.9 and 0.1.
 RERANK_CENTRE, RERANK_SCALE = -3.0, 1.4
-# Fallback when reranking failed: meaning-search similarity (answerable >= 0.784, unanswerable <= 0.751 on the
-# same questions: a thin margin, so this signal is weaker and flagged).
+# Used only if reranking failed. The margin here is thin (0.784 vs 0.751), so this signal is flagged as weaker.
 DENSE_CENTRE, DENSE_SCALE = 0.77, 0.015
 
 WEIGHTS = {"retrieval": 0.3, "citations": 0.4, "completeness": 0.3}
 CAPS = {  # flag -> the highest score an answer with that flag can get
     "ungrounded": 0.2,          # cites nothing at all (every prompt-injection hijack looked like this)
-    # At 0.5 a deliberately wrong answer (every claim unsupported) still scored "medium": anything the documents
-    # don't back must put the answer below the medium threshold.
+    # Capped at 0.5, a deliberately wrong answer still came out "medium".
     "unsupported_claim": 0.4,   # at least one cited claim the judge found unsupported
     "partial_claim": 0.7,       # a claim with a fact the passage lacks: never "high"
     "unchecked_claim": 0.4,     # the judge failed or ran out of time on a claim: unknown is not verified
     "truncated": 0.5,           # cut off by the token budget
     "missing_part": 0.6,        # a part of the question silently ignored
-    # Honestly says a part isn't in the documents: not a red flag, but "high" means the WHOLE question is
-    # answered (a verified half answer otherwise averaged to 0.85).
+    # Says openly that part isn't in the documents. Fine, but "high" should mean the whole question is answered,
+    # and a verified half answer averaged 0.85 without this.
     "incomplete": 0.75,
 }
 LEVELS = ((0.8, "high"), (0.5, "medium"), (0.0, "low"))
@@ -133,7 +130,7 @@ class Confidence:
 
 def score_answer(answer: GroundedAnswer, report: CitationReport, judge) -> Confidence:
     retrieval, signal = retrieval_confidence(answer)
-    if answer.insufficient:  # nothing was claimed; Step 4 turns this into a helpful "not found" response
+    if answer.insufficient:  # nothing was claimed; ask() turns this into a "not found" response
         return Confidence(0.0, "not_found", retrieval, signal, 0.0, 0.0)
     citations = citation_coverage(report)
     completeness = assess_completeness(answer.question, answer.text, judge)

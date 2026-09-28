@@ -1,15 +1,12 @@
-"""Seed the index with a folder of documents: the one-shot job Docker Compose runs before the API starts.
+"""Index folders of documents. Docker Compose runs this once before the API starts.
 
 Usage: python -m hyrag.seed [DIR ...]          (default: corpus sample_docs)
 
-Safe to re-run. Chunk ids come from content and vectors are cached, so a second run re-embeds nothing and
-changes nothing unless a document did. It goes through the same Pipeline call as scripts/build_index.py, so
-document names keep their folder ("engineering/k8s-secrets.md") and match the golden set's evidence.
+Re-running is cheap: unchanged chunks keep their ids and their vectors are cached. Documents keep their folder
+in their name ("engineering/k8s-secrets.md"), which the golden set's evidence relies on.
 
-Then it repairs the index: the chunk table (in HYRAG_DATA_DIR) and the vectors (Chroma, possibly another
-container with its own volume) are stored apart, and wiping one volume but not the other would leave them out
-of sync. Exit code 1 if any file failed or the index is still out of sync, so the API never starts on a
-half-built index.
+The chunk table and the vectors can live in different volumes, so the seed ends with repair() in case one was
+wiped. It exits 1 if a file failed or the index is still out of sync, and Compose then won't start the API.
 
 Environment: MISTRAL_API_KEY, HYRAG_DATA_DIR (data), HYRAG_STRATEGY (structure), HYRAG_CHROMA_URL (optional).
 """

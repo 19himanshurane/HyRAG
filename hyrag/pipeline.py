@@ -1,8 +1,7 @@
-"""The single way documents enter and leave HyRAG: store -> chunk -> index, and deletions reach both.
+"""Store, chunk and index documents, and delete them from both the store and the index.
 
-Before this module, ingestion (DocumentStore) and search (ChunkIndex) were two islands: a document deleted
-from the store stayed searchable, so answers could cite a withdrawn policy (audit H1). Everything that adds,
-changes or removes a document should go through a Pipeline.
+Everything that adds, changes or removes a document goes through here. Before this existed, a document deleted
+from the store stayed searchable, so answers could cite a withdrawn policy.
 """
 import logging
 from collections.abc import Callable
@@ -32,8 +31,8 @@ class Pipeline:
         return docs
 
     def ingest_one(self, path: Path, *, root: Path) -> Document:
-        """Parse, store, chunk and index ONE file in this process (no worker pool): for a web server, where
-        spawning worker processes per upload is slow and fragile. Raises if the file can't be ingested."""
+        """Parse, store, chunk and index one file in this process. The API uses this: starting worker processes
+        for each upload is slow and fragile. Raises if the file can't be ingested."""
         doc = self.store.ingest_file(path, root=root)
         self._index(doc)
         return doc

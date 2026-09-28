@@ -1,4 +1,4 @@
-"""HTTP API for HyRAG (Phase 5): ask questions, list and add documents.
+"""HTTP API: ask questions, list and add documents.
 
 Run:  uvicorn hyrag.api:app --host 0.0.0.0 --port 8000     (OpenAPI docs at /docs)
 
@@ -12,9 +12,9 @@ Endpoints:
 - GET  /health         liveness: the process is up.
 - GET  /ready          readiness: keys, index and reranker model are usable (503 with the reasons if not).
 
-HTTP status follows the answer's status: every honest outcome (answered, partial, not_found, unverified,
-unchecked) is 200 with its `status`/`code`, because "the documents don't say" is a correct result, not a server
-failure. Only `error` responses map to 5xx: quota exhausted and outages -> 503, timeouts -> 504.
+Every answer the pipeline actually gives, including not_found and unverified, is a 200 with its status and
+code: "the documents don't say" is a valid result, not a server failure. Only `error` becomes a 5xx: 503 for
+outages and exhausted quota, 504 for timeouts.
 
 Configuration (environment):
   HYRAG_DATA_DIR (data)  HYRAG_STRATEGY (structure)  HYRAG_BUDGET_SECONDS (60)

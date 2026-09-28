@@ -1,4 +1,4 @@
-"""Run the golden-set evaluation. Tune and debug on DEV only; score TEST once, at the end (docs/phase4.md).
+"""Run the golden-set evaluation. Tune and debug on the dev split; score the test split once, at the end.
 
 Usage (from the repo root):
   PYTHONPATH=. python scripts/run_eval.py --check-grader            # is the grader trustworthy? (dev items)
@@ -7,12 +7,12 @@ Usage (from the repo root):
   PYTHONPATH=. python scripts/run_eval.py --summarize eval/results/<name>.jsonl
   options: --strategy structure|fixed|semantic   --limit N   --budget SECONDS
 
-Crash-safe: every question's record is appended to eval/results/<time>-<split>-<strategy>.jsonl the moment it
-is scored (one JSON object per line, flushed), and "started <id>" is printed before each question, so a hang
-is visible at once and a stopped run loses nothing. (The first version wrote results only at the end; a run
-hung on question 10 after an hour and everything was lost.) Do not rebuild an index while a run reads it.
+Each question's result is appended to eval/results/<time>-<split>-<strategy>.jsonl as soon as it's scored, and
+"started <id>" is printed first, so a hang shows up straight away and a stopped run loses nothing. (The first
+version saved only at the end, and a run that hung on question 10 lost an hour of work.) Don't rebuild an index
+while a run is reading it.
 
-Cost: per question ~1 writer + ~4 checker/grader requests. The judge model's plan allows 1,000 requests/day.
+Cost: about 1 writer and 4 checker/grader requests per question.
 """
 import argparse
 import dataclasses

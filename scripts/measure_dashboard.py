@@ -1,9 +1,9 @@
-"""Is the Streamlit dashboard slow? Measures ITS OWN cost, separately from the API's.
+"""How much time does the dashboard itself add? Measured separately from the API.
 
 Usage (from the repo root): PYTHONPATH=. python scripts/measure_dashboard.py
-Runs the real dashboard script (Streamlit AppTest) against a real HTTP API on this machine that uses a real index
-and fake, instant models, so every millisecond measured is the dashboard + HTTP, not model time. AppTest adds its
-own harness overhead, so these are upper bounds for the Streamlit side (browser drawing is not included).
+Runs the real dashboard (Streamlit AppTest) against a local API with a real index and instant fake models, so
+the time measured is the dashboard and HTTP, not the models. AppTest adds some overhead of its own, so treat the
+numbers as upper bounds. Browser rendering isn't included.
 """
 import os
 import socket

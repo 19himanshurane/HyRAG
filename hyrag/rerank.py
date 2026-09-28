@@ -1,19 +1,15 @@
-"""Cross-encoder reranking: score each (question, chunk) pair by reading them TOGETHER.
+"""Rerank candidates with a cross-encoder, which reads the question and the chunk together.
 
-The searches before this step never see the question and the chunk side by side. Meaning search compares two
-vectors made separately (a "bi-encoder"); BM25 counts shared words. A cross-encoder feeds "question [SEP]
-chunk" through one transformer, so every question word can attend to every chunk word. That is how it can
-tell "ERR_TUNNEL_4012" from "ERR_TUNNEL_4013" where a single vector blurs them. The price: one model pass per
-pair, so it only runs on the ~20 fused candidates, never on the whole corpus. Measured on this project's
-laptop CPU (6 threads): 31 ms for one pair, ~410-550 ms for 20; about 13 s to import PyTorch and load the model.
+Meaning search compares two vectors made separately, and BM25 counts shared words. A cross-encoder runs the
+question and chunk through one transformer, so it can tell ERR_TUNNEL_4012 from ERR_TUNNEL_4013 where a single
+vector blurs them. It costs one model pass per pair, so it only sees the ~20 fused candidates: about 0.5 s for
+20 on a laptop CPU, plus ~13 s once to load PyTorch and the model.
 
-Model: cross-encoder/ms-marco-MiniLM-L6-v2 (Apache-2.0 model card; 22M parameters, 88 MB, CPU is enough).
-Trained on MS MARCO (real Bing questions + answer passages). MS MARCO's own terms are non-commercial: the
-licence on the weights says Apache-2.0, but check with legal before shipping it in a commercial product.
+Model: cross-encoder/ms-marco-MiniLM-L6-v2 (22M parameters, 88 MB). The weights are Apache-2.0, but they were
+trained on MS MARCO, whose terms are non-commercial, so check that before any commercial use.
 
-The model is fetched ONCE, explicitly (`python -m hyrag.rerank`, or a Docker build step), and loaded from
-the local cache at runtime. Letting the load reach the Hub costs 250 s when the Hub is unreachable, even
-with the model cached (measured, docs/phase2-audit.md round 2).
+Download it once (`python -m hyrag.rerank`, or the Docker build does it). At runtime it only loads from the
+local cache: letting it check the Hub took 250 s whenever the Hub was unreachable, even with the model cached.
 """
 import logging
 import threading
