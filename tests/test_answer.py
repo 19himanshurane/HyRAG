@@ -24,8 +24,8 @@ class FakeRetriever:
         self.hits, self.degraded = hits, degraded
         self.index = type("Index", (), {"version": lambda _self: version})()
 
-    def search(self, question, mode="hybrid"):
-        self.last_mode = mode
+    def search(self, question, mode="hybrid", collection=None):
+        self.last_mode, self.last_collection = mode, collection
         if not question.strip():
             raise ValueError("empty query")
         return Retrieval(list(self.hits), list(self.degraded))
@@ -143,7 +143,7 @@ from hyrag.http import DeadlineExceeded  # noqa: E402
 
 
 class BrokenRetriever(FakeRetriever):
-    def search(self, question, mode="hybrid"):
+    def search(self, question, mode="hybrid", collection=None):
         raise RuntimeError("index unavailable")
 
 

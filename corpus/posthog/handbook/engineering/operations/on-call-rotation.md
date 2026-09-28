@@ -1,0 +1,221 @@
+---
+title: On-call and escalation
+sidebar: Handbook
+showTitle: true
+---
+
+At PostHog, every engineer is responsible for maintaining their team's services and systems. That includes:
+* Tracking and visualizing key performance metrics
+* Configuring automated alerting
+* Documenting runbooks for on-call resolution
+* First-responder to team-owned services during working hours
+
+In addition, every engineer regardless is part of the global follow-the-sun on-call rotation. 
+
+## Escalation schedules
+
+Your team's schedules, the escalation paths that page them, and your team's entry in the incident.io Team catalog are all [defined in Terraform](#managing-on-call-in-terraform) – one block per team, in one file. Setting a team up, or changing who's on call and when, means editing that block rather than the incident.io dashboard.
+
+Cover for PTO and swaps is the exception: [overrides](#make-sure-your-availability-is-up-to-date) still happen in the dashboard, because Terraform owns the rotations and not what's layered on top of them.
+
+### Team schedules
+
+A team has up to three schedules in [incident.io](https://app.incident.io/posthog/on-call/schedules), and it gets the ones its Terraform block asks for:
+
+* `On call: {team}`
+    - Working-hours cover, and where alerts routed to the team go. Everyone gets their own rotation, you just set the start of your normal working day, weekdays only
+    - Stagger start times to cover as much of the day as your team can – 08:00 for an EU-based engineer leaves 17:00 onwards for a US-based one
+    - Gaps are fine. Nobody is woken up here: a critical alert that finds nobody on call goes to [global on-call](#global-on-call-schedule) instead
+* `Page team (emergency): {team}`
+    - The "everything is broken" rotation, paged only when [someone escalates by hand](#manual-escalation-schedules)
+* `Support Hero: {team}`
+    - The [support hero rotation](/handbook/engineering/operations/support-hero). Everyone takes turns one at a time, handing over every week or two. Nothing pages it
+
+### Manual escalation schedules
+
+Teams that own production-critical services also have a `Page team (emergency): {team}` schedule, triggered by hand by whoever is handling an incident and needs more help. Other teams don't need one. The schedule and the escalation path that pages it share this name – there's exactly one of each per team.
+
+Unlike `On call: {team}`, this rotation has to cover the clock, every day of the week. You describe it as groups – blocks of the clock with the people covering each one, an EU group and a US group, or however your team is actually spread. Everyone in a group is on call for the whole of its window rather than taking turns, and the page cycles between them one at a time.
+
+Group windows have to tile the full 24 hours between them. If they don't, the Terraform plan fails and names the first uncovered minute – somebody escalating by hand at 3am should never find nobody there.
+
+> 💡 Don't rearrange this schedule around your own availability, and don't request cover on it. It's best-effort cover rather than a rotation with turns to trade – everyone in a group is on call for the whole window. If you're genuinely unavailable, [add an override on yourself](#make-sure-your-availability-is-up-to-date) and the rest of your group is still there.
+
+#### When to use manual escalation
+
+Manual escalation should be used when:
+* The primary on-call person is unresponsive or unavailable
+* The situation is critical and requires immediate additional expertise
+* You're the on-call responder and need help from a specific team outside normal working hours
+
+#### How to trigger manual escalation
+
+1. From within an incident in incident.io, use the escalation options to page the relevant `Page team (emergency): {team}`
+2. This pages whoever is on that team's emergency rotation right now, then everyone on it – one person at a time, 10 minutes per level
+3. Any available team member can then respond and assist with the incident
+
+> 💡 Manual escalation is a safety net, not a shortcut. Always try the normal escalation paths first before manually escalating to an entire team.
+
+### Global on-call schedule
+
+[Schedule in incident.io](https://app.incident.io/posthog/on-call/schedules/01K7PNGFNP8ZZSCSTBXKPVWVAZ)
+
+> 💡 You can use @on-call-global in Slack to reach out to whoever is on call! This syncs automatically with the incident.io schedule. This group is also automatically added to all incidents.
+
+PostHog Cloud doesn't shut down at night (_whose_ night anyway?) nor on Sunday. As a 24/7 service, our goal is to be 100% operational 100% of the time. The global on-call is the last line of defense and is escalated to:
+* if nobody at the `On call: {team}` level is available
+* if the alert is critical but has no team assignment (for whatever reason)
+
+It's also the one schedule not defined in Terraform – it changes too often, and by too many hands, for that to be safe.
+
+This schedule has 3 week day layers:
+- **Europe** (06:00 to 14:00 UTC) - (8 hours)
+- **Americas East** (14:00 to 22:00 UTC) - (8 hours)
+- **Americas West**  (22:00 to 06:00 UTC) - (8 hours)
+
+And 2 weekend layers:
+- **Europe Weekend** (06:00 to 18:00 UTC) - (12 hours)
+- **Americas Weekend** (18:00 to 06:00 UTC) - (12 hours)
+
+### Why is the on-call rotation spread across all engineers?
+
+If you're in a product team, it's tempting to think that service alerts don't apply to you, or that when you're on call you can just hand everything off to the infrastructure team. That's not the case, because it's important that every engineer has a basic understanding of how our software is deployed, where the weak points in our systems are, and what the failure modes look like. This understanding should be all that's needed to follow the runbooks, and if you follow the causes of alerts, ultimately you'll be less likely to ship code that takes PostHog down.
+
+Besides knowledge, being on call requires availability – including weekends. If teams had their own separate rotations, there would be more people on call in total, and each would have to stand by 24/7 as our teams aren't big enough to follow the sun. This would be more stressful because of availability constraints, while being less productive because of the rare alerts being spread across multiple people.
+
+## Escalation paths
+
+A schedule says who's on call. An escalation path says who gets paged, in what order, and how long they have to respond. A team gets the paths that follow from the schedules it has:
+
+* `On call: {team}` – where an alert routed to the team goes, previously named `PostHog: {team}`
+* `Page team (emergency): {team}` – where you land when you [escalate to a team by hand](#manual-escalation-schedules)
+
+Two more are org-wide rather than owned by a team: `Default escalation`, for an escalation that's nobody's in particular, which pages global on-call for 30 minutes and then the last-resort rotation alongside it; and the `Slack only: ...` paths, which post to a Slack channel and page nobody.
+
+Paths are named so that listing them alphabetically – which is what the escalation picker does – puts them in the order you'd reach for them.
+
+### The standard on-call path
+
+Every `On call: {team}` path is the same shape, so paging behavior doesn't vary by team:
+
+1. Post to the team's own alert channel, whatever the priority
+2. If the alert is critical, page the team's `On call: {team}` rotation – 10 minutes to ack
+3. Still unacked? Post to #alerts, then page global on-call alongside the team – 15 minutes to ack
+4. Repeat
+
+Non-critical alerts stop at step 1 – the team sees them in Slack, nobody gets woken up. Levels page one person at a time, moving on every two minutes until somebody acks, rather than paging a whole rotation at once.
+
+## Managing on-call in Terraform
+
+Teams, schedules, rotations, and escalation paths all live in the [`incidentio-oncall` module](https://github.com/PostHog/posthog-cloud-infra/tree/main/terraform/modules/incidentio-oncall) in `posthog-cloud-infra`. Everything one team needs is a single block in a single file: [`terraform/environments/incidentio/oncall/terragrunt.hcl`](https://github.com/PostHog/posthog-cloud-infra/blob/main/terraform/environments/incidentio/oncall/terragrunt.hcl).
+
+You supply people and hours – rotation mechanics aren't configurable. Read the existing team blocks in that file for the structure, and the module's README and `teams` variable for what each field means and the rules they have to follow. Those are the source of truth, so this page doesn't restate them.
+
+Open a PR against [`posthog-cloud-infra`](https://github.com/PostHog/posthog-cloud-infra) and CI runs the plan. Read it before merging – it names every rotation and paging level that moves. Don't make these changes in the incident.io dashboard, because the next apply puts them back.
+
+Rather than hand-writing the HCL, point your editor's agent at it:
+
+```
+In posthog-cloud-infra, add my team to the incident.io on-call setup.
+
+Read terraform/modules/incidentio-oncall/ first – the README and the `teams`
+variable, which document every field and the rules they follow – then add a
+block for my team to `teams` in
+terraform/environments/incidentio/oncall/terragrunt.hcl, following the existing
+team blocks for structure.
+
+Here's who's on call and when, in local time: <people, their working hours, and
+who covers escalation out of hours>.
+
+Then run `terragrunt hcl validate` and `terraform fmt`, and show me the plan.
+```
+
+## Before going on call
+
+### Mindset
+
+Read: [Jos Visser: Ten things not to worry about regarding oncall](https://josvisser.substack.com/p/ten-things-not-to-worry-about-regarding?r=b67wp&utm_source=posthog&utm_medium=web&triedRedirect=true)
+(Worth the read, even if you're an on-call veteran.)
+
+### Be prepared
+
+Because the stability of production systems is critical, on-call involves weekends too (unlike Support Hero). More likely than not, nothing will happen over the weekend – but you never know, so the important thing is to keep your laptop at hand.
+
+Before going on call, make sure you have the **Incident.io mobile app** [Android](https://play.google.com/store/apps/details?id=com.incidentio.incidentio&pli=1) / [iOS](https://apps.apple.com/us/app/incident-io/id6471268530) installed and configured. This way it'll be harder to miss an alert.
+
+> TRICKY: We use Slack auth for incident.io and Slack really doesn't like you using the mobile web version. Make sure to choose `Sign in with Slack` and then use your email to login to Slack, **not** google auth as that seems to cause redirect issues for some people.
+
+> Still having redirect issues signing up with Slack? [Create a Slack password instead of using Google SSO](https://posthog.slack.com/account/settings#password), then log in with that password.
+
+To get a calendar with all your on-call shifts from incident.io go to the [schedules section](https://app.incident.io/posthog/on-call/schedules), select `Sync calendar` at the top right and copy the link for the webcal feed. In google calendar, add a new calendar from URL and paste the link in there.
+
+### Make sure alerts can break through Do Not Disturb
+
+The incident.io app does not configure these settings for you on install. By default your phone's Do Not Disturb, Sleep, or Focus mode will silence pages. Configure both the incident.io app and phone contact so alerts always come through.
+
+#### iOS
+
+1. **Save the incident.io On-call contact to your phone.** In the incident.io mobile app, go to `Settings` → `Contacts` and enable the toggle to add the contact to your address book.
+2. **Enable Emergency Bypass for that contact.** Open the `Contacts` app → `Lists` → `All Contacts`, find `incident.io On-call`, tap `Edit` → `Ringtone` → toggle on `Emergency Bypass`. Repeat for `Text Tone` so SMS pages also break through. On iOS 18+, edit from `All Contacts` rather than the auto-grouped "incident.io" section to avoid a known Apple bug.
+3. **Allow critical notifications.** `Settings` → `incident.io` → `Notifications` → enable `Critical Alerts`. These bypass silent and Focus mode for push notifications.
+4. **Allowlist incident.io in every Focus mode.** `Settings` → `Focus` → for each mode (Sleep, Do Not Disturb, Work, etc.) → `Apps` → add `incident.io` to the allowed list.
+5. **Optional: Watch for sound redirects.** Apple Watch pairing, AirPods Announce Notifications, and Screen Time can route incident.io alerts away from your phone speaker – disable the incident.io app in the Watch app's notification list and add incident.io to Screen Time's "Always Allowed" apps.
+
+#### Android
+
+Exact menu paths vary by manufacturer (Pixel, Samsung, OnePlus, etc.), but the same setup applies:
+
+1. **Grant Do Not Disturb access to the app.** Accept the prompt during incident.io onboarding, or set it manually via `Settings` → `Apps` → `incident.io` → `Special app access` → `Do Not Disturb access`.
+2. **Disable battery and sleep restrictions for the app.** `Settings` → `Apps` → `incident.io` → disable `Pause app activity if unused`, and set `App battery usage` to `Unrestricted`. Otherwise Android may kill the app in the background and you won't get paged.
+3. **Allowlist incident.io in each Do Not Disturb / Focus mode.** On Pixel/stock Android: `Settings` → `Sound & vibration` → `Do Not Disturb` → `Apps` → add `incident.io`. On Samsung: `Settings` → `Modes and routines` → each mode → `Allowed apps` → add `incident.io`.
+4. **Star the incident.io On-call contact and allow starred contacts to bypass DND.** Save and star/favorite the contact, then under `Do Not Disturb` → `People` (or `Exceptions`), allow `Calls` and `Messages` from `Starred contacts`. This lets the phone calls and SMS pages ring through.
+5. **Consider enabling Alarm-style notifications.** In the incident.io app's advanced settings, toggle `Alarm style notifications` and make sure alarms are allowed during Do Not Disturb – this routes pages through the alarm channel, which most phones treat as un-silenceable.
+
+> 💡 Test it! Once configured, put your phone into Do Not Disturb / Sleep mode and ask a teammate to send you a test page (or use the `Send test notification` button in the incident.io app). If you don't hear it, something still isn't right.
+
+## Make sure your availability is up-to-date
+
+If you are unavailable for any of your schedules you need to act! Overrides are the one part of a schedule that isn't in Terraform, so do these in the dashboard – an apply won't undo them.
+
+1. For your `On call: {team}` schedule simply click on your name in your rotation, click `create an override` and then remove yourself from the list so it shows `No one`
+1. For your `Support Hero: {team}` or `On call: Global` schedules click `Request cover` at the top right. This will notify selected team members automatically to find someone to cover you (you should probably do a shout out in #ask-posthog-anything as well). You can trade whole weeks, but also just specific days. Remember not to alter the rotation's core order, as that's an easy way to accidentally shift the schedule for everyone.
+1. For your [`Page team (emergency): {team}`](#manual-escalation-schedules) schedule, don't request cover and don't reshuffle the groups – nobody needs to take your turn, because there aren't any. Add an override on yourself for the window you're away, the same way as above, so it's clear you're unavailable. Everyone else in your group is still on call.
+
+## Make sure you have all the access you might need
+
+To be ready, make sure you have access to:
+
+- PostHog Cloud admin interfaces ([🇺🇸 US](https://us.posthog.com/admin/)  / [🇪🇺 EU](https://eu.posthog.com/admin/)) - post in #ask-posthog-anything to be added
+- Grafana ([🇺🇸 US](https://grafana.prod-us.posthog.dev/)  / [🇪🇺 EU](https://grafana.prod-eu.posthog.dev/))
+- [ArgoCD](https://argocd-internal.internal.posthog.dev) - this is where 99% of cluster operations take place such as restarting pods, scaling things up and down etc.
+- Metabase ([🇺🇸 US](https://metabase.prod-us.posthog.dev/)  / [🇪🇺 EU](https://metabase.prod-eu.posthog.dev/)) - post in #ask-posthog-anything to be invited
+
+
+### More advanced access
+
+If you are part of a team that looks after more critical infrastructure such as infra, ingestion, workflows, error-tracking etc. then you are expected to dive deeper than the usual on-call engineer.
+
+As well as the above access you should ensure you have access and feel comfortable working with:
+- EKS over `kubectl` / `k9s`, in case you need to run Kubernetes cluster operations (such as restarting a pod) – follow [this guide](https://runbooks.posthog.com/EKS/access) to get access
+- Our tailnet, which gates our internal services (such as Grafana, Metabase, or runbooks) – follow [this guide](https://github.com/PostHog/posthog-cloud-infra/blob/main/terraform/environments/README.md#connect-to-a-service-hosted-in-our-internal-network) to join
+
+
+## Responding to alerts when on-call
+
+![alert-example](https://res.cloudinary.com/dmukukwp6/image/upload/w_500,c_limit,q_auto,f_auto/Screenshot_2025_10_27_at_08_42_11_f7508c7432.png)
+
+Critical alerts trigger the team's [`On call: {team}` escalation path](#the-standard-on-call-path), which pages a member of the team associated with the alert first, then global on-call alongside the team if nobody responds in time.
+
+> **If at any point you get paged - always respond!** Even if you are unavailable you should respond as such (either via the app or the personal Slack notification). That way the escalation can continue to the next available person.
+
+By default if you are being paged, especially as the global on-call, the alert is considered critical, meaning it almost definitely requires attention.
+
+Every alert should have associated Grafana and Runbook links allowing you to quickly get more visual details of what is going on and how to respond.
+
+When an alert fires, find if there's a runbook for it. A runbook tells you what to look at and what fixes exist. In any case, your first priority will be to understand what's going on, and the right starting point will almost always be Grafana. 
+
+Sometimes alerts are purposefully overly-sensitive and might already be fixing themselves by the time you see them. **Use your best judgement here**. If the linked graph has a spike that is clearly coming down, watch it closely and give it time for the alert to auto-resolve.
+
+[If the alert is starting to have any noticeable impact on users or you are not sure whether to raise an incident - go raise an incident.](/handbook/engineering/operations/incidents) It's that simple.
+
+If you're stumped and no resource is of help, get someone from the relevant team to shadow you while you sort the problem out. The idea is that they can help you understand the issue and where to find how to debug it. The idea is _not_ for them to take over at this point, as otherwise you won't be able to learn from this incident.

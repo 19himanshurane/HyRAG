@@ -34,6 +34,25 @@ log = logging.getLogger(__name__)
 CHROMA_TIMEOUT_SECONDS = 30.0
 CHROMA_CONNECT_SECONDS = 5.0
 
+# ----- collections: each company's documents, searched on their own -----
+# One index can hold several companies' documents, but a question must be answered from ONE company's only:
+# measured, "How much paid time off do I get per year?" drew GitLab, Nimbus and PostHog passages into one top 5.
+# A document's collection is the first folder of its source when that folder is a named collection
+# ("posthog/handbook/people/time-off.md" -> "posthog"); everything else is the demo set.
+NAMED_COLLECTIONS = ("posthog",)
+DEFAULT_COLLECTION = "demo"
+COLLECTIONS = (DEFAULT_COLLECTION, *NAMED_COLLECTIONS)
+
+
+def collection_of(source: str) -> str:
+    first = source.split("/", 1)[0]
+    return first if "/" in source and first in NAMED_COLLECTIONS else DEFAULT_COLLECTION
+
+
+def check_collection(collection: str | None) -> None:
+    if collection is not None and collection not in COLLECTIONS:
+        raise ValueError(f"unknown collection {collection!r}; expected one of {COLLECTIONS}")
+
 # ---------------------------------------------------------------------------
 # Tokenizer: decides which words can match. Documents and queries go through the same function.
 # ---------------------------------------------------------------------------
@@ -187,9 +206,8 @@ class ChunkIndex:
         self.collection = client.get_or_create_collection(
             f"chunks-{strategy}", embedding_function=None, configuration={"hnsw": {"space": "cosine"}})
         self._check_embedding_model()
-        self._bm25 = None
-        self._bm25_ids: list[str] = []
-        self._vectors: tuple[list[str], np.ndarray] | None = None  # exact-search snapshot of Chroma
+        self._bm25: dict | None = None  # collection (None = all) -> (BM25, its chunk ids); see _bm25_index
+        self._vectors: tuple[list[str], np.ndarray, np.ndarray] | None = None  # exact-search snapshot of Chroma
         self._seen_version = self._data_version()
         self._writes = 0  # this object's own committed writes (data_version only counts OTHER connections')
 
@@ -337,21 +355,23 @@ class ChunkIndex:
 
     # ----- searching -----
 
-    def search_dense(self, query: str, k: int = 10) -> list[Hit]:
+    def search_dense(self, query: str, k: int = 10, collection: str | None = None) -> list[Hit]:
+        """collection: search only that company's chunks (None = all of them)."""
+        check_collection(collection)
         if not query.strip() or self.count() == 0:  # a blank query would still embed and "match" something
             return []
         qv = self.embedder.embed([query])[0]  # network call: deliberately outside the state lock
         with self._lock:
-            return self._nearest(qv, k)
+            return self._nearest(qv, k, collection)
 
-    def _nearest(self, qv: np.ndarray, k: int) -> list[Hit]:
+    def _nearest(self, qv: np.ndarray, k: int, collection: str | None = None) -> list[Hit]:
         """EXACT cosine top-k over every stored vector. Chroma's HNSW index is approximate, and on this
         corpus it missed 1-2 of the true top 10 for 3 of 6 test questions, differently in each process
         (docs/phase2-audit.md, S6). A matrix product over 1,266 x 1024 floats takes ~0.25 ms and is exact
         and deterministic. Chroma stays the vector store; past ~100k chunks (~400 MB of float32) switch back to
         an approximate index with a tuned ef_search and measured recall."""
         self._drop_stale_caches()
-        ids, matrix = self._vector_matrix()
+        ids, matrix, labels = self._vector_matrix()
         if not ids:  # emptied while we were embedding
             return []
         norm = float(np.linalg.norm(qv))
@@ -359,7 +379,16 @@ class ChunkIndex:
             log.warning("query embedding is unusable (norm %s); no meaning-search results", norm)
             return []
         sims = matrix @ (qv / norm)
-        k = min(k, len(ids))
+        eligible = len(ids)
+        if collection is not None:
+            # Mask BEFORE taking the top k: filtering afterwards would let other companies' chunks crowd
+            # this company's out of the k slots. The remaining scores are exactly what they were.
+            inside = labels == collection
+            sims = np.where(inside, sims, -np.inf)
+            eligible = int(inside.sum())
+        k = min(k, eligible)
+        if k == 0:
+            return []
         top = np.argpartition(-sims, k - 1)[:k]
         top = top[np.lexsort((top, -sims[top]))]  # by similarity, ties by position (ids are sorted): stable
         found = [ids[i] for i in top]
@@ -367,29 +396,36 @@ class ChunkIndex:
         self._warn_missing(found, chunks)  # ids the table doesn't have (drift) are skipped, not fatal
         return [Hit(chunks[ids[i]], float(sims[i])) for i in top if ids[i] in chunks]
 
-    def _vector_matrix(self) -> tuple[list[str], np.ndarray]:
+    def _vector_matrix(self) -> tuple[list[str], np.ndarray, np.ndarray]:
+        """(sorted ids, normalised vectors, each id's collection). An id the chunk table lacks (drift) gets no
+        collection, so it can only turn up in an unfiltered search, where it is skipped as missing."""
         if self._vectors is None:
             got = self.collection.get(include=["embeddings"])
             if not got["ids"]:
-                self._vectors = ([], np.empty((0, 0), dtype=np.float32))
+                self._vectors = ([], np.empty((0, 0), dtype=np.float32), np.empty(0, dtype=object))
             else:
                 order = sorted(range(len(got["ids"])), key=lambda i: got["ids"][i])  # same order in every process
                 ids = [got["ids"][i] for i in order]
                 matrix = np.asarray(got["embeddings"], dtype=np.float32)[order]
                 matrix /= np.linalg.norm(matrix, axis=1, keepdims=True)
-                self._vectors = (ids, matrix)
+                sources = self._sources(ids)
+                labels = np.array([collection_of(sources[i]) if i in sources else None for i in ids], dtype=object)
+                self._vectors = (ids, matrix, labels)
         return self._vectors
 
     @_locked
-    def search_sparse(self, query: str, k: int = 10) -> list[Hit]:
+    def search_sparse(self, query: str, k: int = 10, collection: str | None = None) -> list[Hit]:
+        """collection: search only that company's chunks (None = all of them), scored with that collection's
+        own word statistics, so adding another company's documents never changes this one's ranking."""
+        check_collection(collection)
         self._drop_stale_caches()
-        bm25 = self._bm25_index()
+        bm25, bm25_ids = self._bm25_index(collection)
         tokens = tokenize(query)
         if bm25 is None or not tokens:
             return []
         scores = bm25.get_scores(tokens)
         top = [i for i in np.argsort(-scores, kind="stable")[:k] if scores[i] > 0]  # 0 = no query word present
-        ids = [self._bm25_ids[i] for i in top]
+        ids = [bm25_ids[i] for i in top]
         chunks = self._chunks(ids)
         self._warn_missing(ids, chunks)
         return [Hit(chunks[cid], float(scores[i])) for cid, i in zip(ids, top) if cid in chunks]
@@ -460,16 +496,27 @@ class ChunkIndex:
 
     # ----- internals -----
 
-    def _bm25_index(self):
+    def _bm25_index(self, collection: str | None = None) -> tuple["LuceneBM25 | None", list[str]]:
+        """(BM25 over the collection's chunks, their ids in the same order); built on first use, one per
+        collection (None = all chunks). Dropped on every write, like the other in-memory snapshots."""
         if self._bm25 is None:
+            self._bm25 = {}
+        if collection not in self._bm25:
             rows = self.db.execute(f"SELECT {','.join(_COLUMNS)} FROM chunks ORDER BY chunk_id").fetchall()
-            if not rows:
-                return None
-            chunks = [self._chunk(r) for r in rows]
-            self._bm25_ids = [c.chunk_id for c in chunks]
+            chunks = [c for c in map(self._chunk, rows)
+                      if collection is None or collection_of(c.source) == collection]
             # Same text as the dense side embeds: heading path + body (headings hold codes the body never repeats).
-            self._bm25 = LuceneBM25([tokenize(c.text_for_search()) for c in chunks])
-        return self._bm25
+            bm25 = LuceneBM25([tokenize(c.text_for_search()) for c in chunks]) if chunks else None
+            self._bm25[collection] = (bm25, [c.chunk_id for c in chunks])
+        return self._bm25[collection]
+
+    def _sources(self, ids: list[str]) -> dict[str, str]:
+        found: dict[str, str] = {}
+        for i in range(0, len(ids), 500):
+            part = ids[i : i + 500]
+            found.update(self.db.execute(f"SELECT chunk_id, source FROM chunks WHERE chunk_id IN "
+                                         f"({','.join('?' * len(part))})", part).fetchall())
+        return found
 
     def _ids_for(self, doc_id: str) -> list[str]:
         return [r[0] for r in self.db.execute("SELECT chunk_id FROM chunks WHERE doc_id = ?", (doc_id,))]

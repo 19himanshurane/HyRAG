@@ -8,13 +8,15 @@ Every question runs through two searches: an embedding search that finds passage
 
 Most of the work goes into what happens after the answer is written. A second model call checks each citation to see whether the cited passage actually supports the sentence it's attached to, and flags the ones that don't hold up. Each answer also gets a confidence score based on how relevant the retrieved passages were, how many claims have a verified citation, and whether the whole question was covered. When that score is too low, HyRAG says it couldn't find the answer and points you to the documents that came closest, which is more useful than a confident guess.
 
-I'm building it to learn how a RAG pipeline works end to end. The plan is to test it against a hand-written set of 50+ questions (including multi-hop ones and ones with no answer in the docs) and use that to compare three chunking strategies: fixed-size, heading-aware and semantic.
+**The documents:** a real company's internal handbook, [PostHog's](https://posthog.com/handbook) (383 pages: time off, expenses, hiring, on-call, incidents; MIT-licensed), plus a demo set of public technical docs (NIST, Kubernetes, PostgreSQL, GitLab handbook pages) and a small fictional company. Each company's documents are a separate **collection**, and a question is answered from one collection only, so two companies' policies are never mixed in one answer. Details and licenses: [corpus/README.md](corpus/README.md).
+
+I'm building it to learn how a RAG pipeline works end to end. It is tested against a hand-written set of 82 questions (including multi-hop ones and ones with no answer in the docs), which is also used to compare three chunking strategies: fixed-size, heading-aware and semantic.
 
 ## Status
 
 Work in progress, built one step at a time. The description above is the target design; this list shows what exists today.
 
-- [x] Multi-format loader (Markdown, text, HTML, PDF) with heading and page metadata. PDFs: layout-aware heading detection for single-column documents; two-column layouts and scanned PDFs are not supported yet
+- [x] Multi-format loader (Markdown and MDX, text, HTML, PDF) with heading and page metadata. PDFs: layout-aware heading detection for single-column documents; two-column layouts and scanned PDFs are not supported yet
 - [x] Chunking: fixed-size and heading-aware (recursive), with content-based chunk ids
 - [x] Production audit of Phase 1, three rounds ([docs/phase1-audit.md](docs/phase1-audit.md)): 32 findings fixed with before/after measurements; an offline test suite covers every one (run `python -m pytest -q`)
 - [x] One pipeline for documents in and out (`hyrag/pipeline.py`): store → chunk → index, and deletions reach both

@@ -22,6 +22,7 @@ from dataclasses import asdict, dataclass, field
 
 from hyrag.answer import ask
 from hyrag.citations import judge_batch, quote_in_passage, split_claims
+from hyrag.index import DEFAULT_COLLECTION
 from hyrag.retrieval import FusedHit
 
 CORRECTNESS_PROMPT = """You grade an ANSWER to a QUESTION against a REFERENCE answer and a list of KEY FACTS.
@@ -170,14 +171,17 @@ class Record:
 def evaluate_item(item: dict, retriever, writer, judge, grader, budget_seconds: float = 180.0) -> Record:
     rec = Record(item["id"], item["type"], item["expected"], item.get("split", ""))
     evidence = item.get("evidence") or []
+    # Whose documents the question is about. Items without the field predate the PostHog collection and were
+    # written against the demo set, which is also what they must be searched in (not PostHog's pages too).
+    collection = item.get("collection", DEFAULT_COLLECTION)
     t0 = time.perf_counter()
     try:
-        top5 = retriever.search(item["question"]).hits
-        top20 = retriever.search(item["question"], rerank_results=False).hits
+        top5 = retriever.search(item["question"], collection=collection).hits
+        top20 = retriever.search(item["question"], rerank_results=False, collection=collection).hits
         rec.evidence_rank_top5 = evidence_found(evidence, top5)
         rec.evidence_rank_top20 = evidence_found(evidence, top20)
         # A larger budget than the interactive 60 s: this measures answer quality, not rate-limit luck.
-        r = ask(item["question"], retriever, writer, judge, budget_seconds=budget_seconds)
+        r = ask(item["question"], retriever, writer, judge, budget_seconds=budget_seconds, collection=collection)
     except Exception as e:
         rec.error = f"{type(e).__name__}: {str(e)[:200]}"
         return rec

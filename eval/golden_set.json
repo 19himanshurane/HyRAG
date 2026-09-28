@@ -1242,15 +1242,506 @@
    ],
    "acceptable": "asks which timeout, or answers a named one clearly labelled",
    "split": "dev"
+  },
+  {
+   "id": "G61",
+   "type": "lookup",
+   "expected": "answer",
+   "collection": "posthog",
+   "question": "A customer with a 20% discount sets a $200 billing limit. How much usage do they get before they hit it?",
+   "answer": "$250 worth of volume: discounts are taken into account before the usage limit is calculated, so they are charged $200 for $250 of usage.",
+   "key_facts": [
+    "$250 worth of volume"
+   ],
+   "extra_facts": [
+    "discounts are applied before the limit is calculated"
+   ],
+   "evidence": [
+    {
+     "source": "posthog/handbook/growth/sales/billing.md",
+     "section": "Coupons and Discounts",
+     "quote": "if the customer sets a billing limit of $200 and has a 20% discount, they will get charged $200 for"
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "G62",
+   "type": "lookup",
+   "expected": "answer",
+   "collection": "posthog",
+   "question": "How can a marketplace company use PostHog to spot demand it isn't meeting?",
+   "answer": "Build dashboards that show searches with no results (tracking supply-side events like listing_created and demand-side events like search_performed); non-technical users can build these.",
+   "key_facts": [
+    "dashboards of searches that returned no results"
+   ],
+   "extra_facts": [
+    "track supply-side and demand-side events",
+    "funnels and alerts for imbalances"
+   ],
+   "evidence": [
+    {
+     "source": "posthog/handbook/growth/sales/utilization-by-business-type.md",
+     "section": "Supply/Demand Balance",
+     "quote": "Non-technical users can create dashboards that visualize searches with no results"
+    }
+   ],
+   "split": "test"
+  },
+  {
+   "id": "G63",
+   "type": "lookup",
+   "expected": "answer",
+   "collection": "posthog",
+   "question": "Can I join a philosophy club session just to listen?",
+   "answer": "No. The only rule is no observers: if you join a session, you're expected to take part.",
+   "key_facts": [
+    "no: no observers, everyone who joins takes part"
+   ],
+   "extra_facts": [
+    "sessions last 30 minutes"
+   ],
+   "evidence": [
+    {
+     "source": "posthog/handbook/people/philosophy-club.md",
+     "section": "Structure",
+     "quote": "The only rule is no observers"
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "G64",
+   "type": "lookup",
+   "expected": "answer",
+   "collection": "posthog",
+   "question": "I just shipped a feature. How do I find out whether people use it and whether the UX confuses them?",
+   "answer": "Add events and check the data to see whether it's being used, and watch session replays of people using it, which often shows confusing UX. Interviews, support and staggered rollouts help too.",
+   "key_facts": [
+    "add events and check the usage data",
+    "watch session replays"
+   ],
+   "extra_facts": [
+    "staggered rollouts, interviews, support"
+   ],
+   "evidence": [
+    {
+     "source": "posthog/handbook/engineering/product-engineering.md",
+     "section": "Ship things iteratively and follow up",
+     "quote": "check if the thing you just built is being used"
+    }
+   ],
+   "split": "test"
+  },
+  {
+   "id": "G65",
+   "type": "lookup",
+   "expected": "answer",
+   "collection": "posthog",
+   "question": "How many merch packs can a startup founder claim for their co-founders, and what if the team has more founders than that?",
+   "answer": "Up to 4 merch packs for co-founders during signup; a team with more than 4 founders can submit a support ticket to request more.",
+   "key_facts": [
+    "up to 4 merch packs",
+    "more than 4 founders: submit a support ticket"
+   ],
+   "evidence": [
+    {
+     "source": "posthog/handbook/marketing/startups.md",
+     "section": "Merch",
+     "quote": "They can request up to 4 merch packs for co-founders during signup."
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "G66",
+   "type": "lookup",
+   "expected": "answer",
+   "collection": "posthog",
+   "question": "What should a new Technical Account Executive focus on in weeks 3 and 4?",
+   "answer": "Taking more and more ownership on calls, with teammates only there as a safety net; also keep meeting customers and new leads, and add a Calendly link to the Slack profile.",
+   "key_facts": [
+    "take more and more ownership on calls"
+   ],
+   "extra_facts": [
+    "keep meeting customers and reaching out to new leads",
+    "add a Calendly link to the Slack profile"
+   ],
+   "evidence": [
+    {
+     "source": "posthog/handbook/growth/sales/new-hire-onboarding.md",
+     "section": "Weeks 3-4",
+     "quote": "Focus on taking more and more ownership on calls"
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "G67",
+   "type": "lookup",
+   "expected": "answer",
+   "collection": "posthog",
+   "question": "In customer health scoring, how recent must the last meeting be for company engagement to count as healthy?",
+   "answer": "Within the last 30 days (30 days or less). 30-90 days is concerning and over 90 days is poor; company engagement carries very little weight in the overall score.",
+   "key_facts": [
+    "30 days or less"
+   ],
+   "extra_facts": [
+    "30-90 days is concerning, over 90 days is poor",
+    "company engagement is weighted very little"
+   ],
+   "evidence": [
+    {
+     "source": "posthog/handbook/cs-and-onboarding/health-tracking.md",
+     "section": "Company engagement",
+     "quote": "Most recent meeting | >90 days | 30-90 days | ≤30 days"
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "G68",
+   "type": "lookup",
+   "expected": "answer",
+   "collection": "posthog",
+   "question": "What's the difference between ETL and ELT?",
+   "answer": "ETL extracts data, transforms (cleans) it, then loads it into the warehouse; ELT loads the raw data into the warehouse first and cleans it there. ELT is the modern default.",
+   "key_facts": [
+    "ETL: transform before loading",
+    "ELT: load raw data first, transform in the warehouse"
+   ],
+   "extra_facts": [
+    "ELT is the modern default"
+   ],
+   "evidence": [
+    {
+     "source": "posthog/handbook/growth/sales/data-foundations.md",
+     "section": "Acronyms, decoded",
+     "quote": "Load raw to the warehouse first, clean it once it's there."
+    }
+   ],
+   "split": "test"
+  },
+  {
+   "id": "G69",
+   "type": "lookup",
+   "expected": "answer",
+   "collection": "posthog",
+   "question": "When should I use Request changes on a PR instead of just leaving a comment?",
+   "answer": "Only when merging the PR as-is would be seriously unsafe (security or privacy risks, data loss, unsafe migrations, breaking API changes, serious harm to customers) and you can keep the feedback loop moving; it blocks the PR until you approve a later revision.",
+   "key_facts": [
+    "only when merging as-is would be seriously unsafe"
+   ],
+   "extra_facts": [
+    "examples: security/privacy, data loss, unsafe migrations, breaking changes",
+    "it blocks the PR until re-approved or dismissed"
+   ],
+   "evidence": [
+    {
+     "source": "posthog/handbook/engineering/how-we-review.md",
+     "section": "Choosing a GitHub review state",
+     "quote": "Use Request changes only when you believe merging the PR as-is would be seriously unsafe"
+    }
+   ],
+   "split": "test"
+  },
+  {
+   "id": "G70",
+   "type": "lookup",
+   "expected": "answer",
+   "collection": "posthog",
+   "question": "Which kinds of tools does PostHog Workflows replace?",
+   "answer": "Three layers: an automation builder (Zapier, Make), a lifecycle messaging tool (Customer.io, Brevo, ActiveCampaign) and a CDP or hand-rolled webhooks (Segment, Rudderstack).",
+   "key_facts": [
+    "an automation builder such as Zapier or Make",
+    "a lifecycle messaging tool such as Customer.io",
+    "a CDP such as Segment or Rudderstack"
+   ],
+   "evidence": [
+    {
+     "source": "posthog/handbook/marketing/how-we-position-and-sell/workflows.md",
+     "section": "Cut three vendors down to one platform",
+     "quote": "Workflows replaces all three."
+    }
+   ],
+   "split": "test"
+  },
+  {
+   "id": "G71",
+   "type": "lookup",
+   "expected": "answer",
+   "collection": "posthog",
+   "question": "If a new account with no previous owner churns soon after it's assigned to me, does it count against my quota?",
+   "answer": "Not during the first 3 months: new accounts with no previous owner come with a 3-month grace period.",
+   "key_facts": [
+    "no: a 3-month grace period"
+   ],
+   "evidence": [
+    {
+     "source": "posthog/handbook/growth/sales/account-allocation.md",
+     "section": "Mid-quarter TAM changes",
+     "quote": "New accounts with no previous owner come with a 3 month grace period"
+    }
+   ],
+   "split": "test"
+  },
+  {
+   "id": "G72",
+   "type": "lookup",
+   "expected": "answer",
+   "collection": "posthog",
+   "question": "Before I reach out to a product-led lead, how do I check whether someone on the team already talked to them?",
+   "answer": "Look in Vitally for prior activity (each lead's Salesforce record has a Vitally account URL field) and check in with the AE or teammate who was involved.",
+   "key_facts": [
+    "check Vitally for prior activity"
+   ],
+   "extra_facts": [
+    "Vitally account URL field in Salesforce",
+    "check in with the AE involved"
+   ],
+   "evidence": [
+    {
+     "source": "posthog/handbook/growth/sales/product-led-sales.md",
+     "section": "Product-led lead generation",
+     "quote": "Before reaching out, take a quick look in Vitally to see if there"
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "G73",
+   "type": "lookup",
+   "expected": "answer",
+   "collection": "posthog",
+   "question": "What should I use to develop the AI wizard locally?",
+   "answer": "The wizard workbench: it runs the full wizard stack in local development mode with hot reload, and also runs CI and tests across a matrix of test applications.",
+   "key_facts": [
+    "the wizard workbench"
+   ],
+   "extra_facts": [
+    "runs the full stack locally with hot reload",
+    "also handles CI and testing"
+   ],
+   "evidence": [
+    {
+     "source": "posthog/handbook/wizard-and-docs/developing-the-wizard.mdx",
+     "section": "Developing the wizard",
+     "quote": "Use the wizard workbench for local, end-to-end development of the wizard."
+    }
+   ],
+   "split": "test"
+  },
+  {
+   "id": "G74",
+   "type": "lookup",
+   "expected": "answer",
+   "collection": "posthog",
+   "question": "What was the biggest lesson from the October 2025 feature flag outages?",
+   "answer": "CPU right-sizing: nodes were too small for the pods' resource requests, so Kubernetes packed too many pods per node and saturated the CPU, which led to retries, connection-pool exhaustion and slow queries.",
+   "key_facts": [
+    "CPU right-sizing: too many pods per node saturated the CPU"
+   ],
+   "extra_facts": [
+    "shared Redis is a single point of failure",
+    "CPU alerting was missing",
+    "connection pool management"
+   ],
+   "evidence": [
+    {
+     "source": "posthog/handbook/company/post-mortems/2025-10-21-feature-flags-recurring-outages.md",
+     "section": "Key takeaways",
+     "quote": "CPU right-sizing is fundamental"
+    }
+   ],
+   "split": "test"
+  },
+  {
+   "id": "G75",
+   "type": "multi_hop",
+   "expected": "answer",
+   "collection": "posthog",
+   "question": "I've been at PostHog for 8 months and I'm about to become a dad. How much paid paternity leave do I get, and how do I book it?",
+   "answer": "2-3 weeks of paid paternity leave (for 6-12 months at PostHog). Book it in the Time Off by Deel app in Slack, choosing the Parental Leave type.",
+   "key_facts": [
+    "2-3 weeks of paid paternity leave",
+    "book it in the Time Off by Deel app in Slack"
+   ],
+   "evidence": [
+    {
+     "source": "posthog/handbook/people/time-off.md",
+     "section": "Parental leave",
+     "quote": "6 - 12 months | 12 weeks | 2 - 3 weeks"
+    },
+    {
+     "source": "posthog/handbook/people/time-off.md",
+     "section": "How to book time off in Time Off by Deel",
+     "quote": "Book it on the Time Off by Deel app in Slack."
+    }
+   ],
+   "split": "test"
+  },
+  {
+   "id": "G76",
+   "type": "multi_hop",
+   "expected": "answer",
+   "collection": "posthog",
+   "question": "My PostHog laptop hasn't arrived for my first day. What can I do in the meantime, and who handles laptops?",
+   "answer": "Start non-sensitive onboarding tasks (reading the handbook, intro calls) on your personal laptop, treating it as less trusted and moving anything sensitive to the company laptop once it arrives. Laptops are handled by Tara: ping her in #team-people-and-ops.",
+   "key_facts": [
+    "do non-sensitive onboarding on a personal laptop in the meantime",
+    "laptops: Tara, via #team-people-and-ops"
+   ],
+   "evidence": [
+    {
+     "source": "posthog/handbook/people/onboarding.md",
+     "section": "Your first week",
+     "quote": "you can begin non-sensitive onboarding tasks"
+    },
+    {
+     "source": "posthog/handbook/people/spending-money.md",
+     "section": "Laptop & monitor",
+     "quote": "Talk to Tara who handles Macbook and Apple Studio Display purchases"
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "G77",
+   "type": "multi_hop",
+   "expected": "answer",
+   "collection": "posthog",
+   "question": "I paid $120 for a keyboard with my Brex card. What's my monthly spending limit, and what do I have to do about the receipt?",
+   "answer": "Your Brex User Limit is $5,000 per month. Because the charge is over $75, you must attach an itemized receipt and update the memo within 14 days.",
+   "key_facts": [
+    "$5,000 per month User Limit",
+    "itemized receipt and memo within 14 days"
+   ],
+   "evidence": [
+    {
+     "source": "posthog/handbook/people/spending-money.md",
+     "section": "How it works",
+     "quote": "User Limit of $5,000 per month in Brex"
+    },
+    {
+     "source": "posthog/handbook/people/spending-money.md",
+     "section": "Receipts",
+     "quote": "All expenses over $75 or £75 must have itemized receipts attached and memo updated within 14 days of the charge"
+    }
+   ],
+   "split": "test"
+  },
+  {
+   "id": "G78",
+   "type": "no_answer",
+   "expected": "not_found",
+   "subtype": "out_of_scope",
+   "collection": "posthog",
+   "question": "Is there a dress code for the office or for customer meetings?",
+   "answer": "Not covered by the documents.",
+   "key_facts": [],
+   "evidence": [],
+   "absence_check": [
+    "dress code",
+    "attire"
+   ],
+   "split": "test"
+  },
+  {
+   "id": "G79",
+   "type": "no_answer",
+   "expected": "not_found",
+   "subtype": "out_of_scope",
+   "collection": "posthog",
+   "question": "Does PostHog offer pet insurance as a benefit?",
+   "answer": "Not covered by the documents.",
+   "key_facts": [],
+   "evidence": [],
+   "absence_check": [
+    "pet insurance"
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "G80",
+   "type": "no_answer",
+   "expected": "not_found",
+   "subtype": "near_miss",
+   "collection": "posthog",
+   "question": "Can I take a paid sabbatical after a few years at PostHog?",
+   "answer": "Not covered by the documents.",
+   "key_facts": [],
+   "evidence": [],
+   "absence_check": [
+    "sabbatical",
+    "career break"
+   ],
+   "acceptable": "saying the handbook doesn't mention sabbaticals, optionally pointing to the unlimited time off policy; NOT claiming sabbaticals are or aren't offered",
+   "split": "test"
+  },
+  {
+   "id": "G81",
+   "type": "ambiguous",
+   "expected": "clarify_or_cover",
+   "collection": "posthog",
+   "question": "How much merch do we give people as a thank-you?",
+   "answer": "Depends who: users who do a feedback call get a merch store gift card worth around $40; people who make a non-team hiring referral get $50 of merch credit.",
+   "key_facts": [
+    "feedback-call users: about $40 gift card",
+    "non-team referrals: $50 merch credit"
+   ],
+   "evidence": [
+    {
+     "source": "posthog/handbook/product/user-feedback.md",
+     "section": "Rewards",
+     "quote": "we send users a gift card to the PostHog merch store with around $40 of value"
+    },
+    {
+     "source": "posthog/handbook/people/hiring-process/index.mdx",
+     "section": "Non-team referrals",
+     "quote": "we will give you $50 credit for our merch shop."
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "G82",
+   "type": "ambiguous",
+   "expected": "clarify_or_cover",
+   "collection": "posthog",
+   "question": "How does the review process work here?",
+   "answer": "Depends which review: code reviews (almost all PRs need a review before merging, and a human always merges) or people feedback (full-team 360-degree feedback sessions at every offsite).",
+   "key_facts": [
+    "code: almost all PRs need a review before merging",
+    "people: full-team 360-degree feedback sessions at offsites"
+   ],
+   "evidence": [
+    {
+     "source": "posthog/handbook/engineering/how-we-review.md",
+     "section": "How we review PRs",
+     "quote": "Almost all PRs made to PostHog repositories need a review before merging."
+    },
+    {
+     "source": "posthog/handbook/people/feedback.md",
+     "section": "Full team feedback sessions",
+     "quote": "We run full team 360-degree feedback session as part of every offsite."
+    }
+   ],
+   "split": "test"
   }
  ],
- "test_fingerprint": "527ec1ac8e0f0baa",
+ "test_fingerprint": "0b5750c84210fd91",
  "rubric_rule": "key_facts are only what the question asks (all are required for 'correct'); supporting details are extra_facts (context, not required). Applied to every item on 2026-09-28 after a dev review found correct answers marked incomplete for omitting details the question never asked for.",
  "lock_history": [
   {
    "fingerprint": "fa9d05146c78e8c6",
    "replaced_on": "2026-09-27",
    "reason": "Rubric rule applied to every item before any test run: key_facts are only what the question asks; supporting details moved to extra_facts. Decided on a dev review where all 3 grader disagreements were answer-key faults (G01, G12, G15)."
+  },
+  {
+   "fingerprint": "527ec1ac8e0f0baa",
+   "replaced_on": "2026-09-28",
+   "reason": "Added 22 PostHog-collection questions (G61-G82) before any test run: the PostHog handbook became the main real-company collection. Existing 60 items unchanged."
   }
- ]
+ ],
+ "posthog_additions": "Added 2026-09-28 for the PostHog collection (a real company's handbook), all with collection 'posthog' and searched only there. Lookup questions (G61-G74) were written about 14 sections drawn at random from the 3,447 eligible PostHog sections (scripts/sample_golden_sections.py --posthog, seed 20260929, eval/golden_sample_posthog.json). Multi-hop pairs were chosen by shared topic; no-answer topics were checked absent by concept, not only by word, within the PostHog collection; ambiguous questions have several readings that the handbook answers differently. Same rubric rule: key_facts are only what the question asks."
 }

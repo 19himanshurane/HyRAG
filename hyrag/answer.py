@@ -39,6 +39,7 @@ from hyrag.citations import verify
 from hyrag.confidence import Confidence, hit_relevance, passages_confidence, score_answer
 from hyrag.generation import generate
 from hyrag.http import DeadlineExceeded, QuotaExhausted, deadline
+from hyrag.index import check_collection
 from hyrag.retrieval import FusedHit
 
 log = logging.getLogger(__name__)
@@ -101,6 +102,7 @@ class Response:
     claim_counts: dict[str, int] = field(default_factory=dict)   # citation-check outcomes by status
     search_queries: list[str] = field(default_factory=list)      # rewritten queries, when the question was rewritten
     mode: str = "hybrid"                                         # hybrid | dense | sparse retrieval
+    collection: str | None = None                                # whose documents were searched (None = all)
     retrieved: list[RetrievedPassage] = field(default_factory=list)  # the passages the writer saw, ranked
     request_id: str = ""
     timings_ms: dict[str, float] = field(default_factory=dict)   # retrieve, generate, verify, score, total
@@ -137,8 +139,9 @@ class AnswerCache:
         self._lock = threading.Lock()
 
     @staticmethod
-    def key(question: str, index_version, mode: str = "hybrid") -> tuple:
-        return (" ".join(question.casefold().split()), index_version, mode)
+    def key(question: str, index_version, mode: str = "hybrid", collection: str | None = None) -> tuple:
+        # The collection is part of the key: one company's cached answer must never be served to another.
+        return (" ".join(question.casefold().split()), index_version, mode, collection)
 
     def get(self, key) -> Response | None:
         with self._lock:
@@ -197,17 +200,20 @@ def _not_found(question: str, hits: list[FusedHit], code: str, reason: str) -> R
 
 def ask(question: str, retriever, writer, judge, gate: float = RETRIEVAL_GATE,
         budget_seconds: float = DEFAULT_BUDGET_SECONDS, cache: AnswerCache | None = None,
-        show_unchecked: bool = True, mode: str = "hybrid") -> Response:
+        show_unchecked: bool = True, mode: str = "hybrid", collection: str | None = None) -> Response:
     """Answer `question` from the indexed documents, or say honestly why not. Never raises for an outage or a
-    timeout (those become `error` / `unchecked` responses); raises ValueError for a blank or over-long question.
+    timeout (those become `error` / `unchecked` responses); raises ValueError for a blank or over-long question
+    or an unknown collection.
 
     retriever: HybridRetriever (with a reranker); writer: the answering model; judge: the checking model.
-    mode: "hybrid" (default), or "dense" / "sparse" to run one search alone (the dashboard's comparison)."""
+    mode: "hybrid" (default), or "dense" / "sparse" to run one search alone (the dashboard's comparison).
+    collection: answer from one company's documents only (hyrag.index.COLLECTIONS); None searches all."""
+    check_collection(collection)
     t0 = time.perf_counter()
     request_id = uuid.uuid4().hex[:12]
     key = None
     if cache is not None:
-        key = AnswerCache.key(question, retriever.index.version(), mode)
+        key = AnswerCache.key(question, retriever.index.version(), mode, collection)
         hit = cache.get(key)
         if hit is not None:
             response = dataclasses.replace(hit, request_id=request_id, cached=True, usage={},
@@ -224,7 +230,7 @@ def ask(question: str, retriever, writer, judge, gate: float = RETRIEVAL_GATE,
         return now
 
     with deadline(budget_seconds):
-        response = _run(question, retriever, w, j, gate, show_unchecked, lap, t0, mode)
+        response = _run(question, retriever, w, j, gate, show_unchecked, lap, t0, mode, collection)
     response.request_id = request_id
     response.timings_ms = {**timings, "total": round((time.perf_counter() - t0) * 1000, 1)}
     response.usage = {**response.usage, "writer_requests": w.requests, "writer_tokens": w.tokens,
@@ -235,9 +241,10 @@ def ask(question: str, retriever, writer, judge, gate: float = RETRIEVAL_GATE,
     return response
 
 
-def _run(question, retriever, writer, judge, gate, show_unchecked, lap, t0, mode="hybrid") -> Response:
+def _run(question, retriever, writer, judge, gate, show_unchecked, lap, t0, mode="hybrid",
+         collection=None) -> Response:
     try:
-        retrieval = retriever.search(question, mode=mode)
+        retrieval = retriever.search(question, mode=mode, collection=collection)
     except ValueError:
         raise  # a bad question is the caller's to fix
     except Exception as e:
@@ -252,6 +259,7 @@ def _run(question, retriever, writer, judge, gate, show_unchecked, lap, t0, mode
     response = _answer(question, retrieval, writer, judge, gate, show_unchecked, lap, since)
     response.search_queries = list(getattr(retrieval, "queries", []) or [])
     response.mode = mode
+    response.collection = collection
     response.retrieved = [_passage(h) for h in retrieval.hits]
     response.usage = dict(getattr(retrieval, "usage", {}) or {})  # ask() adds the writer and judge counts
     return response

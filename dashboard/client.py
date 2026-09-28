@@ -50,13 +50,17 @@ class HyragClient:
     def ready(self) -> dict:
         return self._get("/ready")
 
-    def documents(self, limit: int = 1000) -> dict:
-        return self._get("/v1/documents", limit=limit)
+    def documents(self, limit: int = 1000, collection: str | None = None) -> dict:
+        return self._get("/v1/documents", limit=limit, **({"collection": collection} if collection else {}))
 
-    def ask(self, question: str, mode: str = "hybrid") -> AskResult:
+    def collections(self) -> list[dict]:
+        return self._get("/v1/collections")
+
+    def ask(self, question: str, mode: str = "hybrid", collection: str | None = None) -> AskResult:
         t0 = time.perf_counter()
+        body = {"question": question, "mode": mode, **({"collection": collection} if collection else {})}
         try:
-            r = self.http.post("/v1/ask", json={"question": question, "mode": mode}, timeout=ASK_TIMEOUT_SECONDS)
+            r = self.http.post("/v1/ask", json=body, timeout=ASK_TIMEOUT_SECONDS)
         except httpx.TimeoutException as e:
             raise ApiError(f"No answer within {ASK_TIMEOUT_SECONDS:.0f} s.") from e
         except httpx.HTTPError as e:

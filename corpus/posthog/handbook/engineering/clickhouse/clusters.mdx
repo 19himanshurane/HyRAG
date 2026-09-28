@@ -1,0 +1,51 @@
+---
+title: How PostHog runs ClickHouse at scale
+---
+
+ClickHouse powers nearly every analytical feature in PostHog: trends, funnels, retention, paths, session replay, error tracking, logs, data warehouse queries, and more. This page describes how we operate it, and the patterns that let us run analytics over very large datasets while keeping interactive queries fast and ingestion reliable.
+
+## Workload isolation
+
+The most important idea in our setup is that we don't run one giant cluster. We run a fleet of clusters, each dedicated to a class of workload.
+
+Early on we ran a single cluster and quickly learned that mixing workloads on shared hardware creates unpredictable performance. A heavy background job, such as a large export, a cohort recalculation, or a backfill, would contend for CPU, memory, and disk I/O with the interactive queries a user was waiting on, and query latency would spike. Any one expensive query or misbehaving job could slow down the entire product.
+
+So we split ClickHouse up by workload. Interactive product queries run on clusters tuned for low-latency reads. Ingestion runs on its own clusters sized for sustained write throughput. Session replay, logs, batch exports, API-style endpoints, and internal operational tooling each get dedicated capacity. Because these clusters are separate, a spike in one workload can't degrade another, and we can size, tune, and scale each one for the specific access pattern it serves.
+
+## A unified query experience over separated data
+
+Splitting data across many clusters and shards would be painful if every product engineer had to know where each piece of data physically lived. They don't. Data is sharded and replicated underneath, but queries are written against a logical view of it. ClickHouse's distributed table engine fans a query out to the shards that hold the relevant data, each shard does the selective work of finding and filtering its portion, and the results are combined. Product code asks for "events for this team in this time range" and the topology stays an operational detail rather than an application concern.
+
+## Storage tiers
+
+Our data has a convenient property: it's overwhelmingly time-ordered, and recent data is by far the hottest for both reads and writes. That's a good fit for tiered storage.
+
+We keep hot, recent data on fast local NVMe, where the throughput ceiling is high enough to absorb both live ingestion and the merge activity ClickHouse does in the background. As data ages and cools, it moves down to larger, cheaper volumes. This gives us speed where it matters without paying top-tier storage prices for data that's rarely touched. Keeping the hottest data on instance-local disk also frees up the network storage throughput budget for the colder tiers.
+
+The main tension here is durability. Local disk is fast but ephemeral, so tiered storage only works alongside solid replication (below).
+
+## Ingestion
+
+We ingest into ClickHouse through Kafka rather than by writing to it directly. Every event already flows through Kafka elsewhere in PostHog, and routing ingestion through it gives us resilience. Kafka absorbs sudden spikes and rides out brief periods of ClickHouse unavailability without dropping data, and we can pause or resume ingestion cleanly. ClickHouse consumes from Kafka and materializes the data into its storage tables. The [data ingestion](/handbook/engineering/clickhouse/data-ingestion) page covers the mechanics of this in detail.
+
+## Reliability
+
+Data is replicated across multiple copies so that losing a node doesn't lose data or take a workload offline. Because ingestion is decoupled through Kafka, recent data has a durable source of truth we can replay from rather than depending on ClickHouse alone.
+
+We run the US and EU as independent, mirrored deployments. Each region is fully self-contained for data residency, and the same architectural patterns apply in both. That also means improvements we make to one region's operations transfer directly to the other.
+
+## The trade-offs that shape the design
+
+Several ClickHouse characteristics drive the choices above, and they're worth understanding because they're where most of the interesting engineering lives.
+
+Updates and deletes are expensive. ClickHouse is built to ingest and query immutable, append-heavy data, so mutating existing rows means rewriting large amounts of data on disk. That single fact ripples outward. It pushes us toward local-NVMe hardware that can sustain the I/O, toward schema patterns that model change as new rows rather than in-place edits, and toward batching operations like data deletions instead of doing them one at a time. The [data storage](/handbook/engineering/clickhouse/data-storage) and [operations](/handbook/engineering/clickhouse/operations) pages go deep on this.
+
+Protecting shared clusters from any single query means imposing resource limits, but some legitimate queries are genuinely large. Reconciling those two needs, guardrails for the common case and headroom for the heavy case, is part of what pushes us toward workload isolation in the first place.
+
+Upgrades are non-trivial. ClickHouse moves fast, and changes between versions can affect query results or syntax, so we hold development, CI, and production on matched versions and validate upgrades against our real query patterns before rolling them out. The payoff of staying current is a steady stream of performance and storage improvements from the ClickHouse project.
+
+## Why this is interesting to work on
+
+Running ClickHouse at this scale is a continuous exercise in the fundamentals: isolating workloads so they don't interfere, presenting a simple query surface over data that's physically spread across a fleet, matching storage tiers to access patterns, and getting the most out of hardware by understanding exactly how the database uses disk, memory, and network. The architecture isn't static. As PostHog grows and adds products, the shape of the workload changes and the clusters evolve with it. If problems like these are interesting to you, the ClickHouse team is a good place to be. See our [careers page](/careers).
+
+The rest of this manual digs into the concepts underneath this architecture: [how data is stored on disk](/handbook/engineering/clickhouse/data-storage), [how ingestion works](/handbook/engineering/clickhouse/data-ingestion), and [how we operate the clusters day to day](/handbook/engineering/clickhouse/operations).

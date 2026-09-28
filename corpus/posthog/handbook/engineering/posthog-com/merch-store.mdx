@@ -1,0 +1,41 @@
+---
+title: Merch store development
+---
+
+> [Read this primer](/handbook/company/merch-store) on how our merch store works.
+
+## Adding new products
+
+Kendal/Judy own Merch and you should let them know about new additions to the store for approval before adding in items. 
+
+### Create the product in Shopify
+
+After you've discussed your merch idea with Kendal/Judy, you should create the product on Shopify.
+
+1. Give the product a name
+1. Description appears when the product sidebar is opened
+1. Add photos
+1. Set the product category
+1. Set the product status to **Active**
+1. For sales channels, make sure it's available in **Shop**, **Headless PostHog Merch Store**, and **Shopify GraphQL API**.
+1. Set the price
+1. Uncheck **Track quantity** as this is handled through the Brilliant API.
+1. Under **Metafields**, add a **Product subtitle**. This appears in the index view for the product.
+1. Save the product
+
+
+### Running the merch store locally
+
+You'll need to set environment variables to source products from Shopify and build [the merch store](/merch).
+
+```
+SHOPIFY_APP_PASSWORD=
+GATSBY_SHOPIFY_STOREFRONT_TOKEN=
+```
+
+We don't include these by default as sourcing the products from Shopify takes an absurd amount of time. Ask the <SmallTeam slug="website" /> if you need these values.
+
+
+## Product Fulfillment
+We used to rely on Brilliant for fulfillment, that has been deprecated, we now use Micromerch. 
+You should notify Micromerch of any new products that you want to add to the store as they handle distribution and storage for most things and are connected to Shopify. 

@@ -90,8 +90,10 @@ def test_manifest_decides_what_is_a_document(tmp_path):
 def test_real_corpus_manifest_excludes_readme():
     from hyrag.loader import list_corpus_files
     from .conftest import CORPUS
+    import json
     files = list_corpus_files(CORPUS)
-    assert len(files) == 12 and not any(p.name == "README.md" for p in files)
+    assert len(files) == len(json.loads((CORPUS / "manifest.json").read_text(encoding="utf-8")))
+    assert not any(p.name in ("README.md", "LICENSE", "manifest.json") for p in files)  # notes, not content
 
 
 def test_unchanged_file_is_not_parsed_again(store, tmp_path, monkeypatch):

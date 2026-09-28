@@ -21,6 +21,7 @@ from collections import Counter
 from pathlib import Path
 
 from hyrag.citations import quote_in_passage
+from hyrag.index import DEFAULT_COLLECTION, collection_of
 
 GOLDEN = Path("eval/golden_set.json")
 SEED = 20260928
@@ -52,8 +53,14 @@ def main() -> int:
                 problems.append(f"{it['id']}: no section matching {ev['section']!r} in {src}")
             if not quote_in_passage(ev["quote"], full[src]):
                 problems.append(f"{it['id']}: quote not found in {src}: {ev['quote'][:60]!r}")
+        # Absent from the documents the question is searched in: its own collection (no field = demo set, as in
+        # hyrag.evaluation). Another company's handbook covering the topic doesn't make it answerable here.
+        coll = it.get("collection", DEFAULT_COLLECTION)
+        for ev in it.get("evidence", []):
+            if collection_of(ev["source"]) != coll:
+                problems.append(f"{it['id']}: evidence {ev['source']} is outside its collection {coll!r}")
         for term in it.get("absence_check", []):
-            hits = [s for s, t in full.items() if term.lower() in t.lower()]
+            hits = [s for s, t in full.items() if collection_of(s) == coll and term.lower() in t.lower()]
             if hits:
                 problems.append(f"{it['id']}: {term!r} is NOT absent: found in {hits}")
         for src, terms in it.get("absence_check_in", {}).items():
@@ -75,17 +82,18 @@ def main() -> int:
                 problems.append(f"{it['id']}: too close to a tuning question ({overlap:.0%}): {t!r}")
 
     if all("split" not in it for it in items):  # assign once, stratified by type
-        rng = random.Random(SEED)
-        for kind in sorted({it["type"] for it in items}):
-            group = [it for it in items if it["type"] == kind]
-            rng.shuffle(group)
-            n_test = round(len(group) * TEST_SHARE)
-            for k, it in enumerate(group):
-                it["split"] = "test" if k < n_test else "dev"
+        assign_split(items, random.Random(SEED))
         data["test_fingerprint"] = fingerprint(items)
         GOLDEN.write_text(json.dumps(data, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
         print("split assigned and locked")
-    elif data.get("test_fingerprint") != fingerprint(items):
+    elif any("split" not in it for it in items):
+        # Questions added later (e.g. the PostHog collection) get their split the same way, among themselves only:
+        # no existing question moves. Test items are added, so the lock needs --relock "reason" below.
+        new = [it for it in items if "split" not in it]
+        assign_split(new, random.Random(f"{SEED}:{','.join(sorted(it['id'] for it in new))}"))
+        GOLDEN.write_text(json.dumps(data, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
+        print(f"split assigned to {len(new)} new item(s)")
+    if data.get("test_fingerprint") != fingerprint(items):
         if RELOCK_REASON:
             test_runs = sorted(Path("eval/results").glob("*-test-*.jsonl"))
             if test_runs:  # the whole point of the lock: never change test items after seeing test results
@@ -109,6 +117,15 @@ def main() -> int:
         print("PROBLEM:", p)
     print("OK" if not problems else f"{len(problems)} problem(s)")
     return 1 if problems else 0
+
+
+def assign_split(items: list[dict], rng: random.Random) -> None:
+    for kind in sorted({it["type"] for it in items}):
+        group = [it for it in items if it["type"] == kind]
+        rng.shuffle(group)
+        n_test = round(len(group) * TEST_SHARE)
+        for k, it in enumerate(group):
+            it["split"] = "test" if k < n_test else "dev"
 
 
 def fingerprint(items) -> str:

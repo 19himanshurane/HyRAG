@@ -48,20 +48,33 @@ def api_ready() -> dict:
 
 
 @st.cache_data(ttl=60, show_spinner=False)
-def api_documents() -> dict | None:
+def api_documents(collection: str | None = None) -> dict | None:
     try:
-        return get_client().documents()
+        return get_client().documents(collection=collection)
     except ApiError:
         return None
 
 
-def ask_both(question: str, compare: bool) -> dict:
+@st.cache_data(ttl=60, show_spinner=False)
+def api_collections() -> list[dict]:
+    try:
+        return [c for c in get_client().collections() if c["documents"]]
+    except ApiError:
+        return []
+
+
+COLLECTION_LABELS = {"posthog": "PostHog (real company handbook)",
+                     "demo": "Demo set (fictional Nimbus + NIST, Kubernetes, PostgreSQL, GitLab)"}
+PREFERRED_COLLECTION = "posthog"
+
+
+def ask_both(question: str, compare: bool, collection: str | None) -> dict:
     """{mode: AskResult | ApiError}. With compare, hybrid and dense-only run in parallel (one wait, not two)."""
     modes = ["hybrid", "dense"] if compare else ["hybrid"]
 
     def one(mode):
         try:
-            return get_client().ask(question, mode)
+            return get_client().ask(question, mode, collection)
         except ApiError as e:
             return e
 
@@ -169,7 +182,15 @@ def main() -> None:
             st.error("API not ready")
             for problem in health.get("problems", []):
                 st.caption(problem)
-        docs = api_documents()
+        # Whose documents to answer from: one company at a time, never a mix of their policies.
+        names = [c["name"] for c in api_collections()]
+        collection = None
+        if names:
+            default = names.index(PREFERRED_COLLECTION) if PREFERRED_COLLECTION in names else 0
+            collection = st.selectbox("Company documents", names, index=default,
+                                      format_func=lambda n: COLLECTION_LABELS.get(n, n),
+                                      help="Answers come only from the chosen company's documents.")
+        docs = api_documents(collection)
         if docs:
             with st.expander(f"{docs['total']} documents"):
                 for d in docs["documents"]:
@@ -177,6 +198,7 @@ def main() -> None:
         if st.button("Refresh status"):
             api_ready.clear()
             api_documents.clear()
+            api_collections.clear()
             st.rerun()
         st.caption(f"API: {API_URL}")
 
@@ -193,13 +215,17 @@ def main() -> None:
         else:
             t0 = time.perf_counter()
             with st.spinner("Searching the documents and checking the answer…"):
-                st.session_state["results"] = ask_both(question.strip(), compare)
+                st.session_state["results"] = ask_both(question.strip(), compare, collection)
             st.session_state["question"] = question.strip()
+            st.session_state["collection"] = collection
             st.session_state["wait_seconds"] = time.perf_counter() - t0
 
     results = st.session_state.get("results")
     if results:
         st.markdown(f"### {st.session_state['question']}")
+        if st.session_state.get("collection"):
+            label = COLLECTION_LABELS.get(st.session_state["collection"], st.session_state["collection"])
+            st.caption(f"Answered from: {label}")
         if len(results) == 2:
             left, right = st.columns(2)
             with left:

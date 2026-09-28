@@ -166,3 +166,44 @@ Both Groq models have a **daily token limit**, and a day of evaluation work exha
 - **gpt-oss-120b** (writer): also exhausted today, during a grader check.
 
 To spread the load, the grader model is now configurable (`scripts/run_eval.py --grader-model`), so grading can run on a different daily budget from the pipeline's judge. gpt-oss-120b as grader agreed with the known grade in **31/31** of the synthetic cases it completed before its own quota ran out. The other 31 cases failed on quota, not on grading. **The check must be completed before switching**, and because 120b also writes the answers, grader agreement on real answers must be re-measured for it (a model grading its own family's output).
+
+**How to read the remaining daily budget:** Groq's rate-limit headers show only per-minute tokens and per-day requests, not the daily token budget. The 429 message states it ("Used X"). A test request with a large `max_completion_tokens` proves nothing, because only the prompt counts against the daily limit: it "passed" while the 20b was at 199,762 of 200,000. Probe with a prompt the size of a real request.
+
+## G09: a correct answer withheld by the citation checker (2026-09-28)
+
+The dev run (stopped after 4 questions on the writer's daily quota) reproduced G09: the draft "No patent claims have been identified as applying to NIST SP 800-61r3" was correct but withheld as `unverified`. The checker's own reason: "the passage ... does not mention NIST SP 800-61r3". The passage says "this publication"; only its **source file name** says which publication. The writer sees each passage's source (`<passage source="...">`); the checker did not, so it could not confirm a link the writer had made correctly. This is systematic for any question that names a document the text calls "this document".
+
+**Fix** (`hyrag/citations.py`): the checker gets each passage as the writer does, with its source. Its prompt says the source only identifies the document, and the quote check still requires support from the passage text, so a file name alone can never pass (tested). The same change escapes `</passage>` inside the checker's passages; before, only the writer's were escaped, so a planted document could try to close its block and instruct the checker. The faithfulness metric passes sources too.
+
+**Measured** (`scripts/eval_judge.py` batch 8 on gpt-oss-20b; three labelled pairs added to `eval/judge_pairs.json`):
+
+| | Before (7 runs) | After (1 run) |
+|---|---|---|
+| False support (the bar) | 0/16 | **0/18** |
+| Exact, original 32 pairs | 29–31/32 | 30/32 |
+| #33 G09 claim | (new) | supported ✅ |
+| #34 same passage, claim names SP 800-63B | (new) | partial, not supported ✅ ("does not mention NIST SP 800-63B") |
+| #35 right document, wrong fact | (new) | unsupported ✅ |
+
+One run only: the 7-run spread of the old prompt is the comparison, and a second run is due when quota allows.
+
+## A real company: PostHog's handbook, and collections (2026-09-28)
+
+**Why:** the demo documents are real public docs plus a fictional company (Nimbus), which answers "does the pipeline work" but not "is it useful to a real company". PostHog publishes its real internal handbook under MIT (the `/contents/` folder of PostHog/posthog.com only; the rest of their site is not licensed). It is the policies its staff use daily: time off, expenses, on-call, hiring, incidents.
+
+**What was added:**
+- `corpus/posthog/`: all 383 handbook pages at one pinned commit (`scripts/fetch_corpus.py --posthog`; golden questions must keep matching the text), with PostHog's MIT notice in `corpus/posthog/LICENSE`. Alternatives considered: the GitLab handbook (thousands of pages: too big for the free quotas) and EnterpriseRAG-Bench (MIT, 500k documents, but a synthetic company).
+- **Loader:** PostHog pages are Markdown/MDX with React components and HTML. `strip_components` keeps what a reader sees (`<TeamMember name="X" />` → X, callout titles, wrapped text) and drops media, imports and layout tags, leaving code and `<name-of-pod>`-style placeholders alone. The 16 existing documents parse byte-identical to before; of ~800 tags in the handbook, 7 remain, all inside a style guide's nested code examples.
+- **Index:** 7,628 chunks (was 1,266), 8.4 min and 431 embedding requests to add.
+
+**The problem it exposed:** several companies in one index. Retrieval for "How much paid time off do I get per year?" returned GitLab ×3, Nimbus ×1 and PostHog ×1 in one top 5: the model would get three companies' leave policies side by side.
+
+**Fix: collections.** A document's collection is its first folder when that is a named collection (`posthog/...`), else `demo`.
+- Meaning search masks other collections **before** taking the top k, so another company's closer match can't take this company's slots (tested with a trap: a PostHog page about the same VPN error that beats ours overall).
+- Keyword search keeps **per-collection statistics**: adding PostHog's pages changes no demo score (tested: identical scores with and without them).
+- The collection is part of the answer-cache key; `/v1/ask` takes `collection` (unknown → 422), `GET /v1/collections` lists them, uploads can target one, and the dashboard has a company picker (default PostHog).
+- Evaluation: a golden item without `collection` is searched in `demo` only, which reproduces the pre-PostHog corpus exactly, so earlier results stay comparable and no locked item changed.
+
+**Golden set: 22 PostHog questions (G61–G82), 82 in total.** Lookups were written about 14 sections drawn at random from 3,447 eligible ones (seed 20260929, `eval/golden_sample_posthog.json`), which is why many are sales questions: the handbook is mostly sales. Plus 3 multi-hop, 3 no-answer (dress code, pet insurance, sabbaticals: checked absent by concept, not only by word, and only within PostHog) and 2 ambiguous. Split: 9 dev / 13 test; the test lock was reset with the reason recorded (no test results existed), and the original 60 items are byte-identical.
+
+**First dev finding (retrieval only, no LLM):** 7 of 8 dev questions have all their evidence in the top 5. The miss is **G76** (multi-hop: a late laptop): the onboarding half is found, "Talk to Tara who handles Macbook..." is not, even in the top 20. Query rewriting only runs when the best match is weak; here the first half matched well, so the second half never got its own search. A known multi-hop weakness, recorded here rather than tuned on one question.

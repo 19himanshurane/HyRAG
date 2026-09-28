@@ -82,5 +82,3069 @@
     "publisher": "Kubernetes Documentation",
     "license": "CC BY 4.0",
     "retrieved": "2026-09-22"
+  },
+  {
+    "path": "posthog/handbook/account-management/getting-people-to-talk-to-you.md",
+    "url": "https://posthog.com/handbook/account-management/getting-people-to-talk-to-you",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/brand/ambassador.md",
+    "url": "https://posthog.com/handbook/brand/ambassador",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/brand/approvals.md",
+    "url": "https://posthog.com/handbook/brand/approvals",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/brand/art-requests.md",
+    "url": "https://posthog.com/handbook/brand/art-requests",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/brand/assets.md",
+    "url": "https://posthog.com/handbook/brand/assets",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/brand/designing-posthog-website.md",
+    "url": "https://posthog.com/handbook/brand/designing-posthog-website",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/brand/foundations.md",
+    "url": "https://posthog.com/handbook/brand/foundations",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/brand/in-practice.md",
+    "url": "https://posthog.com/handbook/brand/in-practice",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/brand/overview.md",
+    "url": "https://posthog.com/handbook/brand/overview",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/brand/tone.md",
+    "url": "https://posthog.com/handbook/brand/tone",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/brand/visual-identity.md",
+    "url": "https://posthog.com/handbook/brand/visual-identity",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/community/channels.mdx",
+    "url": "https://posthog.com/handbook/community/channels",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/community/index.mdx",
+    "url": "https://posthog.com/handbook/community",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/community/moderator-tools.mdx",
+    "url": "https://posthog.com/handbook/community/moderator-tools",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/community/points.mdx",
+    "url": "https://posthog.com/handbook/community/points",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/community/profiles.mdx",
+    "url": "https://posthog.com/handbook/community/profiles",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/community/questions.mdx",
+    "url": "https://posthog.com/handbook/community/questions",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/company/_snippets/soc2.mdx",
+    "url": "https://posthog.com/handbook/company/_snippets/soc2",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/company/adding-tools.md",
+    "url": "https://posthog.com/handbook/company/adding-tools",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/company/communication.md",
+    "url": "https://posthog.com/handbook/company/communication",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/company/culture.md",
+    "url": "https://posthog.com/handbook/company/culture",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/company/do-more-weird.mdx",
+    "url": "https://posthog.com/handbook/company/do-more-weird",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/company/fuzzy-ownership.mdx",
+    "url": "https://posthog.com/handbook/company/fuzzy-ownership",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/company/goal-setting.md",
+    "url": "https://posthog.com/handbook/company/goal-setting",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/company/grown-ups.md",
+    "url": "https://posthog.com/handbook/company/grown-ups",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/company/kudos.md",
+    "url": "https://posthog.com/handbook/company/kudos",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/company/lore.md",
+    "url": "https://posthog.com/handbook/company/lore",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/company/management.md",
+    "url": "https://posthog.com/handbook/company/management",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/company/merch-store.md",
+    "url": "https://posthog.com/handbook/company/merch-store",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/company/new-to-github.md",
+    "url": "https://posthog.com/handbook/company/new-to-github",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/company/offsites.md",
+    "url": "https://posthog.com/handbook/company/offsites",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/company/post-mortems/2025-09-29-flags-is-down.md",
+    "url": "https://posthog.com/handbook/company/post-mortems/2025-09-29-flags-is-down",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/company/post-mortems/2025-10-03-surveys-sdk-bug.md",
+    "url": "https://posthog.com/handbook/company/post-mortems/2025-10-03-surveys-sdk-bug",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/company/post-mortems/2025-10-21-feature-flags-recurring-outages.md",
+    "url": "https://posthog.com/handbook/company/post-mortems/2025-10-21-feature-flags-recurring-outages",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/company/post-mortems/2025-11-15-persons-db-migration.md",
+    "url": "https://posthog.com/handbook/company/post-mortems/2025-11-15-persons-db-migration",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/company/post-mortems/2025-11-26-shai-hulud-attack.md",
+    "url": "https://posthog.com/handbook/company/post-mortems/2025-11-26-shai-hulud-attack",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/company/post-mortems/2026-01-17-replay-sdk-fetch-wrapper-incident.md",
+    "url": "https://posthog.com/handbook/company/post-mortems/2026-01-17-replay-sdk-fetch-wrapper-incident",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/company/post-mortems/2026-02-06-feature-flags-cache-degradation.md",
+    "url": "https://posthog.com/handbook/company/post-mortems/2026-02-06-feature-flags-cache-degradation",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/company/post-mortems/2026-02-20-posthog-us-logs-data-loss.md",
+    "url": "https://posthog.com/handbook/company/post-mortems/2026-02-20-posthog-us-logs-data-loss",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/company/post-mortems/2026-04-27-workflow-wait-until-condition.md",
+    "url": "https://posthog.com/handbook/company/post-mortems/2026-04-27-workflow-wait-until-condition",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/company/post-mortems/index.md",
+    "url": "https://posthog.com/handbook/company/post-mortems",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/company/security-advisories.md",
+    "url": "https://posthog.com/handbook/company/security-advisories",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/company/security.md",
+    "url": "https://posthog.com/handbook/company/security",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/company/small-teams.md",
+    "url": "https://posthog.com/handbook/company/small-teams",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/company/sprints.md",
+    "url": "https://posthog.com/handbook/company/sprints",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/company/team-changes.md",
+    "url": "https://posthog.com/handbook/company/team-changes",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/content/_snippets/list-no-nextline-md.md",
+    "url": "https://posthog.com/handbook/content/_snippets/list-no-nextline-md",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/content/_snippets/list-no-nextline.md",
+    "url": "https://posthog.com/handbook/content/_snippets/list-no-nextline",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/content/_snippets/list-with-nextline-md.md",
+    "url": "https://posthog.com/handbook/content/_snippets/list-with-nextline-md",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/content/_snippets/list-with-nextline.md",
+    "url": "https://posthog.com/handbook/content/_snippets/list-with-nextline",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/content/aeo-guide.md",
+    "url": "https://posthog.com/handbook/content/aeo-guide",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/content/blogs.md",
+    "url": "https://posthog.com/handbook/content/blogs",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/content/feature-trailer-process.md",
+    "url": "https://posthog.com/handbook/content/feature-trailer-process",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/content/index.md",
+    "url": "https://posthog.com/handbook/content",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/content/linkedin.md",
+    "url": "https://posthog.com/handbook/content/linkedin",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/content/metadata.md",
+    "url": "https://posthog.com/handbook/content/metadata",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/content/newsletter-ads.md",
+    "url": "https://posthog.com/handbook/content/newsletter-ads",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/content/newsletter-tips.md",
+    "url": "https://posthog.com/handbook/content/newsletter-tips",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/content/newsletter.md",
+    "url": "https://posthog.com/handbook/content/newsletter",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/content/posthog-style-guide.md",
+    "url": "https://posthog.com/handbook/content/posthog-style-guide",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/content/screen-recording-guide.md",
+    "url": "https://posthog.com/handbook/content/screen-recording-guide",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/content/seo-guide.md",
+    "url": "https://posthog.com/handbook/content/seo-guide",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/content/social-media.md",
+    "url": "https://posthog.com/handbook/content/social-media",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/content/youtube.md",
+    "url": "https://posthog.com/handbook/content/youtube",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/cs-and-onboarding/churn-reasons.md",
+    "url": "https://posthog.com/handbook/cs-and-onboarding/churn-reasons",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/cs-and-onboarding/cohort-dinners.md",
+    "url": "https://posthog.com/handbook/cs-and-onboarding/cohort-dinners",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/cs-and-onboarding/cost-optimization.md",
+    "url": "https://posthog.com/handbook/cs-and-onboarding/cost-optimization",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/cs-and-onboarding/customer-churn-retros.md",
+    "url": "https://posthog.com/handbook/cs-and-onboarding/customer-churn-retros",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/cs-and-onboarding/customer-led-calls.md",
+    "url": "https://posthog.com/handbook/cs-and-onboarding/customer-led-calls",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/cs-and-onboarding/customer-success.md",
+    "url": "https://posthog.com/handbook/cs-and-onboarding/customer-success",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/cs-and-onboarding/engaging-unengaged-customers.md",
+    "url": "https://posthog.com/handbook/cs-and-onboarding/engaging-unengaged-customers",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/cs-and-onboarding/feature-requests.md",
+    "url": "https://posthog.com/handbook/cs-and-onboarding/feature-requests",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/cs-and-onboarding/foundation-check.md",
+    "url": "https://posthog.com/handbook/cs-and-onboarding/foundation-check",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/cs-and-onboarding/getting-started-with-customers.md",
+    "url": "https://posthog.com/handbook/cs-and-onboarding/getting-started-with-customers",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/cs-and-onboarding/handling-customer-issues.md",
+    "url": "https://posthog.com/handbook/cs-and-onboarding/handling-customer-issues",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/cs-and-onboarding/health-checks.md",
+    "url": "https://posthog.com/handbook/cs-and-onboarding/health-checks",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/cs-and-onboarding/health-tracking.md",
+    "url": "https://posthog.com/handbook/cs-and-onboarding/health-tracking",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/cs-and-onboarding/how-we-use-automation.md",
+    "url": "https://posthog.com/handbook/cs-and-onboarding/how-we-use-automation",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/cs-and-onboarding/how-we-work.md",
+    "url": "https://posthog.com/handbook/cs-and-onboarding/how-we-work",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/cs-and-onboarding/lifecycle-csm.md",
+    "url": "https://posthog.com/handbook/cs-and-onboarding/lifecycle-csm",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/cs-and-onboarding/new-hire-onboarding-exercise.md",
+    "url": "https://posthog.com/handbook/cs-and-onboarding/new-hire-onboarding-exercise",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/cs-and-onboarding/new-hire-onboarding-team-leads.md",
+    "url": "https://posthog.com/handbook/cs-and-onboarding/new-hire-onboarding-team-leads",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/cs-and-onboarding/new-hire-onboarding.md",
+    "url": "https://posthog.com/handbook/cs-and-onboarding/new-hire-onboarding",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/cs-and-onboarding/onboarding-success-plan.md",
+    "url": "https://posthog.com/handbook/cs-and-onboarding/onboarding-success-plan",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/cs-and-onboarding/renewals.md",
+    "url": "https://posthog.com/handbook/cs-and-onboarding/renewals",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/cs-and-onboarding/shareable-guides/designing-events-for-per-entity-metrics.md",
+    "url": "https://posthog.com/handbook/cs-and-onboarding/shareable-guides/designing-events-for-per-entity-metrics",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/cs-and-onboarding/shareable-guides/llm-cost-optimization.md",
+    "url": "https://posthog.com/handbook/cs-and-onboarding/shareable-guides/llm-cost-optimization",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/cs-and-onboarding/using-ai-to-analyze-customer-issues.md",
+    "url": "https://posthog.com/handbook/cs-and-onboarding/using-ai-to-analyze-customer-issues",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/engineering/ai/ai-platform.md",
+    "url": "https://posthog.com/handbook/engineering/ai/ai-platform",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/engineering/ai/architecture.md",
+    "url": "https://posthog.com/handbook/engineering/ai/architecture",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/engineering/ai/implementation.md",
+    "url": "https://posthog.com/handbook/engineering/ai/implementation",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/engineering/ai/products.md",
+    "url": "https://posthog.com/handbook/engineering/ai/products",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/engineering/ai/team-structure.md",
+    "url": "https://posthog.com/handbook/engineering/ai/team-structure",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/engineering/bug-prioritization.md",
+    "url": "https://posthog.com/handbook/engineering/bug-prioritization",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/engineering/clickhouse/clusters.mdx",
+    "url": "https://posthog.com/handbook/engineering/clickhouse/clusters",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/engineering/clickhouse/data-ingestion.mdx",
+    "url": "https://posthog.com/handbook/engineering/clickhouse/data-ingestion",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/engineering/clickhouse/data-storage.mdx",
+    "url": "https://posthog.com/handbook/engineering/clickhouse/data-storage",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/engineering/clickhouse/dictionaries.mdx",
+    "url": "https://posthog.com/handbook/engineering/clickhouse/dictionaries",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/engineering/clickhouse/index.mdx",
+    "url": "https://posthog.com/handbook/engineering/clickhouse",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/engineering/clickhouse/operations.mdx",
+    "url": "https://posthog.com/handbook/engineering/clickhouse/operations",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/engineering/clickhouse/performance.mdx",
+    "url": "https://posthog.com/handbook/engineering/clickhouse/performance",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/engineering/clickhouse/query-attribution.mdx",
+    "url": "https://posthog.com/handbook/engineering/clickhouse/query-attribution",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/engineering/clickhouse/schema/app-metrics.mdx",
+    "url": "https://posthog.com/handbook/engineering/clickhouse/schema/app-metrics",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/engineering/clickhouse/schema/index.mdx",
+    "url": "https://posthog.com/handbook/engineering/clickhouse/schema",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/engineering/clickhouse/schema/person-distinct-id.mdx",
+    "url": "https://posthog.com/handbook/engineering/clickhouse/schema/person-distinct-id",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/engineering/clickhouse/schema/sharded-events.mdx",
+    "url": "https://posthog.com/handbook/engineering/clickhouse/schema/sharded-events",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/engineering/clickhouse/working-with-json.mdx",
+    "url": "https://posthog.com/handbook/engineering/clickhouse/working-with-json",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/engineering/cloud-providers.md",
+    "url": "https://posthog.com/handbook/engineering/cloud-providers",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/engineering/conventions/scripts.md",
+    "url": "https://posthog.com/handbook/engineering/conventions/scripts",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/engineering/customer-comms.md",
+    "url": "https://posthog.com/handbook/engineering/customer-comms",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/engineering/deployments-support.mdx",
+    "url": "https://posthog.com/handbook/engineering/deployments-support",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/engineering/developer-experience.md",
+    "url": "https://posthog.com/handbook/engineering/developer-experience",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/engineering/development-process.md",
+    "url": "https://posthog.com/handbook/engineering/development-process",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/engineering/feature-ownership.md",
+    "url": "https://posthog.com/handbook/engineering/feature-ownership",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/engineering/feature-pricing.md",
+    "url": "https://posthog.com/handbook/engineering/feature-pricing",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/engineering/how-to-access-posthog-cloud-infra.md",
+    "url": "https://posthog.com/handbook/engineering/how-to-access-posthog-cloud-infra",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/engineering/how-we-review.md",
+    "url": "https://posthog.com/handbook/engineering/how-we-review",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/engineering/operations/incidents.md",
+    "url": "https://posthog.com/handbook/engineering/operations/incidents",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/engineering/operations/on-call-rotation.md",
+    "url": "https://posthog.com/handbook/engineering/operations/on-call-rotation",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/engineering/operations/post-mortems.md",
+    "url": "https://posthog.com/handbook/engineering/operations/post-mortems",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/engineering/operations/support-hero.md",
+    "url": "https://posthog.com/handbook/engineering/operations/support-hero",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/engineering/posthog-com/add-team-member.mdx",
+    "url": "https://posthog.com/handbook/engineering/posthog-com/add-team-member",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/engineering/posthog-com/api-docs.md",
+    "url": "https://posthog.com/handbook/engineering/posthog-com/api-docs",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/engineering/posthog-com/assets.mdx",
+    "url": "https://posthog.com/handbook/engineering/posthog-com/assets",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/engineering/posthog-com/changelog.mdx",
+    "url": "https://posthog.com/handbook/engineering/posthog-com/changelog",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/engineering/posthog-com/cool-tech-jobs.mdx",
+    "url": "https://posthog.com/handbook/engineering/posthog-com/cool-tech-jobs",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/engineering/posthog-com/developing-the-website.md",
+    "url": "https://posthog.com/handbook/engineering/posthog-com/developing-the-website",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/engineering/posthog-com/how-posthog-website-works.mdx",
+    "url": "https://posthog.com/handbook/engineering/posthog-com/how-posthog-website-works",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/engineering/posthog-com/issue-or-pr.md",
+    "url": "https://posthog.com/handbook/engineering/posthog-com/issue-or-pr",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/engineering/posthog-com/jobs.mdx",
+    "url": "https://posthog.com/handbook/engineering/posthog-com/jobs",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/engineering/posthog-com/markdown.mdx",
+    "url": "https://posthog.com/handbook/engineering/posthog-com/markdown",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/engineering/posthog-com/mdx-setup.mdx",
+    "url": "https://posthog.com/handbook/engineering/posthog-com/mdx-setup",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/engineering/posthog-com/merch-store.mdx",
+    "url": "https://posthog.com/handbook/engineering/posthog-com/merch-store",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/engineering/posthog-com/overview.mdx",
+    "url": "https://posthog.com/handbook/engineering/posthog-com/overview",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/engineering/posthog-com/presentations.mdx",
+    "url": "https://posthog.com/handbook/engineering/posthog-com/presentations",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/engineering/posthog-com/product-comparisons.mdx",
+    "url": "https://posthog.com/handbook/engineering/posthog-com/product-comparisons",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/engineering/posthog-com/roadmap.mdx",
+    "url": "https://posthog.com/handbook/engineering/posthog-com/roadmap",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/engineering/posthog-com/small-teams.mdx",
+    "url": "https://posthog.com/handbook/engineering/posthog-com/small-teams",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/engineering/posthog-com/technical-architecture.md",
+    "url": "https://posthog.com/handbook/engineering/posthog-com/technical-architecture",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/engineering/product-design-process.md",
+    "url": "https://posthog.com/handbook/engineering/product-design-process",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/engineering/product-design.md",
+    "url": "https://posthog.com/handbook/engineering/product-design",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/engineering/product-engineering.md",
+    "url": "https://posthog.com/handbook/engineering/product-engineering",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/engineering/revenue-and-forecasting.md",
+    "url": "https://posthog.com/handbook/engineering/revenue-and-forecasting",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/engineering/sdks/guidelines.md",
+    "url": "https://posthog.com/handbook/engineering/sdks/guidelines",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/engineering/sdks/index.md",
+    "url": "https://posthog.com/handbook/engineering/sdks",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/engineering/sdks/releases.mdx",
+    "url": "https://posthog.com/handbook/engineering/sdks/releases",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/engineering/sdks/support-rotation.md",
+    "url": "https://posthog.com/handbook/engineering/sdks/support-rotation",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/engineering/security.md",
+    "url": "https://posthog.com/handbook/engineering/security",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/engineering/session-replay/session-replay-architecture.md",
+    "url": "https://posthog.com/handbook/engineering/session-replay/session-replay-architecture",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/engineering/tech-talks.md",
+    "url": "https://posthog.com/handbook/engineering/tech-talks",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/engineering/usage_reports.md",
+    "url": "https://posthog.com/handbook/engineering/usage_reports",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/engineering/visiting-customers.md",
+    "url": "https://posthog.com/handbook/engineering/visiting-customers",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/engineering/working-with-max-ai.md",
+    "url": "https://posthog.com/handbook/engineering/working-with-max-ai",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/engineering/writing-blogs.md",
+    "url": "https://posthog.com/handbook/engineering/writing-blogs",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/engineering/writing-docs.md",
+    "url": "https://posthog.com/handbook/engineering/writing-docs",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/exec/all-hands-topics.md",
+    "url": "https://posthog.com/handbook/exec/all-hands-topics",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/exec/annual-planning.md",
+    "url": "https://posthog.com/handbook/exec/annual-planning",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/exec/responsibilities.md",
+    "url": "https://posthog.com/handbook/exec/responsibilities",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/finance.md",
+    "url": "https://posthog.com/handbook/finance",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/forward-deployed-engineering/how-to-get-fde-involved.md",
+    "url": "https://posthog.com/handbook/forward-deployed-engineering/how-to-get-fde-involved",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/forward-deployed-engineering/how-we-work.md",
+    "url": "https://posthog.com/handbook/forward-deployed-engineering/how-we-work",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/forward-deployed-engineering/new-hire-onboarding.md",
+    "url": "https://posthog.com/handbook/forward-deployed-engineering/new-hire-onboarding",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/forward-deployed-engineering/overview.md",
+    "url": "https://posthog.com/handbook/forward-deployed-engineering/overview",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/forward-deployed-engineering/who-we-work-with.md",
+    "url": "https://posthog.com/handbook/forward-deployed-engineering/who-we-work-with",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/forward-deployed-engineering/working-with-ai.md",
+    "url": "https://posthog.com/handbook/forward-deployed-engineering/working-with-ai",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/forward-deployed-engineering/working-with-customers.md",
+    "url": "https://posthog.com/handbook/forward-deployed-engineering/working-with-customers",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/forward-deployed-engineering/working-with-product-engineering.md",
+    "url": "https://posthog.com/handbook/forward-deployed-engineering/working-with-product-engineering",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/forward-deployed-engineering/working-with-sales-and-cs.md",
+    "url": "https://posthog.com/handbook/forward-deployed-engineering/working-with-sales-and-cs",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/future.md",
+    "url": "https://posthog.com/handbook/future",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/getting-started/meetings.md",
+    "url": "https://posthog.com/handbook/getting-started/meetings",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/growth/billing/customer-billing-configurations.md",
+    "url": "https://posthog.com/handbook/growth/billing/customer-billing-configurations",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/growth/cross-selling/cross-sell-motions.md",
+    "url": "https://posthog.com/handbook/growth/cross-selling/cross-sell-motions",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/growth/cross-selling/error-tracking-cross-sell.md",
+    "url": "https://posthog.com/handbook/growth/cross-selling/error-tracking-cross-sell",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/growth/cross-selling/how-we-upsell-and-cross-sell.md",
+    "url": "https://posthog.com/handbook/growth/cross-selling/how-we-upsell-and-cross-sell",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/growth/cross-selling/tracking-cross-sells.md",
+    "url": "https://posthog.com/handbook/growth/cross-selling/tracking-cross-sells",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/growth/growth-engineering/growth-sessions.md",
+    "url": "https://posthog.com/handbook/growth/growth-engineering/growth-sessions",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/growth/growth-engineering/per-product-activation.md",
+    "url": "https://posthog.com/handbook/growth/growth-engineering/per-product-activation",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/growth/growth-engineering/product-intents.md",
+    "url": "https://posthog.com/handbook/growth/growth-engineering/product-intents",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/growth/revops/credits.md",
+    "url": "https://posthog.com/handbook/growth/revops/credits",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/growth/revops/enrichment-pipeline.md",
+    "url": "https://posthog.com/handbook/growth/revops/enrichment-pipeline",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/growth/revops/icp-fit-score.md",
+    "url": "https://posthog.com/handbook/growth/revops/icp-fit-score",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/growth/revops/lead-assignment-tracker.md",
+    "url": "https://posthog.com/handbook/growth/revops/lead-assignment-tracker",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/growth/revops/lifecycle-analysis.md",
+    "url": "https://posthog.com/handbook/growth/revops/lifecycle-analysis",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/growth/revops/metric-conventions.md",
+    "url": "https://posthog.com/handbook/growth/revops/metric-conventions",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/growth/revops/org-definitions.md",
+    "url": "https://posthog.com/handbook/growth/revops/org-definitions",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/growth/revops/overview.md",
+    "url": "https://posthog.com/handbook/growth/revops/overview",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/growth/revops/retention-metrics.md",
+    "url": "https://posthog.com/handbook/growth/revops/retention-metrics",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/growth/revops/revenue-adjustments.md",
+    "url": "https://posthog.com/handbook/growth/revops/revenue-adjustments",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/growth/sales/account-allocation.md",
+    "url": "https://posthog.com/handbook/growth/sales/account-allocation",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/growth/sales/account-planning.md",
+    "url": "https://posthog.com/handbook/growth/sales/account-planning",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/growth/sales/accounts-overview.md",
+    "url": "https://posthog.com/handbook/growth/sales/accounts-overview",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/growth/sales/automations.md",
+    "url": "https://posthog.com/handbook/growth/sales/automations",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/growth/sales/billing.md",
+    "url": "https://posthog.com/handbook/growth/sales/billing",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/growth/sales/communications-templates-feature-adoption.md",
+    "url": "https://posthog.com/handbook/growth/sales/communications-templates-feature-adoption",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/growth/sales/communications-templates-fundraising.md",
+    "url": "https://posthog.com/handbook/growth/sales/communications-templates-fundraising",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/growth/sales/communications-templates-incidents.md",
+    "url": "https://posthog.com/handbook/growth/sales/communications-templates-incidents",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/growth/sales/communications-templates.md",
+    "url": "https://posthog.com/handbook/growth/sales/communications-templates",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/growth/sales/contract-rules.md",
+    "url": "https://posthog.com/handbook/growth/sales/contract-rules",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/growth/sales/contracts.md",
+    "url": "https://posthog.com/handbook/growth/sales/contracts",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/growth/sales/crm.md",
+    "url": "https://posthog.com/handbook/growth/sales/crm",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/growth/sales/csm-tam-overlay-coverage.md",
+    "url": "https://posthog.com/handbook/growth/sales/csm-tam-overlay-coverage",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/growth/sales/customer-faqs.md",
+    "url": "https://posthog.com/handbook/growth/sales/customer-faqs",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/growth/sales/customer-industry-segments.md",
+    "url": "https://posthog.com/handbook/growth/sales/customer-industry-segments",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/growth/sales/customer-journey.md",
+    "url": "https://posthog.com/handbook/growth/sales/customer-journey",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/growth/sales/customer-onboarding.md",
+    "url": "https://posthog.com/handbook/growth/sales/customer-onboarding",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/growth/sales/customer-onsites.md",
+    "url": "https://posthog.com/handbook/growth/sales/customer-onsites",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/growth/sales/customer-training.md",
+    "url": "https://posthog.com/handbook/growth/sales/customer-training",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/growth/sales/data-foundations.md",
+    "url": "https://posthog.com/handbook/growth/sales/data-foundations",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/growth/sales/evaluating-growth-potential.md",
+    "url": "https://posthog.com/handbook/growth/sales/evaluating-growth-potential",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/growth/sales/expansion-and-retention.md",
+    "url": "https://posthog.com/handbook/growth/sales/expansion-and-retention",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/growth/sales/expansion-strategies.md",
+    "url": "https://posthog.com/handbook/growth/sales/expansion-strategies",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/growth/sales/getting-people-to-talk-to-you.md",
+    "url": "https://posthog.com/handbook/growth/sales/getting-people-to-talk-to-you",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/growth/sales/grow-an-account.md",
+    "url": "https://posthog.com/handbook/growth/sales/grow-an-account",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/growth/sales/historical-import.md",
+    "url": "https://posthog.com/handbook/growth/sales/historical-import",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/growth/sales/how-to-do-discovery.md",
+    "url": "https://posthog.com/handbook/growth/sales/how-to-do-discovery",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/growth/sales/how-to-pitch-self-driving.md",
+    "url": "https://posthog.com/handbook/growth/sales/how-to-pitch-self-driving",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/growth/sales/how-we-work.md",
+    "url": "https://posthog.com/handbook/growth/sales/how-we-work",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/growth/sales/lead-scoring.md",
+    "url": "https://posthog.com/handbook/growth/sales/lead-scoring",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/growth/sales/new-business-how-we-work.md",
+    "url": "https://posthog.com/handbook/growth/sales/new-business-how-we-work",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/growth/sales/new-hire-onboarding.md",
+    "url": "https://posthog.com/handbook/growth/sales/new-hire-onboarding",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/growth/sales/new-sales.md",
+    "url": "https://posthog.com/handbook/growth/sales/new-sales",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/growth/sales/outbound-sales.md",
+    "url": "https://posthog.com/handbook/growth/sales/outbound-sales",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/growth/sales/overview.md",
+    "url": "https://posthog.com/handbook/growth/sales/overview",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/growth/sales/product-enablement.md",
+    "url": "https://posthog.com/handbook/growth/sales/product-enablement",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/growth/sales/product-led-lead-qualification.md",
+    "url": "https://posthog.com/handbook/growth/sales/product-led-lead-qualification",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/growth/sales/product-led-sales.md",
+    "url": "https://posthog.com/handbook/growth/sales/product-led-sales",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/growth/sales/professional-services.md",
+    "url": "https://posthog.com/handbook/growth/sales/professional-services",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/growth/sales/refunds.md",
+    "url": "https://posthog.com/handbook/growth/sales/refunds",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/growth/sales/risk-mitigation-and-churn-prevention.md",
+    "url": "https://posthog.com/handbook/growth/sales/risk-mitigation-and-churn-prevention",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/growth/sales/running-trials.md",
+    "url": "https://posthog.com/handbook/growth/sales/running-trials",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/growth/sales/sales-and-cs-tools.md",
+    "url": "https://posthog.com/handbook/growth/sales/sales-and-cs-tools",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/growth/sales/sales-operations.md",
+    "url": "https://posthog.com/handbook/growth/sales/sales-operations",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/growth/sales/sandboxes.md",
+    "url": "https://posthog.com/handbook/growth/sales/sandboxes",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/growth/sales/selling-via-aws.md",
+    "url": "https://posthog.com/handbook/growth/sales/selling-via-aws",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/growth/sales/slack-channels.md",
+    "url": "https://posthog.com/handbook/growth/sales/slack-channels",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/growth/sales/tam-excellence.md",
+    "url": "https://posthog.com/handbook/growth/sales/tam-excellence",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/growth/sales/team-leads.md",
+    "url": "https://posthog.com/handbook/growth/sales/team-leads",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/growth/sales/trials.md",
+    "url": "https://posthog.com/handbook/growth/sales/trials",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/growth/sales/turning-knowledge-into-agent-skills.md",
+    "url": "https://posthog.com/handbook/growth/sales/turning-knowledge-into-agent-skills",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/growth/sales/user-event-streams.md",
+    "url": "https://posthog.com/handbook/growth/sales/user-event-streams",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/growth/sales/utilization-by-business-type.md",
+    "url": "https://posthog.com/handbook/growth/sales/utilization-by-business-type",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/growth/sales/who-we-do-business-with.md",
+    "url": "https://posthog.com/handbook/growth/sales/who-we-do-business-with",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/growth/sales/why-buy-posthog.md",
+    "url": "https://posthog.com/handbook/growth/sales/why-buy-posthog",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/growth/shipping-a-pricing-change.md",
+    "url": "https://posthog.com/handbook/growth/shipping-a-pricing-change",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/growth/use-case-selling/ai-llm-observability.md",
+    "url": "https://posthog.com/handbook/growth/use-case-selling/ai-llm-observability",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/growth/use-case-selling/customer-experience.md",
+    "url": "https://posthog.com/handbook/growth/use-case-selling/customer-experience",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/growth/use-case-selling/data-infrastructure.md",
+    "url": "https://posthog.com/handbook/growth/use-case-selling/data-infrastructure",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/growth/use-case-selling/growth-and-marketing.md",
+    "url": "https://posthog.com/handbook/growth/use-case-selling/growth-and-marketing",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/growth/use-case-selling/observability.md",
+    "url": "https://posthog.com/handbook/growth/use-case-selling/observability",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/growth/use-case-selling/product-intelligence.md",
+    "url": "https://posthog.com/handbook/growth/use-case-selling/product-intelligence",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/growth/use-case-selling/release-engineering.md",
+    "url": "https://posthog.com/handbook/growth/use-case-selling/release-engineering",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/growth/use-case-selling/use-case-selling.md",
+    "url": "https://posthog.com/handbook/growth/use-case-selling/use-case-selling",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/help.md",
+    "url": "https://posthog.com/handbook/help",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/how-we-get-users.md",
+    "url": "https://posthog.com/handbook/how-we-get-users",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/how-we-make-money.md",
+    "url": "https://posthog.com/handbook/how-we-make-money",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/low-prices.md",
+    "url": "https://posthog.com/handbook/low-prices",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/making-users-happy.md",
+    "url": "https://posthog.com/handbook/making-users-happy",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/marketing/campaigns-and-coupons.md",
+    "url": "https://posthog.com/handbook/marketing/campaigns-and-coupons",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/marketing/co-marketing.md",
+    "url": "https://posthog.com/handbook/marketing/co-marketing",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/marketing/collaborating-with-pms.md",
+    "url": "https://posthog.com/handbook/marketing/collaborating-with-pms",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/marketing/customer-case-studies.md",
+    "url": "https://posthog.com/handbook/marketing/customer-case-studies",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/marketing/email-comms.md",
+    "url": "https://posthog.com/handbook/marketing/email-comms",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/marketing/events.md",
+    "url": "https://posthog.com/handbook/marketing/events",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/marketing/exporting-blog-post-image.md",
+    "url": "https://posthog.com/handbook/marketing/exporting-blog-post-image",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/marketing/how-we-position-and-sell/error-tracking.md",
+    "url": "https://posthog.com/handbook/marketing/how-we-position-and-sell/error-tracking",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/marketing/how-we-position-and-sell/logs.md",
+    "url": "https://posthog.com/handbook/marketing/how-we-position-and-sell/logs",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/marketing/how-we-position-and-sell/workflows.md",
+    "url": "https://posthog.com/handbook/marketing/how-we-position-and-sell/workflows",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/marketing/in-app.md",
+    "url": "https://posthog.com/handbook/marketing/in-app",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/marketing/incident-comms.md",
+    "url": "https://posthog.com/handbook/marketing/incident-comms",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/marketing/index.md",
+    "url": "https://posthog.com/handbook/marketing",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/marketing/influencers.md",
+    "url": "https://posthog.com/handbook/marketing/influencers",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/marketing/onboarding-and-lifecycle-emails.md",
+    "url": "https://posthog.com/handbook/marketing/onboarding-and-lifecycle-emails",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/marketing/open-source-sponsorship.mdx",
+    "url": "https://posthog.com/handbook/marketing/open-source-sponsorship",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/marketing/ownership.md",
+    "url": "https://posthog.com/handbook/marketing/ownership",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/marketing/paid.md",
+    "url": "https://posthog.com/handbook/marketing/paid",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/marketing/partners.md",
+    "url": "https://posthog.com/handbook/marketing/partners",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/marketing/positioning/analytics.md",
+    "url": "https://posthog.com/handbook/marketing/positioning/analytics",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/marketing/positioning/data-pipelines.md",
+    "url": "https://posthog.com/handbook/marketing/positioning/data-pipelines",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/marketing/positioning/data-warehouse.md",
+    "url": "https://posthog.com/handbook/marketing/positioning/data-warehouse",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/marketing/positioning/desktop.md",
+    "url": "https://posthog.com/handbook/marketing/positioning/desktop",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/marketing/positioning/endpoints.md",
+    "url": "https://posthog.com/handbook/marketing/positioning/endpoints",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/marketing/positioning/experiments.md",
+    "url": "https://posthog.com/handbook/marketing/positioning/experiments",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/marketing/positioning/feature-flags.md",
+    "url": "https://posthog.com/handbook/marketing/positioning/feature-flags",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/marketing/positioning/index.md",
+    "url": "https://posthog.com/handbook/marketing/positioning",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/marketing/positioning/llm-analytics.md",
+    "url": "https://posthog.com/handbook/marketing/positioning/llm-analytics",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/marketing/positioning/posthog-ai.md",
+    "url": "https://posthog.com/handbook/marketing/positioning/posthog-ai",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/marketing/positioning/replay-vision.md",
+    "url": "https://posthog.com/handbook/marketing/positioning/replay-vision",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/marketing/positioning/session-replay.md",
+    "url": "https://posthog.com/handbook/marketing/positioning/session-replay",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/marketing/press.md",
+    "url": "https://posthog.com/handbook/marketing/press",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/marketing/product-announcements.md",
+    "url": "https://posthog.com/handbook/marketing/product-announcements",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/marketing/slack-messaging.md",
+    "url": "https://posthog.com/handbook/marketing/slack-messaging",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/marketing/social-media.md",
+    "url": "https://posthog.com/handbook/marketing/social-media",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/marketing/speaker-guide.md",
+    "url": "https://posthog.com/handbook/marketing/speaker-guide",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/marketing/startups.md",
+    "url": "https://posthog.com/handbook/marketing/startups",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/marketing/templates.md",
+    "url": "https://posthog.com/handbook/marketing/templates",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/marketing/testimonials.md",
+    "url": "https://posthog.com/handbook/marketing/testimonials",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/marketing/video.md",
+    "url": "https://posthog.com/handbook/marketing/video",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/marketing/working-with-website.md",
+    "url": "https://posthog.com/handbook/marketing/working-with-website",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/onboarding/chrome-extension-billing-case-study-wildfire.md",
+    "url": "https://posthog.com/handbook/onboarding/chrome-extension-billing-case-study-wildfire",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/onboarding/metabase-account-analysis.md",
+    "url": "https://posthog.com/handbook/onboarding/metabase-account-analysis",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/onboarding/new-hire-onboarding.md",
+    "url": "https://posthog.com/handbook/onboarding/new-hire-onboarding",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/onboarding/onboarding-conversations-playbook.md",
+    "url": "https://posthog.com/handbook/onboarding/onboarding-conversations-playbook",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/onboarding/onboarding-data.md",
+    "url": "https://posthog.com/handbook/onboarding/onboarding-data",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/onboarding/onboarding-program.md",
+    "url": "https://posthog.com/handbook/onboarding/onboarding-program",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/onboarding/onboarding-team.md",
+    "url": "https://posthog.com/handbook/onboarding/onboarding-team",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/onboarding/onboarding-tracking.md",
+    "url": "https://posthog.com/handbook/onboarding/onboarding-tracking",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/onboarding/sales-handover.md",
+    "url": "https://posthog.com/handbook/onboarding/sales-handover",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/people/benefits.md",
+    "url": "https://posthog.com/handbook/people/benefits",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/people/bookhog.mdx",
+    "url": "https://posthog.com/handbook/people/bookhog",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/people/career-progression.md",
+    "url": "https://posthog.com/handbook/people/career-progression",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/people/compensation.mdx",
+    "url": "https://posthog.com/handbook/people/compensation",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/people/feedback.md",
+    "url": "https://posthog.com/handbook/people/feedback",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/people/finance.md",
+    "url": "https://posthog.com/handbook/people/finance",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/people/grievances.md",
+    "url": "https://posthog.com/handbook/people/grievances",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/people/hiring-process/design-hiring.md",
+    "url": "https://posthog.com/handbook/people/hiring-process/design-hiring",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/people/hiring-process/devrel-hiring.md",
+    "url": "https://posthog.com/handbook/people/hiring-process/devrel-hiring",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/people/hiring-process/engineering-hiring.md",
+    "url": "https://posthog.com/handbook/people/hiring-process/engineering-hiring",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/people/hiring-process/engineering-superday.md",
+    "url": "https://posthog.com/handbook/people/hiring-process/engineering-superday",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/people/hiring-process/engineering-tech-screen.md",
+    "url": "https://posthog.com/handbook/people/hiring-process/engineering-tech-screen",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/people/hiring-process/exec-hiring.md",
+    "url": "https://posthog.com/handbook/people/hiring-process/exec-hiring",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/people/hiring-process/how-to-interview.md",
+    "url": "https://posthog.com/handbook/people/hiring-process/how-to-interview",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/people/hiring-process/index.mdx",
+    "url": "https://posthog.com/handbook/people/hiring-process",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/people/hiring-process/marketing-hiring.md",
+    "url": "https://posthog.com/handbook/people/hiring-process/marketing-hiring",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/people/hiring-process/operations-hiring.md",
+    "url": "https://posthog.com/handbook/people/hiring-process/operations-hiring",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/people/hiring-process/sales-cs-hiring.md",
+    "url": "https://posthog.com/handbook/people/hiring-process/sales-cs-hiring",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/people/hogpatch-operations.md",
+    "url": "https://posthog.com/handbook/people/hogpatch-operations",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/people/hogpatch.md",
+    "url": "https://posthog.com/handbook/people/hogpatch",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/people/offboarding.md",
+    "url": "https://posthog.com/handbook/people/offboarding",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/people/onboarding.md",
+    "url": "https://posthog.com/handbook/people/onboarding",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/people/overview.md",
+    "url": "https://posthog.com/handbook/people/overview",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/people/philosophy-club.md",
+    "url": "https://posthog.com/handbook/people/philosophy-club",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/people/ramp-up/product-manager.md",
+    "url": "https://posthog.com/handbook/people/ramp-up/product-manager",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/people/share-options.mdx",
+    "url": "https://posthog.com/handbook/people/share-options",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/people/side-gigs.md",
+    "url": "https://posthog.com/handbook/people/side-gigs",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/people/spending-money.md",
+    "url": "https://posthog.com/handbook/people/spending-money",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/people/talent.md",
+    "url": "https://posthog.com/handbook/people/talent",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/people/time-off.md",
+    "url": "https://posthog.com/handbook/people/time-off",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/people/training.md",
+    "url": "https://posthog.com/handbook/people/training",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/product/metrics.md",
+    "url": "https://posthog.com/handbook/product/metrics",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/product/per-product-cost-margin-analysis.md",
+    "url": "https://posthog.com/handbook/product/per-product-cost-margin-analysis",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/product/per-product-growth-reviews.md",
+    "url": "https://posthog.com/handbook/product/per-product-growth-reviews",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/product/prioritizing-work-for-mature-products.md",
+    "url": "https://posthog.com/handbook/product/prioritizing-work-for-mature-products",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/product/product-manager-hiring.md",
+    "url": "https://posthog.com/handbook/product/product-manager-hiring",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/product/product-manager-onboarding.md",
+    "url": "https://posthog.com/handbook/product/product-manager-onboarding",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/product/product-manager-role.md",
+    "url": "https://posthog.com/handbook/product/product-manager-role",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/product/product-team.md",
+    "url": "https://posthog.com/handbook/product/product-team",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/product/releasing-new-products-and-features.md",
+    "url": "https://posthog.com/handbook/product/releasing-new-products-and-features",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/product/user-feedback.md",
+    "url": "https://posthog.com/handbook/product/user-feedback",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/product/visiting-customers.md",
+    "url": "https://posthog.com/handbook/product/visiting-customers",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/story.md",
+    "url": "https://posthog.com/handbook/story",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/strong-team.md",
+    "url": "https://posthog.com/handbook/strong-team",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/support/_snippets/our-long-term-vision.mdx",
+    "url": "https://posthog.com/handbook/support/_snippets/our-long-term-vision",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/support/_snippets/support-values.mdx",
+    "url": "https://posthog.com/handbook/support/_snippets/support-values",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/support/_snippets/what-makes-us-great.mdx",
+    "url": "https://posthog.com/handbook/support/_snippets/what-makes-us-great",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/support/_snippets/what-we-do.mdx",
+    "url": "https://posthog.com/handbook/support/_snippets/what-we-do",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/support/customer-support.md",
+    "url": "https://posthog.com/handbook/support/customer-support",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/support/posthog-support.md",
+    "url": "https://posthog.com/handbook/support/posthog-support",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/support/support-incident-response.md",
+    "url": "https://posthog.com/handbook/support/support-incident-response",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/support/support-smes.md",
+    "url": "https://posthog.com/handbook/support/support-smes",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/support/support-team.md",
+    "url": "https://posthog.com/handbook/support/support-team",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/support/support-zero.md",
+    "url": "https://posthog.com/handbook/support/support-zero",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/support/troubleshooting-tips.md",
+    "url": "https://posthog.com/handbook/support/troubleshooting-tips",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/values.md",
+    "url": "https://posthog.com/handbook/values",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/which-products.md",
+    "url": "https://posthog.com/handbook/which-products",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/who-we-build-for.md",
+    "url": "https://posthog.com/handbook/who-we-build-for",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/why-does-posthog-exist.md",
+    "url": "https://posthog.com/handbook/why-does-posthog-exist",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/wide-company.md",
+    "url": "https://posthog.com/handbook/wide-company",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/wizard-and-docs/_snippets/hogref-schema.mdx",
+    "url": "https://posthog.com/handbook/wizard-and-docs/_snippets/hogref-schema",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/wizard-and-docs/api-specifications.mdx",
+    "url": "https://posthog.com/handbook/wizard-and-docs/api-specifications",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/wizard-and-docs/content-writer-agent.mdx",
+    "url": "https://posthog.com/handbook/wizard-and-docs/content-writer-agent",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/wizard-and-docs/context-mill.mdx",
+    "url": "https://posthog.com/handbook/wizard-and-docs/context-mill",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/wizard-and-docs/developing-the-wizard.mdx",
+    "url": "https://posthog.com/handbook/wizard-and-docs/developing-the-wizard",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/wizard-and-docs/docs-ownership.md",
+    "url": "https://posthog.com/handbook/wizard-and-docs/docs-ownership",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/wizard-and-docs/docs-style-guide.mdx",
+    "url": "https://posthog.com/handbook/wizard-and-docs/docs-style-guide",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/wizard-and-docs/how-to-publish-changelog.mdx",
+    "url": "https://posthog.com/handbook/wizard-and-docs/how-to-publish-changelog",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/wizard-and-docs/index.mdx",
+    "url": "https://posthog.com/handbook/wizard-and-docs",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/wizard-and-docs/mdx-and-components.mdx",
+    "url": "https://posthog.com/handbook/wizard-and-docs/mdx-and-components",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/wizard-and-docs/onboarding-docs.mdx",
+    "url": "https://posthog.com/handbook/wizard-and-docs/onboarding-docs",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/wizard-and-docs/pocket-guides.md",
+    "url": "https://posthog.com/handbook/wizard-and-docs/pocket-guides",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/wizard-and-docs/sdk-reference-docs.mdx",
+    "url": "https://posthog.com/handbook/wizard-and-docs/sdk-reference-docs",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/wizard-and-docs/vale.mdx",
+    "url": "https://posthog.com/handbook/wizard-and-docs/vale",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/wizard-and-docs/writing-product-docs.mdx",
+    "url": "https://posthog.com/handbook/wizard-and-docs/writing-product-docs",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
+  },
+  {
+    "path": "posthog/handbook/world-class-engineering.md",
+    "url": "https://posthog.com/handbook/world-class-engineering",
+    "publisher": "PostHog Handbook",
+    "license": "MIT (the /contents/ folder of PostHog/posthog.com; notice in corpus/posthog/LICENSE)",
+    "retrieved": "2026-09-27",
+    "commit": "3b7d39fa9a40fe9a099a325e6dd81a082b9e25d1"
   }
 ]

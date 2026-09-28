@@ -6,8 +6,9 @@ Endpoints:
 - POST /v1/ask         a question -> the structured answer (hyrag.answer.Response): answer, citations, confidence
                        by dimension, retrieved passages, status/code. Optional retrieval mode (hybrid | dense |
                        sparse) for the dashboard's comparison.
-- GET  /v1/documents   indexed documents with chunk counts.
-- POST /v1/ingest      upload files to index (needs the admin key). Same filename = a new version of it.
+- GET  /v1/collections the document collections (one company's documents each) and their size.
+- GET  /v1/documents   indexed documents with chunk counts (optionally one collection's).
+- POST /v1/ingest      upload files to index into a collection (needs the admin key). Same name = a new version.
 - GET  /health         liveness: the process is up.
 - GET  /ready          readiness: keys, index and reranker model are usable (503 with the reasons if not).
 
@@ -39,6 +40,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from hyrag.answer import AnswerCache, DEFAULT_BUDGET_SECONDS, Response, ask
+from hyrag.index import COLLECTIONS, DEFAULT_COLLECTION, collection_of
 from hyrag.loader import MAX_FILE_BYTES, SUPPORTED
 from hyrag.retrieval import MAX_QUERY_CHARS
 
@@ -128,6 +130,15 @@ class AskRequest(BaseModel):
     question: str = Field(min_length=1, max_length=MAX_QUERY_CHARS, examples=["How do I fix ERR_TUNNEL_4012?"])
     mode: Literal["hybrid", "dense", "sparse"] = Field(
         "hybrid", description="Retrieval mode; dense/sparse run one search alone, for comparison.")
+    collection: Literal[*COLLECTIONS] | None = Field(
+        None, description="Answer from one company's documents only (see GET /v1/collections). "
+                          "Omitted: all documents, which can mix different companies' policies.")
+
+
+class CollectionInfo(BaseModel):
+    name: str
+    documents: int
+    chunks: int
 
 
 class DocumentInfo(BaseModel):
@@ -213,7 +224,8 @@ def create_app(services: Services | None = None, settings: Settings | None = Non
         passages by [n]; `retrieved` lists every passage the writer saw, with how each search ranked it."""
         try:
             result = ask(body.question, services.retriever, services.writer, services.judge,
-                         budget_seconds=settings.budget_seconds, cache=services.cache, mode=body.mode)
+                         budget_seconds=settings.budget_seconds, cache=services.cache, mode=body.mode,
+                         collection=body.collection)
         except ValueError as e:  # blank or too long (after trimming): the caller's to fix
             raise HTTPException(422, str(e))
         response.headers["X-Request-ID"] = result.request_id
@@ -223,30 +235,48 @@ def create_app(services: Services | None = None, settings: Settings | None = Non
                 response.headers["Retry-After"] = "3600"
         return result
 
-    @app.get("/v1/documents", response_model=DocumentList, tags=["documents"], dependencies=[Depends(require_key)])
-    def documents(limit: int = Query(100, ge=1, le=1000), offset: int = Query(0, ge=0),
-                  services: Services = Depends(svc)) -> DocumentList:
-        """Documents in the index, with how many chunks each contributes."""
+    def document_rows(services: Services) -> list[tuple]:
         db = services.index.db
         with services.index._lock:  # the index's own lock: SQLite is shared with other requests
-            rows = db.execute(
+            return db.execute(
                 "SELECT d.doc_id, d.source, COALESCE(c.n, 0), COALESCE(x.n, 0) FROM "
                 "(SELECT doc_id, source FROM chunks UNION SELECT doc_id, source FROM duplicates) d "
                 "LEFT JOIN (SELECT doc_id, COUNT(*) n FROM chunks GROUP BY doc_id) c ON c.doc_id = d.doc_id "
                 "LEFT JOIN (SELECT doc_id, COUNT(*) n FROM duplicates GROUP BY doc_id) x ON x.doc_id = d.doc_id "
                 "GROUP BY d.doc_id ORDER BY d.source").fetchall()
+
+    @app.get("/v1/collections", response_model=list[CollectionInfo], tags=["documents"],
+             dependencies=[Depends(require_key)])
+    def collections(services: Services = Depends(svc)) -> list[CollectionInfo]:
+        """The document collections (one company's documents each) and their size. Pass a name as
+        `collection` to /v1/ask to answer from that collection only."""
+        rows = document_rows(services)
+        return [CollectionInfo(name=name, documents=sum(collection_of(r[1]) == name for r in rows),
+                               chunks=sum(r[2] for r in rows if collection_of(r[1]) == name))
+                for name in COLLECTIONS]
+
+    @app.get("/v1/documents", response_model=DocumentList, tags=["documents"], dependencies=[Depends(require_key)])
+    def documents(limit: int = Query(100, ge=1, le=1000), offset: int = Query(0, ge=0),
+                  collection: Literal[*COLLECTIONS] | None = None,
+                  services: Services = Depends(svc)) -> DocumentList:
+        """Documents in the index, with how many chunks each contributes (optionally one collection's only)."""
+        rows = [r for r in document_rows(services) if collection is None or collection_of(r[1]) == collection]
         page = rows[offset:offset + limit]
         return DocumentList(total=len(rows), documents=[DocumentInfo(doc_id=r[0], source=r[1], chunks=r[2],
                                                                      duplicates=r[3]) for r in page])
 
     @app.post("/v1/ingest", response_model=IngestResult, tags=["documents"], dependencies=[Depends(require_admin)])
-    def ingest(files: list[UploadFile] = File(...), services: Services = Depends(svc)) -> IngestResult:
-        """Parse, chunk and index uploaded files (.md .txt .html .pdf). A file with the same name as an indexed
-        document replaces it. Each file succeeds or fails on its own."""
+    def ingest(files: list[UploadFile] = File(...), collection: Literal[*COLLECTIONS] = DEFAULT_COLLECTION,
+               services: Services = Depends(svc)) -> IngestResult:
+        """Parse, chunk and index uploaded files (.md .mdx .txt .html .pdf) into a collection (default: demo).
+        A file with the same name in the same collection replaces it. Each file succeeds or fails on its own."""
         if services.pipeline is None:
             raise HTTPException(503, "ingestion is unavailable")
         results: list[IngestedFile] = []
-        with tempfile.TemporaryDirectory(prefix="hyrag-upload-") as tmp:
+        with tempfile.TemporaryDirectory(prefix="hyrag-upload-") as root:
+            # A named collection is the document's first folder ("posthog/x.md"): that is how it is told apart.
+            tmp = Path(root) / collection if collection != DEFAULT_COLLECTION else Path(root)
+            tmp.mkdir(exist_ok=True)
             accepted: list[Path] = []
             for upload in files:
                 name = Path(upload.filename or "").name
@@ -260,13 +290,13 @@ def create_app(services: Services | None = None, settings: Settings | None = Non
                     results.append(IngestedFile(filename=name, status="failed",
                                                 error=f"larger than {settings.max_upload_bytes // (1024 * 1024)} MB"))
                     continue
-                path = Path(tmp) / name
+                path = tmp / name
                 path.write_bytes(data)
                 accepted.append(path)
             with services.ingest_lock:  # uploads are rare and heavy: one batch at a time
                 for path in accepted:
                     try:
-                        doc = services.pipeline.ingest_one(path, root=Path(tmp))
+                        doc = services.pipeline.ingest_one(path, root=Path(root))  # source keeps its collection folder
                     except Exception as e:  # this file fails; the others still go in
                         log.warning("ingest of %s failed: %s", path.name, e)
                         results.append(IngestedFile(filename=path.name, status="failed",

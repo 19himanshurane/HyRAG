@@ -19,7 +19,7 @@ from pathlib import Path
 
 from hyrag.embeddings import MistralEmbedder
 from hyrag.evaluation import evidence_found
-from hyrag.index import ChunkIndex
+from hyrag.index import DEFAULT_COLLECTION, ChunkIndex
 from hyrag.rerank import CrossEncoderScorer
 from hyrag.retrieval import HybridRetriever
 
@@ -40,8 +40,10 @@ def main() -> None:
             retriever = HybridRetriever(index, reranker=scorer)
             r5, r20, hit, allin, rr = [], [], [], [], []
             for it in items:
-                top5 = evidence_found(it["evidence"], retriever.search(it["question"]).hits)
-                top20 = evidence_found(it["evidence"], retriever.search(it["question"], rerank_results=False).hits)
+                coll = it.get("collection", DEFAULT_COLLECTION)  # as in hyrag.evaluation.evaluate_item
+                top5 = evidence_found(it["evidence"], retriever.search(it["question"], collection=coll).hits)
+                top20 = evidence_found(it["evidence"],
+                                       retriever.search(it["question"], rerank_results=False, collection=coll).hits)
                 r5 += [x is not None for x in top5]
                 r20 += [x is not None for x in top20]
                 hit.append(any(x is not None for x in top5))

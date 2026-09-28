@@ -23,7 +23,7 @@ from typing import Literal, Protocol, get_args
 import numpy as np
 
 from hyrag.chunking import Chunk
-from hyrag.index import ChunkIndex, Hit
+from hyrag.index import ChunkIndex, Hit, check_collection
 
 log = logging.getLogger(__name__)
 
@@ -129,16 +129,20 @@ class HybridRetriever:
         self.reranker = reranker
         self.rewriter = rewriter  # a chat model (hyrag.llm.GroqChat) for query rewriting, or None
 
-    def retrieve(self, query: str, mode: Mode = "hybrid", rerank_results: bool = True) -> list[FusedHit]:
+    def retrieve(self, query: str, mode: Mode = "hybrid", rerank_results: bool = True,
+                 collection: str | None = None) -> list[FusedHit]:
         """Ranked candidates for `query`. mode="dense" / "sparse" run one search alone (same output shape),
         which is what the dashboard's hybrid-vs-dense comparison needs. With a reranker (and
-        rerank_results=True) the fused top_k are re-scored and the best rerank_top_n returned."""
-        return self.search(query, mode, rerank_results).hits
+        rerank_results=True) the fused top_k are re-scored and the best rerank_top_n returned.
+        collection: search one company's documents only (hyrag.index.COLLECTIONS; None = all)."""
+        return self.search(query, mode, rerank_results, collection).hits
 
-    def search(self, query: str, mode: Mode = "hybrid", rerank_results: bool = True) -> "Retrieval":
+    def search(self, query: str, mode: Mode = "hybrid", rerank_results: bool = True,
+               collection: str | None = None) -> "Retrieval":
         """Like retrieve(), but also reports which parts had to be skipped (`degraded`) and, when the question
         was rewritten, the search queries used (`queries`)."""
-        first = self._search_one(query, mode, rerank_results)
+        check_collection(collection)  # before any paid call
+        first = self._search_one(query, mode, rerank_results, collection)
         c = self.config
         top = first.hits[0].rerank_score if first.hits else None
         if (self.rewriter is None or mode != "hybrid" or not rerank_results or top is None
@@ -150,12 +154,13 @@ class HybridRetriever:
         queries = rewrite_query(query, self.rewriter, usage)
         if not queries:
             return Retrieval(first.hits, first.degraded + ["query_rewrite_failed"], usage=usage)
-        results = [self._search_one(q[:MAX_QUERY_CHARS], mode, rerank_results) for q in queries]
+        results = [self._search_one(q[:MAX_QUERY_CHARS], mode, rerank_results, collection) for q in queries]
         degraded = sorted(set(first.degraded).union(*(r.degraded for r in results)))
         return Retrieval(merge_rewritten([r.hits for r in results] + [first.hits], c.rerank_top_n), degraded, queries,
                          usage)
 
-    def _search_one(self, query: str, mode: Mode = "hybrid", rerank_results: bool = True) -> "Retrieval":
+    def _search_one(self, query: str, mode: Mode = "hybrid", rerank_results: bool = True,
+                    collection: str | None = None) -> "Retrieval":
         """One search: dense + sparse, fused, reranked.
 
         Meaning search needs the Mistral API for the query embedding; keyword search and the reranker run
@@ -178,7 +183,7 @@ class HybridRetriever:
         lists: dict[str, tuple[list[Hit], float]] = {}
         if dense_w > 0:  # a zero-weight list can't change the order: don't pay for its search (or API call)
             try:
-                lists["dense"] = (self.index.search_dense(query, k=c.dense_k), dense_w)
+                lists["dense"] = (self.index.search_dense(query, k=c.dense_k, collection=collection), dense_w)
             except Exception as e:
                 if mode == "dense":  # nothing to fall back to
                     raise
@@ -186,7 +191,7 @@ class HybridRetriever:
                             type(e).__name__, str(e)[:120])
                 degraded.append("dense_search_unavailable")
         if sparse_w > 0:
-            lists["sparse"] = (self.index.search_sparse(query, k=c.sparse_k), sparse_w)
+            lists["sparse"] = (self.index.search_sparse(query, k=c.sparse_k, collection=collection), sparse_w)
         candidates = reciprocal_rank_fusion(lists, rrf_k=c.rrf_k)[: c.top_k]
         if self.reranker is None or not rerank_results:
             return Retrieval(candidates, degraded)

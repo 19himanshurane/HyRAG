@@ -1,0 +1,91 @@
+{
+ "seed": 20260929,
+ "min_words": 40,
+ "eligible_sections": 3447,
+ "sections": [
+  {
+   "source": "posthog/handbook/growth/sales/billing.md",
+   "section_index": 21,
+   "heading": "Billing > Managing billing > Working with pricing > Coupons and Discounts",
+   "text": "As much as possible the existing prices should be used in combination with Coupons to offer custom deals to customers. Coupons are applied to the _Customer_ in Stripe, not to the customer's subscription.\n\n1. Visit the customer in the Stripe dashboard.\n2. Select Actions -> Apply Coupon.\n3. Select the coupon to apply.\n4. The UI should soon reflect the change. If you need it to reflect immediately, use the \"Sync selected customers with Stripe\" action in Django Admin.\n\nWhen calculating usage limits, discounts are taken into consideration _before_ the limit is calculated. This means that if the customer sets a billing limit of $200 and has a 20% discount, they will get charged $200 for _$250 worth of volume_."
+  },
+  {
+   "source": "posthog/handbook/growth/sales/utilization-by-business-type.md",
+   "section_index": 29,
+   "heading": "Matching PostHog to a business type > Marketplace > Key metrics & PostHog > Supply/Demand Balance",
+   "text": "Importance: Measures the equilibrium between the number of sellers (supply) and buyers (demand) on the platform. A balanced marketplace ensures a good user experience for both sides, preventing situations like too few products for buyers or too few customers for sellers, which can lead to churn.\n\nPostHog approach: Track supply-side events (listing_created, service_offered) and demand-side events (search_performed, booking_requested). Use properties like category, location, and search terms to analyze supply-demand gaps on dashboards. Funnel analysis can reveal booking conversion rates, while alerts can notify of imbalances, helping to identify and act on new market opportunities. Non-technical users can create dashboards that visualize searches with no results, providing a simple way to spot unmet demand and guide supply-side growth efforts."
+  },
+  {
+   "source": "posthog/handbook/people/philosophy-club.md",
+   "section_index": 1,
+   "heading": "Philosophy club > Structure",
+   "text": "Each session is 30min:\n\n- 5min — framing: one person summarizes the pre-read in plain language\n- 10min — clarification: we define the terms in the question\n- 10min — probing: share examples from real life\n- 10min — synthesis: each person states if their belief has altered or not\n\nThe only rule is no observers - if you join a session, you should expect to take part."
+  },
+  {
+   "source": "posthog/handbook/engineering/product-engineering.md",
+   "section_index": 5,
+   "heading": "How to do product, as an engineer > How to > Ship things iteratively and follow up",
+   "text": "- Use staggered rollouts: we have a product _designed_ to help you do this. Depending on how risky a new feature is, start with internal users, or\n- Data: check if the thing you just built is being used. Remember to add some events.\n- Session replay: watch users using your thing. This can often highlight confusing UX.\n- Interviews\n- Support\n- Listen to the internet"
+  },
+  {
+   "source": "posthog/handbook/marketing/startups.md",
+   "section_index": 8,
+   "heading": "Startup programs and partnerships > Merch",
+   "text": "All merch is fulfilled through the PostHog store by Micromerch.\n\n- Founders receive unique codes via email to claim merch.\n- They can request up to 4 merch packs for co-founders during signup.\n- If a team has more than 4 founders, they can submit a support ticket to request more.\n- Additional merch is occasionally granted at our discretion.\n\nIssues? Reach out in #merch Slack. Founders can also email merch@posthog.com."
+  },
+  {
+   "source": "posthog/handbook/growth/sales/new-hire-onboarding.md",
+   "section_index": 6,
+   "heading": "New starter onboarding > Technical Account Executive ramp > Weeks 3-4",
+   "text": "- Focus on taking more and more ownership on calls so that team members are just there as a safety net.\n- Continue to meet with customers and reaching out to new leads.\n- Add your Calendly link to your Slack profile so customers can book in with you directly (this works!)"
+  },
+  {
+   "source": "posthog/handbook/cs-and-onboarding/health-tracking.md",
+   "section_index": 6,
+   "heading": "Customer health tracking > Health scoring > Customer engagement > Company engagement",
+   "text": "This looks at a customer's engagement with PostHog as a company. Most of PostHog's customers are happily self served so this is weighted very little in the overall healthscore.\n\n| Measure | Poor | Concerning | Healthy |\n|-----------------------------|----------|------------|----------|\n| Most recent meeting | >90 days | 30-90 days | ≤30 days |\n| Most recent ticket | >90 days | 30-90 days | ≤30 days |\n| Total product count | <3 | 3-6 | >6 |"
+  },
+  {
+   "source": "posthog/handbook/growth/sales/data-foundations.md",
+   "section_index": 17,
+   "heading": "Data foundations > Acronyms, decoded",
+   "text": "An appendix of sorts.\n\n| Acronym | Meaning | What it is |\n|---------|---------|------------|\n| ETL | Extract, Transform, Load | Pull data out from the source, clean it, then load it into your warehouse. |\n| ELT | Extract, Load, Transform | Load raw to the warehouse first, clean it once it's there. The modern default. |\n| CDC | Change Data Capture | Live updates only the data that is new or changed to your warehouse |\n| OLTP | Online Transaction Processing | The database that runs your app. Fast, one row at a time. |\n| OLAP | Online Analytical Processing | The database built for analytics. Slower, millions of rows at once. |\n| SQL | Structured Query Language | The coding language you use to ask a database questions. |\n| BI | Business Intelligence | Dashboards and reports built on top of your data. |\n| CDP | Customer Data Platform | Unifies customer data and pushes it to your other tools. |\n| Reverse ETL | – | Send modeled warehouse data back out into apps so it's up to date and enriched in tools like Salesforce. |\n| DAG | Directed Acyclic Graph | A map of the order modeling tasks need to run in |"
+  },
+  {
+   "source": "posthog/handbook/engineering/how-we-review.md",
+   "section_index": 15,
+   "heading": "How we review PRs > Choosing a GitHub review state",
+   "text": "Use Comment for thoughts, questions, suggestions, partial reviews, or feedback where the author can use their judgment.\n\nUse Approve when you think the PR is safe to merge. It's fine to approve with nits or suggestions.\n\nUse Request changes only when you believe merging the PR as-is would be seriously unsafe and you can keep the feedback loop moving. Examples include security or privacy risks, data loss or corruption, migrations that are unsafe or hard to roll back, unexpected breaking changes to public APIs or contracts, or changes likely to materially harm customers or the company.\n\nRemember that Request changes blocks the PR until you approve a later revision or the state is dismissed. A blocking: comment can be submitted with Comment, especially when something must be fixed but you cannot own prompt follow-up. Authors and mergers should not merge while unresolved blocking: comments remain, even if those comments were submitted with Comment. If you use Request changes, make the required change explicit, watch for the author's response, and re-review promptly. If you won't be available, prefer Comment or hand off to someone who can follow through."
+  },
+  {
+   "source": "posthog/handbook/marketing/how-we-position-and-sell/workflows.md",
+   "section_index": 7,
+   "heading": "Workflows > Messaging > Message 3: Cut three vendors down to one platform",
+   "text": "Problem: Most teams pay for several layers to move product events into the tools their team actually works in. An automation builder (Zapier, Make) to handle triggers. A lifecycle messaging tool (Customer.io, Brevo, ActiveCampaign) to send the actual emails. A CDP (Segment, Rudderstack) or hand-rolled webhooks to keep identities consistent across all of them. Three bills, six contracts, and every new destination is another integration to build.\n\nSolution: Workflows replaces all three. Trigger from any PostHog event and fan out to 35+ destinations natively: Slack alerts, Linear tickets, HubSpot updates, Discord pings, custom webhooks. (Grantable replaced Zapier outright and cut workflow setup time by ~90%. Suped consolidated transactional email off Customer.io.)\n\nSupporting features:\n- One platform for triggers, conditions, dispatches, and audience updates\n- 35+ destinations natively: Slack, Linear, Jira, GitHub, Discord, HubSpot, Google Ads, more\n- Webhook step for anything not covered natively\n- Predictable per-send pricing; no per-user, per-MTU, or per-task billing"
+  },
+  {
+   "source": "posthog/handbook/growth/sales/account-allocation.md",
+   "section_index": 16,
+   "heading": "Account allocation and handover > Doing the allocation > Mid-quarter TAM changes",
+   "text": "Account removals should only happen at the end of the quarter so that quota can be calculated correctly. However, accounts can be added to your book at any time if you're confident there's growth potential.\n\nIf you're assigned an account with a previous owner, work with them on a proper handover. If the customer isn't in a healthy state (usage and engagement-wise), push back and ask the previous owner to get them to a good state first.\n\nNew accounts with no previous owner come with a 3 month grace period – if they churn in that initial period, they won't count against your quota. Don't ask for the AM Managed tag to be added until you're confident there's growth potential.\n\n---"
+  },
+  {
+   "source": "posthog/handbook/growth/sales/product-led-sales.md",
+   "section_index": 1,
+   "heading": "Product-led Sales > Product-led lead generation",
+   "text": "Product-led leads can be generated in different ways - see this page for more info.\n\nSome product-led leads might have already chatted with someone on our team. Before reaching out, take a quick look in Vitally to see if there’s any prior activity, and check in with the AE or team member who was involved to get the full picture if needed. Every lead has a \"Vitally account URL\" field in Salesforce which links directly to their Vitally profile for easy review."
+  },
+  {
+   "source": "posthog/handbook/wizard-and-docs/developing-the-wizard.mdx",
+   "section_index": 3,
+   "heading": "AI wizard > Developing the wizard",
+   "text": "Use the wizard workbench for local, end-to-end development of the wizard. The workbench can run the full wizard stack in local development mode, with hot reload where supported.\n\nThe workbench is also responsible for CI and testing the wizard across a matrix of test applications."
+  },
+  {
+   "source": "posthog/handbook/company/post-mortems/2025-10-21-feature-flags-recurring-outages.md",
+   "section_index": 14,
+   "heading": "Feature flags recurring outages > Lessons learned > Key takeaways",
+   "text": "1. CPU right-sizing is fundamental – The biggest takeaway: nodes were too small relative to pod resource requests, causing Kubernetes to pack too many pods per node and saturate CPU capacity. This CPU saturation led to excessive parallelism (Envoy retries → concurrent requests → concurrent Redis reads), connection pool exhaustion (pods couldn't initialize Postgres pools under CPU pressure), and slow queries. Right-sizing (fewer pods per node, better-resourced pods) addressed the underlying issues that caused October 21, 28, and 29-30 incidents. This must be a primary consideration for any service deployment.\n\n2. Connection pool management architecture matters – Each pod maintains its own Postgres connection pool. Creating a pool involves TLS handshakes, authentication, and connection establishment—operations that are computationally expensive, especially when pods are CPU-bound. This complexity, combined with CPU saturation, exacerbated connection pool exhaustion. Better approach: reduce concurrency and run smaller fleets with better-resourced pods rather than larger fleets with CPU-bound pods.\n\n3. Shared Redis is a critical single point of failure – When flags service overloads Redis, it takes down the main app too. This was evident in October 21 and 28 incidents where Redis overload from flags service impacted the main PostHog application. Isolation is critical despite implementation complexity.\n\n4. CPU alerting was completely missing – CPU alerting was absent throughout these incidents, preventing early detection of CPU saturation that was the root cause of three outages. This was a fundamental gap in our monitoring strategy. CPU metrics must be monitored and alertable from day one.\n\n5. Monitor data flow patterns – Postgres-to-Redis transfer spikes should trigger alerts. Watch for unusual data movement.\n\n6. Test under load – Overload patterns only appeared under production traffic. Load testing is non-negotiable.\n\n7. Progressive rollouts save lives – Gradual deployments limit blast radius and enable rapid detection. We're implementing rollout/annotation controls to disable staged rollouts and enable \"force-merge\" for rolling changes.\n\n8. Configuration must be flexible – Critical settings must be adjustable without full deployment cycles.\n\n9. Unbounded retries amplify failures – Retries without bounds in Envoy (between load balancer and endpoint) can cascade failures. We've implemented retry limits to prevent this."
+  }
+ ]
+}

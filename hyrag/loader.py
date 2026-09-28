@@ -10,7 +10,7 @@ from pathlib import Path
 
 log = logging.getLogger(__name__)
 
-SUPPORTED = {".md", ".txt", ".html", ".htm", ".pdf"}
+SUPPORTED = {".md", ".mdx", ".txt", ".html", ".htm", ".pdf"}
 # Bump whenever parsing output changes: stored documents parsed by an older version get re-parsed.
 PARSER_VERSION = "2026-09-23.3"
 # Refuse inputs that would take minutes and gigabytes (measured: ~90 ms and ~0.1 MB per PDF page).
@@ -86,6 +86,84 @@ def split_front_matter(text: str) -> tuple[str | None, str]:
     return (title.group(1) if title else None), text[match.end():]
 
 
+# ----- MDX / JSX components (PostHog's handbook) -----
+# A component is <Capitalized ...>: a React element on the website, never text a reader sees as such. What it
+# renders to is known for the few that carry words; the rest either wrap text (keep the text) or show media
+# (drop them). An uppercase <NAME> placeholder in prose is NOT a component: it has no attributes, doesn't close
+# itself and has no </NAME>, so it is left alone.
+_COMPONENT_TEXT = {
+    "TeamMember": lambda a: a.get("name", ""),               # <TeamMember name="Lottie Coxon" /> -> Lottie Coxon
+    "SmallTeam": lambda a: f"{a['slug']} team" if a.get("slug") else "",  # <SmallTeam slug="website" />
+}
+_ATTR = re.compile(r"""([\w-]+)=\{?["']([^"']*)["']\}?""")
+_SELF_CLOSING = re.compile(r"<([A-Z][\w.]*)(\s[^<>]*?)?\s*/>", re.S)
+_OPENING = re.compile(r"<([A-Z][\w.]*)(\s[^<>]*?)?\s*>", re.S)
+_CLOSING = re.compile(r"</([A-Z][\w.]*)\s*>")
+_IMPORT = re.compile(r"""^import\s.+?\sfrom\s+['"][^'"]+['"];?[ \t]*\n?""", re.M)
+_JSX_COMMENT = re.compile(r"\{/\*.*?\*/\}", re.S)
+# Real HTML tag names only (a Markdown page may use them for layout); <name-of-pod>-style placeholders survive.
+_HTML_BLOCK = ("p|div|li|ul|ol|tr|table|thead|tbody|colgroup|col|details|summary|fieldset|legend|blockquote|h[1-6]"
+               "|pre|br|hr|img|iframe|object|video|source|figure|figcaption")
+_HTML_INLINE = "strong|em|b|i|u|span|a|code|sup|sub|td|th|small|mark|kbd"
+_HTML_TAG = re.compile(rf"</?(?:({_HTML_BLOCK})|({_HTML_INLINE}))(?:\s[^<>]*)?/?>", re.I)
+_INLINE_CODE = re.compile(r"(`+)(?!`).+?(?<!`)\1(?!`)")
+_MASK = chr(0xE000)  # private-use character: marks a masked inline code span while tags are cleaned
+
+
+def _strip_components(prose: str) -> str:
+    """Clean one stretch of Markdown that holds no fenced code. Inline code keeps its tags: `<CalloutBox>` in
+    a style guide is an example, not layout."""
+    spans: list[str] = []
+
+    def mask(m: re.Match) -> str:
+        spans.append(m.group(0))
+        return f"{_MASK}{len(spans) - 1}{_MASK}"
+
+    prose = _INLINE_CODE.sub(mask, prose)
+    prose = _IMPORT.sub("", prose)
+    prose = _JSX_COMMENT.sub("", prose)
+
+    def self_closing(m: re.Match) -> str:
+        render = _COMPONENT_TEXT.get(m.group(1))
+        return render(dict(_ATTR.findall(m.group(2) or ""))) if render else ""
+
+    def opening(m: re.Match) -> str:
+        name, attrs = m.group(1), m.group(2) or ""
+        if "=" not in attrs and f"</{name}" not in prose:
+            return m.group(0)  # <NAME>: a placeholder, not a component
+        title = dict(_ATTR.findall(attrs)).get("title", "") if name == "CalloutBox" else ""
+        return f"\n{title}\n" if title else ""
+
+    prose = _SELF_CLOSING.sub(self_closing, prose)
+    prose = _OPENING.sub(opening, prose)
+    prose = _CLOSING.sub("", prose)
+    prose = _HTML_TAG.sub(lambda m: "\n" if m.group(1) else "", prose)
+    return re.sub(f"{_MASK}(\\d+){_MASK}", lambda m: spans[int(m.group(1))], prose)
+
+
+def strip_components(text: str) -> str:
+    """Remove MDX imports, JSX components and HTML tags from Markdown, outside fenced code blocks."""
+    out: list[str] = []
+    prose: list[str] = []
+    fence: str | None = None
+    for line in text.splitlines(keepends=True):
+        m = re.match(r"^\s*(`{3,}|~{3,})", line)
+        if fence is None:
+            if m:
+                out.append(_strip_components("".join(prose)))
+                prose.clear()
+                fence = m.group(1)
+                out.append(line)
+            else:
+                prose.append(line)
+            continue
+        out.append(line)
+        if m and m.group(1)[0] == fence[0] and len(m.group(1)) >= len(fence) and line.strip() == m.group(1):
+            fence = None
+    out.append(_strip_components("".join(prose)))
+    return "".join(out)
+
+
 _SHORTCODE = re.compile(r"\{\{[<%]\s*(/?)([\w-]+)(.*?)\s*[>%]\}\}", re.S)
 _ALERTS = {"note": "Note:", "caution": "Caution:", "warning": "Warning:"}
 _HEADING_KEYS = {"whatsnext": "What's next", "prerequisites": "Before you begin", "objectives": "Objectives"}
@@ -142,6 +220,7 @@ def _strip_html_comments(line: str, in_comment: bool) -> tuple[str, bool]:
 
 def parse_markdown(text: str, title: str) -> list[Section]:
     front_title, text = split_front_matter(text)
+    text = strip_components(text)
     text = _SHORTCODE.sub(_shortcode_to_text, text)
     # Empty HTML anchors used as link targets: <a id="x" />, <a name="x"></a>. (Placeholders like
     # <name-of-pod> in commands look similar but have no id=/name= attribute, so they survive.)
@@ -574,7 +653,7 @@ def load_document(filename: str, data: bytes) -> Document:
         sections = parse_pdf(data, title)
     else:
         text = decode_text(data)
-        if ext == ".md":
+        if ext in (".md", ".mdx"):
             sections = parse_markdown(text, title)
         elif ext in (".html", ".htm"):
             sections = parse_html(text, title)

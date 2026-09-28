@@ -38,5 +38,30 @@ def main() -> None:
     print(f"{len(draw)} sections drawn")
 
 
+POSTHOG_SEED = 20260929  # fixed before any PostHog section was read
+POSTHOG_LOOKUPS = 14
+
+
+def main_posthog() -> None:
+    """The PostHog collection (383 pages): too many documents to allocate by hand, so sections are drawn
+    uniformly from all of its eligible sections -> eval/golden_sample_posthog.json."""
+    rng = random.Random(POSTHOG_SEED)
+    pool = []
+    for p in sorted(Path("data/processed").glob("*.json")):
+        d = json.load(open(p, encoding="utf-8"))
+        if d["source"].startswith("posthog/"):
+            pool += [(d["source"], i, s) for i, s in enumerate(d["sections"])
+                     if len((s.get("text") or "").split()) >= MIN_WORDS]
+    pool.sort(key=lambda x: (x[0], x[1]))  # same order on every machine before drawing
+    draw = [{"source": src, "section_index": i, "heading": s.get("heading") or "", "text": s["text"]}
+            for src, i, s in rng.sample(pool, POSTHOG_LOOKUPS)]
+    Path("eval/golden_sample_posthog.json").write_text(
+        json.dumps({"seed": POSTHOG_SEED, "min_words": MIN_WORDS, "eligible_sections": len(pool), "sections": draw},
+                   indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
+    print(f"{len(draw)} of {len(pool)} eligible PostHog sections drawn")
+
+
 if __name__ == "__main__":
-    main()
+    import sys
+
+    main_posthog() if sys.argv[1:] == ["--posthog"] else main()
