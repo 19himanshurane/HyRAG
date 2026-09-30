@@ -393,21 +393,50 @@ class ChunkIndex:
         return [Hit(chunks[ids[i]], float(sims[i])) for i in top if ids[i] in chunks]
 
     def _vector_matrix(self) -> tuple[list[str], np.ndarray, np.ndarray]:
-        """(sorted ids, normalised vectors, each id's collection). An id the chunk table lacks (drift) gets no
-        collection, so it can only turn up in an unfiltered search, where it is skipped as missing."""
+        """(ids sorted, normalised vectors, each chunk's collection) for every chunk in the table.
+
+        Vectors come from the embedder's local cache when it has them, and from Chroma only for the rest.
+        Fetching all 7,628 from a Chroma server took 96 s in pages and 692 s in one request on a
+        memory-starved machine, which made the first question after a restart time out; the cache is a local
+        SQLite read. A chunk with no vector anywhere is left out of meaning search, with a warning."""
         if self._vectors is None:
-            got = self.collection.get(include=["embeddings"])
-            if not got["ids"]:
+            rows = self.db.execute(f"SELECT {','.join(_COLUMNS)} FROM chunks ORDER BY chunk_id").fetchall()
+            chunks = [self._chunk(r) for r in rows]
+            vectors = self._stored_vectors(chunks)
+            kept = [c for c in chunks if c.chunk_id in vectors]
+            if len(kept) < len(chunks):
+                log.warning("%d chunk(s) have no stored vector and are left out of meaning search; "
+                            "run check_sync() / repair()", len(chunks) - len(kept))
+            if not kept:
                 self._vectors = ([], np.empty((0, 0), dtype=np.float32), np.empty(0, dtype=object))
             else:
-                order = sorted(range(len(got["ids"])), key=lambda i: got["ids"][i])  # same order in every process
-                ids = [got["ids"][i] for i in order]
-                matrix = np.asarray(got["embeddings"], dtype=np.float32)[order]
+                matrix = np.stack([vectors[c.chunk_id] for c in kept]).astype(np.float32)
                 matrix /= np.linalg.norm(matrix, axis=1, keepdims=True)
-                sources = self._sources(ids)
-                labels = np.array([collection_of(sources[i]) if i in sources else None for i in ids], dtype=object)
-                self._vectors = (ids, matrix, labels)
+                labels = np.array([collection_of(c.source) for c in kept], dtype=object)
+                self._vectors = ([c.chunk_id for c in kept], matrix, labels)
         return self._vectors
+
+    def _stored_vectors(self, chunks: list[Chunk]) -> dict[str, np.ndarray]:
+        cached = getattr(self.embedder, "cached", None)  # test embedders have no cache
+        found: dict[str, np.ndarray] = {}
+        if cached:
+            for c, v in zip(chunks, cached([c.text_for_search() for c in chunks])):  # what was embedded
+                if v is not None:
+                    found[c.chunk_id] = v
+        rest = [c.chunk_id for c in chunks if c.chunk_id not in found]
+        for i in range(0, len(rest), 500):
+            got = self.collection.get(ids=rest[i:i + 500], include=["embeddings"])
+            found.update(zip(got["ids"], (np.asarray(e, dtype=np.float32) for e in got["embeddings"])))
+        return found
+
+    @_locked
+    def warm(self) -> None:
+        """Build the in-memory search data now (vectors, and keyword indexes per collection) instead of on the
+        first question, which then paid for all of it inside its time budget."""
+        self._drop_stale_caches()
+        self._vector_matrix()
+        for collection in (None, *COLLECTIONS):
+            self._bm25_index(collection)
 
     @_locked
     def search_sparse(self, query: str, k: int = 10, collection: str | None = None) -> list[Hit]:
@@ -505,14 +534,6 @@ class ChunkIndex:
             bm25 = LuceneBM25([tokenize(c.text_for_search()) for c in chunks]) if chunks else None
             self._bm25[collection] = (bm25, [c.chunk_id for c in chunks])
         return self._bm25[collection]
-
-    def _sources(self, ids: list[str]) -> dict[str, str]:
-        found: dict[str, str] = {}
-        for i in range(0, len(ids), 500):
-            part = ids[i : i + 500]
-            found.update(self.db.execute(f"SELECT chunk_id, source FROM chunks WHERE chunk_id IN "
-                                         f"({','.join('?' * len(part))})", part).fetchall())
-        return found
 
     def _ids_for(self, doc_id: str) -> list[str]:
         return [r[0] for r in self.db.execute("SELECT chunk_id FROM chunks WHERE doc_id = ?", (doc_id,))]

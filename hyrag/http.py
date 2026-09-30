@@ -66,12 +66,14 @@ def remaining() -> float | None:
 
 
 def retry_wait(resp: httpx.Response | None, attempt: int) -> float:
-    """Honour the server's Retry-After (seconds) when it sends one; otherwise back off 1s, 2s, 4s..."""
+    """Honour the server's Retry-After (seconds) when it sends one. Otherwise a 429 backs off 5s, 10s, 20s, 40s
+    and anything else 1s, 2s, 4s, 8s. Mistral rate-limits per minute (60 requests) and sends no Retry-After, so
+    the short schedule gave up after 15 s, inside the same minute: the Docker seed failed that way."""
     header = resp.headers.get("Retry-After") if resp is not None else None
     try:
         return min(float(header), MAX_RETRY_WAIT_SECONDS)
     except (TypeError, ValueError):
-        return float(2**attempt)
+        return float(5 * 2**attempt if resp is not None and resp.status_code == 429 else 2**attempt)
 
 
 def post_json(client: httpx.Client, url: str, payload: dict, *, what: str, attempts: int = 5,

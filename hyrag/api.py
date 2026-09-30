@@ -30,6 +30,7 @@ import os
 import re
 import tempfile
 import threading
+import time
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -113,6 +114,10 @@ def build_services(settings: Settings) -> Services:
                        chroma_url=settings.chroma_url or None)
     if index.count() == 0:
         problems.append(f"the {settings.strategy!r} index is empty: run the seed/ingest step")
+    else:
+        started = time.perf_counter()
+        index.warm()  # otherwise the first question loads everything and can run out of time
+        log.info("search data loaded in %.1f s", time.perf_counter() - started)
     scorer = CrossEncoderScorer()
     if not is_downloaded():
         problems.append("reranker model not downloaded: python -m hyrag.rerank")

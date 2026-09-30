@@ -173,4 +173,19 @@ Each service has a health check (Chroma's image has no curl, so its check reques
 - **Keys as environment variables** are visible to anyone who can run `docker inspect`. That is fine on a developer machine; in production they belong in Docker or cloud secrets.
 - **Every seed run rewrites the chunk rows** even when nothing changed, which makes the running API reload its vectors and clear its answer cache. It is correct, but wasteful after a no-op seed.
 - **One API replica** (in-memory answer cache and ingest lock), as in Step 1.
-- **A file uploaded while Chroma is down** is written to the chunk table but not to Chroma: it is keyword-searchable only until the next seed or `repair()`.
+- **A file uploaded while Chroma is down** is written to the chunk table and the embedding cache but not to Chroma. It stays fully searchable (the search vectors come from the cache), but Chroma lacks a copy until the next seed or `repair()`.
+
+### Two startup bugs found after adding PostHog (2026-09-30)
+With PostHog's handbook the index grew from 1,266 to 7,628 chunks, and `docker compose up` exposed two problems the smaller corpus hid.
+
+**1. The seed crashed on Mistral's rate limit.** Mistral allows 60 embedding requests a minute (`x-ratelimit-limit-req-minute: 60`) and its 429 responses carry no `Retry-After`. The fallback backoff of 1, 2, 4, 8 s gave up after 15 s, inside the same minute, so the seed stopped after 118 pages and Compose, correctly, never started the API. Now a 429 without `Retry-After` backs off 5, 10, 20, 40 s (75 s, more than a window); other errors keep the short schedule, and a per-question deadline still caps every wait. In the next run the seed hit the limit, waited 5+10+20 s and finished: 399 documents, 7,628 chunks, 309 requests, 319 s.
+
+**2. The first question after every start timed out (504).** Meaning search keeps every vector in memory, and the API used to fetch them all from the Chroma container on the first question. Measured inside the container, on a machine with 826 MB of RAM free:
+
+| Loading 7,628 vectors | Time |
+|---|---|
+| From the Chroma server, one request | 692 s |
+| From the Chroma server, pages of 1,000 | 96 s |
+| From embedded Chroma (local files) | 10.3 s |
+
+That came out of the question's 60 s budget, so the writer was never called; the second question, with the vectors in memory, took 9 s. Now the matrix is built from the chunk table with each vector read from the local embedding cache (the SQLite file in the same data volume, binary), falling back to Chroma in pages only for vectors the cache lacks. And the API loads it at startup (`ChunkIndex.warm()`, with each collection's keyword index), as it already did for the reranker, so no visitor pays for it. A side effect: search is built from the chunk table, so a stray vector in Chroma with no chunk behind it can't surface at all; `check_sync()` still reports it and the seed repairs it.

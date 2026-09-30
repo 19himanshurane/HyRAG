@@ -92,6 +92,14 @@ class MistralEmbedder:
         with self._count_lock:
             self.requests_made += 1
 
+    def cached(self, texts: list[str]) -> list[np.ndarray | None]:
+        """The vectors already in the cache (None where a text isn't there). Never calls the API."""
+        if not self.cache or not texts:
+            return [None] * len(texts)
+        keys = [EmbeddingCache.key(self.model, t) for t in texts]
+        found = self.cache.get_many(list(set(keys)))
+        return [found.get(k) for k in keys]
+
     def embed(self, texts: list[str]) -> np.ndarray:
         """Return one vector per text, as rows of a (len(texts), dimensions) array, each scaled to length 1.
         Texts already in the cache (or repeated within this call) are not sent to the API again."""

@@ -1,5 +1,6 @@
 import threading
 
+import httpx
 import numpy as np
 import pytest
 
@@ -149,12 +150,46 @@ def test_failed_embedding_changes_nothing(index):
     assert index.count() == 0 and index.collection.count() == 0
 
 
-def test_search_skips_results_missing_from_the_table(index, caplog):  # audit H2
+def test_search_skips_results_missing_from_the_table(index):  # audit H2
     index.index_document(*vpn_doc())
     index.collection.add(ids=["ghost"], embeddings=[[1.0] * 256], documents=["stale"])  # crash-state drift
     hits = index.search_dense("certificate expired renew", k=10)
-    assert hits and all(h.chunk.chunk_id != "ghost" for h in hits)
-    assert any("check_sync" in r.getMessage() for r in caplog.records)
+    assert hits and all(h.chunk.chunk_id != "ghost" for h in hits)  # search is built from the table
+    assert index.check_sync()["extra_in_chroma"] == ["ghost"]  # the drift is reported here, and repaired
+
+
+def test_a_chunk_with_no_stored_vector_is_left_out_with_a_warning(index, caplog):
+    index.index_document(*vpn_doc())
+    lost = index.search_dense("certificate expired renew", k=1)[0].chunk.chunk_id
+    index.collection.delete(ids=[lost])  # not in Chroma, and this test embedder has no cache
+    index._vectors = None
+    assert lost not in {h.chunk.chunk_id for h in index.search_dense("certificate expired renew", k=10)}
+    assert any("no stored vector" in r.getMessage() for r in caplog.records)
+
+
+def test_vectors_come_from_the_embedding_cache_not_chroma(tmp_path, monkeypatch):
+    """Loading every vector from a Chroma server made the first question time out; the cache is local."""
+    from hyrag.embeddings import MistralEmbedder
+    from .test_embeddings import fake_mistral
+    monkeypatch.setenv("MISTRAL_API_KEY", "test")
+    emb = MistralEmbedder(cache_path=tmp_path / "cache.sqlite")
+    emb.client = httpx.Client(transport=fake_mistral([], []))
+    ix = ChunkIndex(emb, data_dir=tmp_path / "i")
+    ix.index_document(*vpn_doc())
+    asked = []
+    real_get = ix.collection.get
+    monkeypatch.setattr(ix.collection, "get", lambda *a, **kw: asked.append(kw) or real_get(*a, **kw))
+    ix._vectors = None
+    ids, matrix, _ = ix._vector_matrix()
+    assert len(ids) == ix.count() and asked == []  # every vector came from the cache
+    emb.close()
+
+
+def test_warm_builds_the_search_data_before_the_first_question(index):
+    index.index_document(*vpn_doc())
+    index._vectors, index._bm25 = None, None
+    index.warm()
+    assert index._vectors is not None and set(index._bm25) >= {None, "demo", "posthog"}
 
 
 def test_index_is_safe_to_use_from_many_threads(index):  # audit H3

@@ -87,6 +87,13 @@ def test_gives_up_after_all_attempts_with_backoff(embedder, sleeps):
     assert len(seen) == 5 and sleeps == [1.0, 2.0, 4.0, 8.0]  # no pointless sleep after the last attempt
 
 
+def test_rate_limit_without_retry_after_waits_out_a_minute(embedder, sleeps):
+    # Mistral's 429s carry no Retry-After and its limit is per minute: 15 s of backoff wasn't enough.
+    e = embedder(responses=[(429, {})] * 4)  # then the fake answers normally
+    e.embed(["x"])
+    assert sleeps == [5.0, 10.0, 20.0, 40.0] and sum(sleeps) > 60
+
+
 def test_client_errors_fail_fast(embedder):
     seen = []
     e = embedder(responses=[(401, {})], seen=seen)
