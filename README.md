@@ -1,78 +1,98 @@
 # HyRAG
 
-HyRAG answers questions about internal company docs and cites the exact passage behind each part of the answer.
+HyRAG answers questions about a company's internal documents and shows where each part of the answer came from. Every claim carries a numbered citation, a second model checks that the cited passage really supports it, and when the documents don't contain the answer HyRAG says so instead of guessing.
 
-HyRAG is a question-answering system for a company's internal documentation. You point it at a folder of Markdown, HTML, text and PDF files, and it answers questions in plain English with a numbered citation after each claim, so you can go straight to the passage it used.
+I built it to learn how a retrieval-augmented generation (RAG) system works end to end, and to find out what it takes to make one you can trust.
 
-Every question runs through two searches: an embedding search that finds passages meaning the same thing as the question even when the wording differs, and a BM25 keyword search that catches the exact strings embeddings tend to miss in technical docs, like error codes, CLI flags and config keys. The two result lists are merged with Reciprocal Rank Fusion, and the best candidates go through a reranker before anything reaches the model.
+## How a question is answered
 
-Most of the work goes into what happens after the answer is written. A second model call checks each citation to see whether the cited passage actually supports the sentence it's attached to, and flags the ones that don't hold up. Each answer also gets a confidence score based on how relevant the retrieved passages were, how many claims have a verified citation, and whether the whole question was covered. When that score is too low, HyRAG says it couldn't find the answer and points you to the documents that came closest, which is more useful than a confident guess.
+1. Two searches run over the documents. An embedding search finds passages that mean the same thing as the question. A BM25 keyword search finds exact strings that embeddings blur, such as error codes, flags and config keys.
+2. The two result lists are merged by rank (Reciprocal Rank Fusion), and a cross-encoder reranker picks the five best passages.
+3. If even the best passage is a poor match, HyRAG stops here and reports "not found", listing the closest documents.
+4. Otherwise a model writes an answer from those five passages only, with a citation after each sentence.
+5. A second model checks every citation against its passage and has to quote the words that support it. The quote is then looked up in the passage. An answer with an unsupported claim is withheld.
+6. The answer gets a confidence score built from retrieval relevance, the share of verified claims, and whether every part of the question was covered.
 
-**The documents:** a real company's internal handbook, [PostHog's](https://posthog.com/handbook) (383 pages: time off, expenses, hiring, on-call, incidents; MIT-licensed), plus a demo set of public technical docs (NIST, Kubernetes, PostgreSQL, GitLab handbook pages) and a small fictional company. Each company's documents are a separate **collection**, and a question is answered from one collection only, so two companies' policies are never mixed in one answer. Details and licenses: [corpus/README.md](corpus/README.md).
+[docs/architecture.md](docs/architecture.md) walks through each step.
 
-I'm building it to learn how a RAG pipeline works end to end. It is tested against a hand-written set of 82 questions (including multi-hop ones and ones with no answer in the docs), which is also used to compare three chunking strategies: fixed-size, heading-aware and semantic.
+## The documents
 
-## Status
+The main collection is [PostHog's company handbook](https://posthog.com/handbook): 383 pages on time off, expenses, hiring, on-call and incidents, published by PostHog under the MIT license. It is a real company's internal documentation, which is the use case HyRAG is for.
 
-Work in progress, built one step at a time. The description above is the target design; this list shows what exists today.
+A second collection holds public technical documents (two NIST security standards, Kubernetes and PostgreSQL pages, four GitLab handbook pages) and four files for a small fictional company. It covers the awkward cases: PDFs, tables of error codes, near-duplicate text.
 
-- [x] Multi-format loader (Markdown and MDX, text, HTML, PDF) with heading and page metadata. PDFs: layout-aware heading detection for single-column documents; two-column layouts and scanned PDFs are not supported yet
-- [x] Chunking: fixed-size and heading-aware (recursive), with content-based chunk ids
-- [x] Production audit of Phase 1, three rounds ([docs/phase1-audit.md](docs/phase1-audit.md)): 32 findings fixed with before/after measurements; an offline test suite covers every one (run `python -m pytest -q`)
-- [x] One pipeline for documents in and out (`hyrag/pipeline.py`): store → chunk → index, and deletions reach both
-- [x] Chunking: semantic (topic cuts from neighbour-embedding similarity, relative per-document threshold; whether it beats structure-aware is measured in the eval phase)
-- [x] Embeddings + ChromaDB, BM25 index kept in sync (one SQLite chunk table is the source of truth; Chroma is reconciled against it, BM25 is rebuilt from it; `check_sync()` / `repair()`). Meaning search is exact cosine over the stored vectors, not Chroma's approximate HNSW, which missed real top-10 results on this corpus (measured in [docs/phase2-audit.md](docs/phase2-audit.md), S6)
-- [x] Near-duplicate detection (by text, not embeddings: ≥90% shared 3-word sequences + identical numbers/identifiers; skipped copies are recorded and promoted back if their original disappears)
-- [x] Hybrid retrieval: weighted Reciprocal Rank Fusion of both searches (`hyrag/retrieval.py`), then a local cross-encoder reranker (`hyrag/rerank.py`, ms-marco-MiniLM-L6-v2, pinned revision) that keeps the best 5 of the fused 20. Audited: [docs/phase2-audit.md](docs/phase2-audit.md)
-- [x] Grounded generation with citation verification and confidence scoring (`hyrag/answer.py` is the single entry point: answered / partial / unverified / not found). Design and measurements: [docs/phase3.md](docs/phase3.md)
-- [ ] Evaluation suite and chunking comparison
-- [x] FastAPI service (`hyrag/api.py`): `/v1/ask`, `/v1/documents`, `/v1/ingest`, health/readiness, OpenAPI docs. Details: [docs/phase5.md](docs/phase5.md)
-- [x] Dashboard (`dashboard/`, Streamlit): answer with clickable citations, ranked retrieved passages, confidence by dimension, hybrid vs dense-only side by side. A thin client of the API. Details and speed measurements: [docs/phase5.md](docs/phase5.md)
-- [x] Docker Compose (`docker-compose.yml`): Chroma server, one-shot seed job (`hyrag/seed.py`), API, dashboard, with health checks and start order. Failure drills and measurements: [docs/phase5.md](docs/phase5.md)
+Each collection is searched on its own, so one company's policy never ends up in an answer about another's. Sources and licenses are in [corpus/README.md](corpus/README.md). HyRAG is not affiliated with PostHog.
 
-## Run it with Docker
+## What has been measured
+
+| | Result |
+|---|---|
+| Heading-aware chunks vs fixed-size chunks, evidence found in the top 5 | 0.83 vs 0.78 (reciprocal rank 0.91 vs 0.67) |
+| Citation checker on 35 hand-labelled claim/passage pairs | no false approvals in 18 that should fail; 32 of 35 exactly right |
+| Prompt injection planted in a document | hijacked 2 of 10 answers before the fix, 0 of 40 after |
+| Time per question (6 questions, 3 runs each) | 5.1 s median, 20.9 s worst |
+| Dashboard overhead on top of that | 25 to 45 ms |
+
+There is a hand-written set of 82 evaluation questions, 49 of them held out as a test set that nothing is tuned on. The full end-to-end scores on it are not in yet: the free model tier allows about 115 checked questions a day, and the runs so far went into finding and fixing problems. [docs/evaluation.md](docs/evaluation.md) has the method, the numbers above in detail, and what is still open.
+
+## Run it
+
+You need a [Mistral](https://console.mistral.ai/) API key for embeddings and a [Groq](https://console.groq.com/) API key for the two language models. Both have free tiers.
+
+### With Docker
 
 ```bash
-cp .env.example .env               # fill in MISTRAL_API_KEY and GROQ_API_KEY
-docker compose up -d --build       # first build ~13 min; first start indexes the documents (~1 min)
+cp .env.example .env               # put the two keys in it
+docker compose up -d --build
 ```
 
-Dashboard: http://localhost:8501. API docs: http://localhost:8000/docs. Stop with `docker compose down` (add `-v` to delete the index too).
+Open the dashboard at http://localhost:8501. The API and its documentation are at http://localhost:8000/docs.
 
-## Try it (local Python)
+The first build takes about 13 minutes, mostly downloading PyTorch. The first start then indexes the documents, which takes about 5 minutes because Mistral's free tier allows 60 embedding requests a minute. Later starts take seconds. Stop it with `docker compose down`; add `-v` to delete the index as well.
+
+### Without Docker
 
 ```bash
 python -m venv .venv
-.venv\Scripts\activate          # macOS/Linux: source .venv/bin/activate
-pip install -r requirements.txt
-python sample_docs/make_sample_pdf.py
-python try_loader.py
+.venv\Scripts\activate             # macOS/Linux: source .venv/bin/activate
+pip install -r requirements-lock.txt
+python -m hyrag.seed               # parse, chunk and index the documents
+python -m hyrag.rerank             # download the reranker model once (88 MB)
+
+python -m examples.ask --collection posthog "How do I book time off?"
+uvicorn hyrag.api:app --port 8000
+streamlit run dashboard/app.py     # with HYRAG_API_URL=http://localhost:8000
+python -m pytest -q
 ```
 
-Retrieval (needs `MISTRAL_API_KEY` in `.env`):
+On Linux, install PyTorch from https://download.pytorch.org/whl/cpu first, or pip fetches the CUDA build, which is several gigabytes. The reranker needs about 590 MB of RAM.
 
-```bash
-python try_index.py             # parse, chunk and index the corpus into data/index/
-python -m hyrag.rerank          # download the reranker model once (~88 MB); it loads offline after that
-python try_rerank.py            # hybrid search + reranking on real questions
-python try_ask.py "How do I fix ERR_TUNNEL_4012?"   # the full pipeline (also needs GROQ_API_KEY)
-```
+[docs/deployment.md](docs/deployment.md) covers configuration, what each container does and what happens when one of them fails.
 
-Run the API (after the steps above):
+## What's in the repository
 
-```bash
-uvicorn hyrag.api:app --port 8000          # docs at http://localhost:8000/docs
-curl -X POST localhost:8000/v1/ask -H "Content-Type: application/json" -d '{"question": "How do I fix ERR_TUNNEL_4012?"}'
-```
+| Path | Contents |
+|---|---|
+| `hyrag/` | The library: loading, chunking, the index, retrieval, generation, citation checks, confidence, the API |
+| `dashboard/` | The Streamlit page. It only talks to the API |
+| `examples/` | Four short scripts: parse documents, compare the two searches, see the reranker's effect, ask a question |
+| `scripts/` | Evaluation runners and corpus tools; `scripts/audit/` holds the probes used to find bugs |
+| `eval/` | The evaluation questions and the labelled data for the citation checker |
+| `corpus/`, `sample_docs/` | The documents |
+| `tests/` | The test suite. It runs offline, with fake models |
+| `docs/` | How it works, how it's evaluated, how to deploy it, and the main design decisions |
 
-Run the dashboard (with the API running; in its own environment: `pip install -r dashboard/requirements.txt`):
+## Limits
 
-```bash
-HYRAG_API_URL=http://localhost:8000 streamlit run dashboard/app.py   # opens http://localhost:8501
-```
+- It answers one question at a time. There is no conversation memory, so a follow-up like "and if that doesn't work?" is not understood.
+- The free model tier caps it at roughly 115 fully checked questions a day.
+- Two-column and scanned PDFs are not supported.
+- The reranker was trained on MS MARCO, whose terms are non-commercial. Check that before any commercial use.
+- Retrieved passages are sent to Groq and Mistral. That is fine for public documents; a company would need to check its own data policy.
+- One API process only. The answer cache lives in memory.
 
-Set `HYRAG_ADMIN_KEY` to enable uploads (`POST /v1/ingest` with header `X-API-Key`), and `HYRAG_API_KEY` to require a key for questions.
+[docs/decisions.md](docs/decisions.md) explains the main design choices and the measurement behind each. The original build notes, kept as they were written, are in [docs/history/](docs/history/).
 
-Heads-up on size: `requirements.txt` pulls in PyTorch for the reranker (a ~124 MB CPU wheel on Windows/macOS; on Linux, install the CPU build from https://download.pytorch.org/whl/cpu or pip fetches the multi-GB CUDA one). Loading the reranker takes ~10-13 s and ~590 MB of RAM, so a server should load it once at startup.
+## License
 
-`try_loader.py` loads every file in `sample_docs/`, prints the sections it extracted, and saves the originals to `data/raw/` and the cleaned versions to `data/processed/`.
+The code is MIT-licensed (see [LICENSE](LICENSE)). The documents in `corpus/` keep their own licenses.

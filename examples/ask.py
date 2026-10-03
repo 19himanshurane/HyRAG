@@ -1,9 +1,13 @@
-"""Ask the documents a question and get a structured, honest response.
+"""Ask a question from the command line and print the full response.
 
-Usage: python try_ask.py "How do I fix ERR_TUNNEL_4012?" ["another question" ...]
-       python try_ask.py            (runs one question for each kind of response)
-       add --json to print the raw response (what the Phase 5 API will return)
-Needs data/index (python try_index.py), the reranker model (python -m hyrag.rerank), MISTRAL_API_KEY, GROQ_API_KEY.
+Usage (from the repo root):
+  python -m examples.ask "How do I fix ERR_TUNNEL_4012?" ["another question" ...]
+  python -m examples.ask                                 one question for each kind of response
+  python -m examples.ask --collection posthog "How do I book time off?"
+  add --json to print the raw response, as the API returns it
+
+Needs an index (python -m hyrag.seed), MISTRAL_API_KEY and GROQ_API_KEY. The reranker model is downloaded on
+first use.
 """
 import json
 import logging
@@ -62,17 +66,23 @@ def show(r) -> None:
 
 def main() -> None:
     logging.basicConfig(level=logging.WARNING, format="%(levelname)s %(name)s: %(message)s")
-    as_json = "--json" in sys.argv
-    questions = [a for a in sys.argv[1:] if a != "--json"] or SHOWCASE
+    args = sys.argv[1:]
+    as_json = "--json" in args
+    collection = "demo"  # the showcase questions are about the demo documents
+    if "--collection" in args:
+        i = args.index("--collection")
+        collection = args[i + 1]
+        del args[i:i + 2]
+    questions = [a for a in args if a != "--json"] or SHOWCASE
     if not is_downloaded():
         download()
     with MistralEmbedder() as emb, GroqChat() as writer, judge_client() as judge:
         index = ChunkIndex(emb)
         if index.count() == 0:
-            raise SystemExit("data/index is empty: run python try_index.py first")
+            raise SystemExit("data/index is empty: run python -m hyrag.seed first")
         retriever = HybridRetriever(index, reranker=CrossEncoderScorer(), rewriter=writer)
         for q in questions:
-            r = ask(q, retriever, writer, judge)
+            r = ask(q, retriever, writer, judge, collection=collection)
             print(json.dumps(r.to_dict(), indent=1, ensure_ascii=False)) if as_json else show(r)
         print(f"\nrequests: writer {writer.requests_made}, judge {judge.requests_made}, Mistral {emb.requests_made}")
 

@@ -1,7 +1,7 @@
 """Phase 2 Step 4 audit probes: the cross-encoder reranker inside HybridRetriever.
 
 Usage (from the repo root): PYTHONPATH=. python scripts/audit/probe_rerank.py
-Needs the reranker model in the local Hugging Face cache (run try_rerank.py once). Probe 6 sends ONE long
+Needs the reranker model in the local Hugging Face cache (run python -m hyrag.rerank once). Probe 6 sends ONE long
 query to Mistral (the only API request).
 """
 import os

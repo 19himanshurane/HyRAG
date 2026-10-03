@@ -2,7 +2,7 @@
 brute-force cosine over every vector stored in Chroma, and reports latency.
 
 Usage (from the repo root): PYTHONPATH=. python scripts/audit/probe_recall.py
-Needs the real index (python try_index.py). Query embeddings are cached after the first run.
+Needs the real index (python -m hyrag.seed). Query embeddings are cached after the first run.
 Run it several times: approximate indexes can miss different chunks in different processes.
 """
 import time

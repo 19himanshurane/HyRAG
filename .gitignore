@@ -12,6 +12,10 @@ data/
 # old draft kept locally for reference only
 _draft/
 
+# local tool output: code-graph analysis, promo video
+.ua/
+brag-output/
+
 # editor / OS
 .vscode/
 .idea/

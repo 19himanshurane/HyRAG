@@ -398,7 +398,7 @@
      "quote": "Supported Versions: Current (18) / 17 / 16 / 15 / 14"
     }
    ],
-   "notes": "The only source is the page's version-navigation line, which the parser keeps as text (see docs/phase4.md).",
+   "notes": "The only source is the page's version-navigation line, which the parser keeps as text (see docs/history/phase4.md).",
    "split": "test"
   },
   {

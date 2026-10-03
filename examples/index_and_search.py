@@ -1,9 +1,8 @@
-"""Ingest the whole corpus through the pipeline (store -> structure-aware chunks -> ChromaDB + BM25), then
-compare the two searches.
+"""Index the corpus, then show what meaning search and keyword search each find for the same questions.
 
-Usage: python try_index.py
-Stored under data/ (git-ignored). Unchanged files are not re-parsed and embeddings are cached, so a re-run
-makes no API calls.
+Usage (from the repo root): python -m examples.index_and_search
+The index goes under data/ (git-ignored). Parsed documents and embeddings are cached, so a second run makes
+no API calls. The first run embeds every document, PostHog's handbook included (a few hundred requests).
 """
 import logging
 import time
@@ -45,10 +44,10 @@ def main() -> None:
         for q in QUESTIONS:
             print(f"\nQ: {q}")
             print("   meaning search (dense / Chroma):")
-            for hit in index.search_dense(q, k=3):
+            for hit in index.search_dense(q, k=3, collection="demo"):  # the questions are about the demo set
                 print("     " + describe(hit))
             print("   keyword search (sparse / BM25):")
-            for hit in index.search_sparse(q, k=3):
+            for hit in index.search_sparse(q, k=3, collection="demo"):
                 print("     " + describe(hit))
 
 

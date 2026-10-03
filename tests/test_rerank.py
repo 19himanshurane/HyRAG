@@ -88,7 +88,7 @@ def _model_cached() -> bool:
 
 
 @pytest.mark.model
-@pytest.mark.skipif(not _model_cached(), reason="reranker model not downloaded (run try_rerank.py once)")
+@pytest.mark.skipif(not _model_cached(), reason="reranker model not downloaded (run python -m hyrag.rerank once)")
 def test_real_cross_encoder_tells_4012_from_4013():
     from hyrag.rerank import CrossEncoderScorer
 
@@ -102,7 +102,7 @@ def test_real_cross_encoder_tells_4012_from_4013():
     assert scorer.score("q", []).shape == (0,)
 
 
-# ----- audit round 2 fixes (docs/phase2-audit.md) -----
+# ----- loading and failure handling -----
 
 class RaisingScorer:
     def score(self, query, texts):

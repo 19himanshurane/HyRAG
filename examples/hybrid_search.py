@@ -1,8 +1,7 @@
-"""Reranking on the real corpus: the fused top 20 re-scored by a cross-encoder, best 5 kept.
+"""Hybrid search with and without the reranker: where the right passage ranks before and after.
 
-Usage: python try_index.py first (builds data/index), then python try_rerank.py
-The first run downloads the model (~88 MB, into the Hugging Face cache; same as `python -m hyrag.rerank`);
-after that it loads offline. Query embeddings are cached.
+Usage (from the repo root): python -m examples.hybrid_search      (needs an index: python -m hyrag.seed)
+The first run downloads the reranker model (~88 MB) into the Hugging Face cache; after that it loads offline.
 """
 import re
 import time
@@ -12,8 +11,8 @@ from hyrag.index import ChunkIndex
 from hyrag.rerank import CrossEncoderScorer, download, is_downloaded
 from hyrag.retrieval import HybridRetriever
 
-# question -> (where to look, pattern only the chunk(s) holding the answer match). Headings where the body
-# text would also match a table of contents that merely LISTS the section.
+# question -> (field to check, pattern that only the passage holding the answer matches). The heading is
+# checked where the body text would also match a table of contents that just lists the section.
 QUESTIONS = {
     "How do I fix ERR_TUNNEL_4012?": ("heading", r"Error ERR_TUNNEL_4012$"),
     "What does SQLSTATE 23505 mean?": ("text", r"(?<!\w)23505(?!\w)"),
@@ -37,7 +36,7 @@ def main() -> None:
     with MistralEmbedder() as embedder:
         index = ChunkIndex(embedder)
         if index.count() == 0:
-            raise SystemExit("data/index is empty: run python try_index.py first")
+            raise SystemExit("data/index is empty: run python -m hyrag.seed first")
         if not is_downloaded():
             print(f"reranker model not cached yet: downloading once -> {download()}")
         scorer = CrossEncoderScorer()
@@ -47,9 +46,9 @@ def main() -> None:
         retriever = HybridRetriever(index, reranker=scorer)
 
         for q, target in QUESTIONS.items():
-            fused = retriever.retrieve(q, rerank_results=False)
+            fused = retriever.retrieve(q, rerank_results=False, collection="demo")
             t0 = time.perf_counter()
-            reranked = retriever.retrieve(q)
+            reranked = retriever.retrieve(q, collection="demo")
             ms = (time.perf_counter() - t0) * 1000
             print(f"\nQ: {q}\n   answer's rank ->  fused: {rank_of(fused, target)} of {len(fused)},  "
                   f"reranked: {rank_of(reranked, target)} of {len(reranked)}   ({ms:.0f} ms)")

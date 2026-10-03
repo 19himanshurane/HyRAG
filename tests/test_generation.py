@@ -154,7 +154,7 @@ def test_missing_groq_key_is_a_clear_error(monkeypatch):
         GroqChat()
 
 
-# ----- prompt-injection defences and look-alike characters (measured in docs/phase3.md) -----
+# ----- prompt-injection defences and look-alike characters -----
 
 def test_reminder_sits_between_the_passages_and_the_question():
     from hyrag.generation import REMINDER

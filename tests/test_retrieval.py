@@ -65,7 +65,7 @@ def test_empty_index_returns_nothing(tmp_path):
     assert empty.retrieve("anything") == []
 
 
-# ----- audit fixes (docs/phase2-audit.md) -----
+# ----- input validation and concurrency -----
 
 @pytest.mark.parametrize("query", ["", "   ", "\n\t"])
 def test_blank_query_is_rejected_without_searching(retriever, query):

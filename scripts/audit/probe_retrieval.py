@@ -134,7 +134,7 @@ def main() -> None:
 
     # 8. Real index: latency and how often sparse-only junk reaches the fused top 5.
     if not Path("data/index/chunks-structure.sqlite").exists():
-        print("[SKIP   ] real index not built (run try_index.py)"); return
+        print("[SKIP   ] real index not built (run python -m hyrag.seed)"); return
     from hyrag.embeddings import MistralEmbedder
     qs = ["How do I fix ERR_TUNNEL_4012?", "What does SQLSTATE 23505 mean?",
           "I forgot my login credentials, what can I do?", "Can I deploy to production on a Friday?"]

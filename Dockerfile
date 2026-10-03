@@ -33,5 +33,5 @@ RUN mkdir -p /app/data && chown hyrag /app/data
 
 USER hyrag
 EXPOSE 8000
-# One worker: the answer cache and the ingest lock are in memory (see docs/phase5.md, Known limits).
+# One worker: the answer cache and the ingest lock are in memory (see docs/deployment.md).
 CMD ["uvicorn", "hyrag.api:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1", "--no-server-header"]
