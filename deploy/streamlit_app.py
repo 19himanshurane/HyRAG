@@ -22,20 +22,43 @@ QUESTIONS_PER_VISITOR_PER_HOUR = "10"
 QUESTIONS_PER_DAY = "100"  # the free model tier covers about 115 checked questions a day
 
 
+KEYS = ("MISTRAL_API_KEY", "GROQ_API_KEY")
+
+
+def load_keys() -> None:
+    """Put the two API keys in the environment: from .env locally, from the host's secrets box when hosted.
+    If one is missing, say which on the page and stop. Streamlit redacts exception messages on hosted apps, so
+    a raised error would only show "an error occurred". Secret names are shown; values never are."""
+    from dotenv import load_dotenv
+
+    load_dotenv(ROOT / ".env")
+    try:
+        secrets = {name: st.secrets[name] for name in st.secrets}
+    except Exception:  # no secrets configured at all
+        secrets = {}
+    for key in KEYS:
+        value = secrets.get(key)
+        if not os.environ.get(key) and isinstance(value, str) and value.strip():
+            os.environ[key] = value.strip()
+    missing = [key for key in KEYS if not os.environ.get(key)]
+    if not missing:
+        return
+    st.error(f"HyRAG can't start: {' and '.join(missing)} {'is' if len(missing) == 1 else 'are'} not set.")
+    found = ", ".join(f"`{name}`" for name in secrets) or "none"
+    st.markdown(
+        f"Secret names this app can see: {found}.\n\n"
+        "In **Manage app → Settings → Secrets**, the box should hold exactly these two lines, with your keys "
+        "inside the quotes and nothing above them (no `[section]` header):\n\n"
+        '```toml\nMISTRAL_API_KEY = "..."\nGROQ_API_KEY = "..."\n```\n\n'
+        "Save, and the app restarts by itself.")
+    st.stop()
+
+
 @st.cache_resource(show_spinner="Starting HyRAG. A cold start indexes the documents and takes a minute or two.")
 def backend() -> str:
     """Index the documents and start the API once per process. Returns the API's address."""
     os.chdir(ROOT)  # the seed reads corpus/ and sample_docs/ relative to the repository root
     sys.path.insert(0, str(ROOT))
-    from dotenv import load_dotenv
-
-    load_dotenv(ROOT / ".env")  # local runs; a hosted copy has no .env and uses its secrets box
-    for key in ("MISTRAL_API_KEY", "GROQ_API_KEY"):  # the host's secrets box, if the environment lacks them
-        if not os.environ.get(key):
-            try:
-                os.environ[key] = st.secrets[key]
-            except Exception:
-                raise RuntimeError(f"{key} is not set: add it to the app's secrets") from None
     data = Path(os.environ.setdefault("HYRAG_DATA_DIR", str(ROOT / "data")))
     data.mkdir(parents=True, exist_ok=True)
     if not (data / "embeddings.sqlite").exists():
@@ -68,6 +91,7 @@ def backend() -> str:
     return f"http://127.0.0.1:{port}"
 
 
+load_keys()
 os.environ["HYRAG_API_URL"] = backend()
 sys.path.insert(0, str(ROOT / "dashboard"))  # the dashboard imports its neighbours `client` and `safety`
 runpy.run_path(str(ROOT / "dashboard" / "app.py"), run_name="__main__")
