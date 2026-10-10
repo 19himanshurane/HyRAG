@@ -23,6 +23,7 @@ Configuration (environment):
   HYRAG_CORS_ORIGINS     comma-separated origins allowed to call the API from a browser (the dashboard)
   HYRAG_MAX_UPLOAD_MB    per-file upload limit (default 20, never above the loader's 50)
   HYRAG_CHROMA_URL       a Chroma server (e.g. http://chroma:8000); unset = embedded store in HYRAG_DATA_DIR
+  HYRAG_VISITOR_LIMIT_PER_HOUR, HYRAG_DAILY_LIMIT   question limits for a public deployment (0 = off)
 """
 import hmac
 import logging
@@ -42,6 +43,7 @@ from pydantic import BaseModel, Field
 
 from hyrag.answer import AnswerCache, DEFAULT_BUDGET_SECONDS, Response, ask
 from hyrag.index import COLLECTIONS, DEFAULT_COLLECTION, collection_of
+from hyrag.limits import AskLimiter
 from hyrag.loader import MAX_FILE_BYTES, SUPPORTED
 from hyrag.retrieval import MAX_QUERY_CHARS
 
@@ -60,6 +62,8 @@ class Settings:
     cors_origins: list[str] = field(default_factory=list)
     max_upload_bytes: int = 20 * 1024 * 1024
     chroma_url: str = ""
+    visitor_limit: int = 0  # questions per visitor per hour; 0 = no limit
+    daily_limit: int = 0    # questions per day in total; 0 = no limit
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -70,7 +74,9 @@ class Settings:
                    api_key=os.environ.get("HYRAG_API_KEY", ""), admin_key=os.environ.get("HYRAG_ADMIN_KEY", ""),
                    cors_origins=[o.strip() for o in os.environ.get("HYRAG_CORS_ORIGINS", "").split(",") if o.strip()],
                    max_upload_bytes=min(int(mb * 1024 * 1024), MAX_FILE_BYTES),
-                   chroma_url=os.environ.get("HYRAG_CHROMA_URL", ""))
+                   chroma_url=os.environ.get("HYRAG_CHROMA_URL", ""),
+                   visitor_limit=int(os.environ.get("HYRAG_VISITOR_LIMIT_PER_HOUR", "0")),
+                   daily_limit=int(os.environ.get("HYRAG_DAILY_LIMIT", "0")))
 
 
 @dataclass
@@ -196,6 +202,8 @@ def create_app(services: Services | None = None, settings: Settings | None = Non
         app.add_middleware(CORSMiddleware, allow_origins=settings.cors_origins, allow_methods=["GET", "POST"],
                            allow_headers=["Content-Type", "X-API-Key"])
 
+    limiter = AskLimiter(settings.visitor_limit, settings.daily_limit)
+
     def svc(request: Request) -> Services:
         return request.app.state.services
 
@@ -223,10 +231,27 @@ def create_app(services: Services | None = None, settings: Settings | None = Non
     @app.post("/v1/ask", response_model=Response, tags=["questions"], dependencies=[Depends(require_key)],
               responses={503: {"description": "service or daily quota unavailable (body is the same schema)"},
                          504: {"description": "time budget exceeded (body is the same schema)"}})
-    def ask_question(body: AskRequest, response: HTTPResponse, services: Services = Depends(svc)) -> Response:
+    def ask_question(body: AskRequest, request: Request, response: HTTPResponse,
+                     x_visitor_id: str = Header("", alias="X-Visitor-Id"),
+                     services: Services = Depends(svc)) -> Response:
         """Answer from the indexed documents. `status` says what happened (answered, partial, unverified, unchecked,
         not_found, error) and `code` why; `confidence` has the score by dimension; `sources` are the cited
-        passages by [n]; `retrieved` lists every passage the writer saw, with how each search ranked it."""
+        passages by [n]; `retrieved` lists every passage the writer saw, with how each search ranked it.
+
+        With question limits configured, a 429 says which limit was hit and `Retry-After` when to come back."""
+        visitor = (x_visitor_id or (request.client.host if request.client else "") or "unknown")[:64]
+        blocked = limiter.check(visitor)
+        if blocked and services.cache is not None and services.cache.get(AnswerCache.key(
+                body.question, services.index.version(), body.mode, body.collection)) is not None:
+            blocked = None  # already answered and cached: serving it again costs nothing
+        if blocked:
+            which, wait = blocked
+            minutes = max(1, round(wait / 60))
+            n = settings.visitor_limit
+            detail = (f"This demo allows {n} question{'' if n == 1 else 's'} per visitor per hour. "
+                      f"Try again in about {minutes} min." if which == "visitor" else
+                      "This demo has used up its question budget for today. Please come back later.")
+            raise HTTPException(429, detail, headers={"Retry-After": str(wait)})
         try:
             result = ask(body.question, services.retriever, services.writer, services.judge,
                          budget_seconds=settings.budget_seconds, cache=services.cache, mode=body.mode,
@@ -234,6 +259,8 @@ def create_app(services: Services | None = None, settings: Settings | None = Non
         except ValueError as e:  # blank or too long (after trimming): the caller's to fix
             raise HTTPException(422, str(e))
         response.headers["X-Request-ID"] = result.request_id
+        if not result.cached and result.status != "error":  # cached answers and outages cost no quota
+            limiter.record(visitor)
         if result.status == "error":
             response.status_code = ERROR_HTTP.get(result.code, 503)
             if result.code == "error.quota_exhausted":

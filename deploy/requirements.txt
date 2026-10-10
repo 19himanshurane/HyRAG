@@ -1,0 +1,19 @@
+# Dependencies for deploy/streamlit_app.py on a single-process host (Streamlit Community Cloud reads the
+# requirements file next to the entry point). Same versions as requirements-lock.txt.
+#
+# PyTorch from its CPU-only index: the default Linux wheel on PyPI bundles CUDA and is several GB.
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.14.0+cpu
+
+beautifulsoup4==4.15.0
+pdfplumber==0.11.10
+numpy==2.5.3
+httpx==0.28.1
+python-dotenv==1.2.3
+chromadb==1.5.9
+rank-bm25==0.2.2
+fastapi==0.141.1
+uvicorn==0.54.0
+python-multipart==0.0.32
+sentence-transformers==6.1.0
+streamlit==1.64.0

@@ -56,6 +56,8 @@ All of it is environment variables.
 | `HYRAG_MAX_UPLOAD_MB` | `20` | per-file upload limit |
 | `HYRAG_CORS_ORIGINS` | unset | origins allowed to call the API from a browser |
 | `HYRAG_STRATEGY` | `structure` | which chunking strategy's index to serve |
+| `HYRAG_VISITOR_LIMIT_PER_HOUR` | `0` (off) | questions one visitor may ask per hour |
+| `HYRAG_DAILY_LIMIT` | `0` (off) | questions per day in total, across all visitors |
 | `HYRAG_API_URL` | `http://localhost:8000` | dashboard only: where the API is |
 
 ## Adding documents
@@ -87,11 +89,51 @@ The Chroma and Mistral rows were tested on the running stack. The rows about the
 
 Two of these were bugs first. The seed used to give up on Mistral's rate limit after 15 seconds of retrying, which is shorter than the one-minute window the limit resets in. And the API used to fetch every vector from Chroma on the first question after a start. With 7,628 chunks that took longer than the question's whole time budget, so the first question always failed. The vectors now come from the local cache, at startup.
 
+## Question limits
+
+Every question spends the Groq and Mistral quota of whoever owns the keys, and the free tier covers roughly 115 checked questions a day. Two limits protect that, both off by default.
+
+`HYRAG_VISITOR_LIMIT_PER_HOUR` caps one visitor, and `HYRAG_DAILY_LIMIT` caps everyone together. A question over the limit gets HTTP 429 with a message saying which limit it was and a `Retry-After` header; the model is never called. Answers served from the cache and questions that failed because of an outage don't count, and a visitor at their limit can still get an answer that is already cached.
+
+The dashboard identifies a visitor by a hash of their forwarded address when a proxy supplies one, and by a random id per browser session otherwise. No address is stored. The API takes that id on trust, so the per-visitor limit stops ordinary overuse and not someone who forges ids. The daily total is the one that can't be dodged. Both live in memory and reset when the process restarts.
+
+## One process: Streamlit Community Cloud
+
+Some hosts run a single process and no containers. `deploy/streamlit_app.py` is the entry point for those. On a cold start it indexes the documents, starts the API in a background thread, and then serves the normal dashboard against it on localhost. It sets the limits above to 10 questions per visitor per hour and 100 a day unless the environment says otherwise.
+
+```bash
+streamlit run deploy/streamlit_app.py      # locally, with the two keys in .env
+```
+
+To deploy on [Streamlit Community Cloud](https://share.streamlit.io):
+
+1. Sign in with GitHub and create an app from this repository, branch `main`, main file `deploy/streamlit_app.py`.
+2. Under Advanced settings choose Python 3.12, and paste the two keys into the Secrets box:
+
+   ```toml
+   MISTRAL_API_KEY = "..."
+   GROQ_API_KEY = "..."
+   ```
+
+3. Deploy. The app installs `deploy/requirements.txt`, which sits next to the entry point and pins PyTorch's CPU build.
+
+Three things make this work without a separate vector database or a seed job.
+
+`deploy/embeddings.sqlite` holds the vector of every chunk in the index, 36 MB. The host's disk is empty on every cold start, and with this file the documents are indexed without a single embedding request. Regenerate it with `scripts/export_embedding_cache.py` after the documents change.
+
+Chroma runs embedded, inside the same process, in the data directory.
+
+Documents are parsed one at a time in the app's own process (`python -m hyrag.seed --in-process`). The normal seed uses worker processes, and starting those from inside a running Streamlit app is fragile.
+
+Measured locally from an empty data directory, on a machine short of memory: 179 seconds to a ready page, of which 78 were indexing, with no embedding requests. Once the backend is up, a page loads in 3.6 seconds and a question was answered in 3.6 seconds. Memory was not measured in this mode; the API and dashboard used about 800 MB together when measured separately in Docker, and Community Cloud allows up to 2.7 GB.
+
+What to know about this host: the app sleeps after 12 hours without visitors, and the next visitor waits through a cold start. Whether its installer honours the `--extra-index-url` line in `deploy/requirements.txt` is not confirmed by its documentation; if the build pulls the CUDA build of PyTorch, that line is the place to look.
+
 ## Before putting it on the internet
 
 A few things matter that don't on a laptop.
 
-Every question spends the Groq and Mistral quota of whoever owns the keys. On the free tier that is roughly 115 checked questions a day, so a public demo needs a per-visitor limit.
+Set the question limits described above. Without them a public demo can spend its whole daily quota in minutes.
 
 The dashboard has no sign-in. If the API requires a key, the dashboard holds it on the server side and every visitor uses it. Put it behind a login proxy.
 

@@ -24,10 +24,9 @@ def _free_port() -> int:
         return s.getsockname()[1]
 
 
-@pytest.fixture
-def api(services, monkeypatch):  # noqa: F811
+def _serve(services, monkeypatch, settings):  # noqa: F811
     port = _free_port()
-    server = uvicorn.Server(uvicorn.Config(create_app(services, Settings()), port=port, log_level="warning", access_log=False))
+    server = uvicorn.Server(uvicorn.Config(create_app(services, settings), port=port, log_level="warning", access_log=False))
     thread = threading.Thread(target=server.run, daemon=True)
     thread.start()
     deadline = time.time() + 10
@@ -39,6 +38,16 @@ def api(services, monkeypatch):  # noqa: F811
     yield services
     server.should_exit = True
     thread.join(5)
+
+
+@pytest.fixture
+def api(services, monkeypatch):  # noqa: F811
+    yield from _serve(services, monkeypatch, Settings())
+
+
+@pytest.fixture
+def limited_api(services, monkeypatch):  # noqa: F811
+    yield from _serve(services, monkeypatch, Settings(visitor_limit=1))
 
 
 def page() -> AppTest:
@@ -92,6 +101,15 @@ def test_redrawing_after_an_answer_never_calls_the_api_again(api):
     for _ in range(3):
         at.run()  # a rerun without pressing Ask (what any widget interaction would cause)
     assert len(api.writer.calls) == calls and "Answered from the documents" in all_text(at)
+
+
+def test_a_visitor_over_the_limit_sees_why(limited_api):
+    at = ask(page().run(), "How do I fix ERR_TUNNEL_4012 certificate expired?")
+    assert "Answered from the documents" in all_text(at)
+    at = ask(at, "And how do I fix ERR_TUNNEL_4013 gateway region?")  # same browser session: same visitor
+    assert not at.exception
+    assert any("1 question per visitor per hour" in e.value for e in at.error)
+    assert len(limited_api.writer.calls) == 1  # the second question never reached the model
 
 
 def test_empty_question_is_caught_before_any_request(api):

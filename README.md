@@ -67,7 +67,7 @@ python -m pytest -q
 
 On Linux, install PyTorch from https://download.pytorch.org/whl/cpu first, or pip fetches the CUDA build, which is several gigabytes. The reranker needs about 590 MB of RAM.
 
-[docs/deployment.md](docs/deployment.md) covers configuration, what each container does and what happens when one of them fails.
+[docs/deployment.md](docs/deployment.md) covers configuration, what each container does, what happens when one of them fails, question limits for a public copy, and hosting it as a single process on Streamlit Community Cloud.
 
 ## What's in the repository
 
@@ -76,6 +76,7 @@ On Linux, install PyTorch from https://download.pytorch.org/whl/cpu first, or pi
 | `hyrag/` | The library: loading, chunking, the index, retrieval, generation, citation checks, confidence, the API |
 | `dashboard/` | The Streamlit page. It only talks to the API |
 | `examples/` | Four short scripts: parse documents, compare the two searches, see the reranker's effect, ask a question |
+| `deploy/` | A single-process entry point for Streamlit Community Cloud, with its own dependency list and a ready-made embedding cache |
 | `scripts/` | Evaluation runners and corpus tools; `scripts/audit/` holds the probes used to find bugs |
 | `eval/` | The evaluation questions and the labelled data for the citation checker |
 | `corpus/`, `sample_docs/` | The documents |

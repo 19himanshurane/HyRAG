@@ -69,6 +69,14 @@ def test_a_file_that_fails_fails_the_seed(env, capsys):
     assert sources(tmp_path) == {"it/vpn-setup.md"}  # the good file still went in
 
 
+def test_in_process_mode_gives_the_same_index_and_reports_failures(env, capsys):
+    tmp_path, docs = env
+    (docs / "broken.pdf").write_bytes(b"not a pdf")
+    assert seed.main([str(docs), "--in-process"]) == 1
+    assert "FAILED broken.pdf" in capsys.readouterr().err
+    assert sources(tmp_path) == {"it/vpn-setup.md"}  # same name, with its folder, as the worker-process path
+
+
 def test_missing_folder_or_key_is_refused_before_any_work(env, monkeypatch, capsys):
     tmp_path, docs = env
     assert seed.main([str(tmp_path / "nope")]) == 1

@@ -6,8 +6,10 @@ Streamlit reruns the whole script on every interaction, so: the question sits in
 page, answers are kept in session_state so reruns never call the API, and the sidebar calls are cached. The
 dense-only comparison sends both requests at once. Model text goes through safety.py before it's shown.
 """
+import hashlib
 import os
 import time
+import uuid
 from concurrent.futures import ThreadPoolExecutor
 
 import streamlit as st
@@ -62,13 +64,27 @@ COLLECTION_LABELS = {"posthog": "PostHog (real company handbook)",
 PREFERRED_COLLECTION = "posthog"
 
 
-def ask_both(question: str, compare: bool, collection: str | None) -> dict:
+def visitor_id() -> str:
+    """An opaque id for the person asking, for the API's per-visitor question limit. Behind a proxy it is a
+    hash of the forwarded address, so the same person keeps their count across page reloads and no address is
+    stored or sent on. Without one, it is a random id for this browser session."""
+    try:
+        forwarded = st.context.headers.get("X-Forwarded-For") or ""
+    except Exception:  # no request context (tests, some hosts)
+        forwarded = ""
+    address = forwarded.split(",")[0].strip()
+    if address:
+        return hashlib.sha256(address.encode()).hexdigest()[:16]
+    return st.session_state.setdefault("visitor", uuid.uuid4().hex[:16])
+
+
+def ask_both(question: str, compare: bool, collection: str | None, visitor: str = "") -> dict:
     """{mode: AskResult | ApiError}. With compare, hybrid and dense-only run in parallel (one wait, not two)."""
     modes = ["hybrid", "dense"] if compare else ["hybrid"]
 
     def one(mode):
         try:
-            return get_client().ask(question, mode, collection)
+            return get_client().ask(question, mode, collection, visitor)
         except ApiError as e:
             return e
 
@@ -209,7 +225,7 @@ def main() -> None:
         else:
             t0 = time.perf_counter()
             with st.spinner("Searching the documents and checking the answer…"):
-                st.session_state["results"] = ask_both(question.strip(), compare, collection)
+                st.session_state["results"] = ask_both(question.strip(), compare, collection, visitor_id())
             st.session_state["question"] = question.strip()
             st.session_state["collection"] = collection
             st.session_state["wait_seconds"] = time.perf_counter() - t0

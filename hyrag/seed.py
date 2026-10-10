@@ -28,6 +28,9 @@ from hyrag.pipeline import Pipeline
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("dirs", nargs="*", type=Path, default=[Path("corpus"), Path("sample_docs")])
+    ap.add_argument("--in-process", action="store_true",
+                    help="parse one file at a time in this process, without worker processes (for running "
+                         "inside another application, where starting workers is fragile)")
     args = ap.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
     load_dotenv()
@@ -49,8 +52,16 @@ def main(argv: list[str] | None = None) -> int:
         pipe = Pipeline(store, index)
         docs, failures = 0, {}
         for root in args.dirs:
-            docs += len(pipe.ingest(list_corpus_files(root), root=root))
-            failures.update(store.failures)
+            if args.in_process:
+                for path in list_corpus_files(root):
+                    try:
+                        pipe.ingest_one(path, root=root)
+                        docs += 1
+                    except Exception as e:  # this file fails; the others still go in
+                        failures[path.relative_to(root).as_posix()] = f"{type(e).__name__}: {e}"
+            else:
+                docs += len(pipe.ingest(list_corpus_files(root), root=root))
+                failures.update(store.failures)
         repaired = index.repair()
         left = index.check_sync()
         print(f"seed: {docs} documents, {index.count()} chunks ({index.duplicate_count()} near-duplicates skipped), "

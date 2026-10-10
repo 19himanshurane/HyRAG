@@ -55,11 +55,14 @@ class HyragClient:
     def collections(self) -> list[dict]:
         return self._get("/v1/collections")
 
-    def ask(self, question: str, mode: str = "hybrid", collection: str | None = None) -> AskResult:
+    def ask(self, question: str, mode: str = "hybrid", collection: str | None = None,
+            visitor: str = "") -> AskResult:
+        """visitor: an opaque id for the person asking, so the API can apply its per-visitor question limit."""
         t0 = time.perf_counter()
         body = {"question": question, "mode": mode, **({"collection": collection} if collection else {})}
+        headers = {"X-Visitor-Id": visitor} if visitor else {}
         try:
-            r = self.http.post("/v1/ask", json=body, timeout=ASK_TIMEOUT_SECONDS)
+            r = self.http.post("/v1/ask", json=body, headers=headers, timeout=ASK_TIMEOUT_SECONDS)
         except httpx.TimeoutException as e:
             raise ApiError(f"No answer within {ASK_TIMEOUT_SECONDS:.0f} s.") from e
         except httpx.HTTPError as e:
@@ -71,6 +74,9 @@ class HyragClient:
             raise ApiError(message, 422)
         if r.status_code == 401:
             raise ApiError("The API rejected the key (401): check HYRAG_API_KEY.", 401)
+        if r.status_code == 429:  # the API's question limit, with its own explanation
+            detail = r.json().get("detail")
+            raise ApiError(detail if isinstance(detail, str) else "Too many questions for now. Try again later.", 429)
         try:
             body = r.json()
         except ValueError as e:
