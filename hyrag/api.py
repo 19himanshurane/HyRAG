@@ -298,12 +298,12 @@ def create_app(services: Services | None = None, settings: Settings | None = Non
             # cached answer would keep the document's passages in memory after the upload is gone.
             shared = services.retriever
             retriever, cache = HybridRetriever(upload.index, shared.config, shared.reranker, shared.rewriter), None
-            if upload.index.count() <= shared.config.rerank_top_n:
-                # The writer sees the whole document, so search can't have missed the passage, and the gate
-                # would only add the reranker's mistakes: it scored a CV's "Languages: Go, Python, SQL" at
-                # relevance 0.09 for "Which programming languages does she know?". The writer still says so
-                # when the document has no answer (4 of 4 live), and the citation check still runs.
-                gate = 0.0
+            # No relevance gate either. Its threshold was set on the built-in documents, and on uploads it
+            # refused questions the document answers: the reranker scored a CV's "Languages: Go, Python, SQL"
+            # at 0.09 for "Which programming languages does she know?". Measured live on two uploads without
+            # the gate, the writer answered both questions the gate had refused and declined all 9 questions
+            # the documents don't answer. Such a question now costs a model call (about 1,600 tokens).
+            gate = 0.0
         blocked = limiter.check(visitor)
         if blocked and cache is not None and cache.get(AnswerCache.key(
                 body.question, retriever.index.version(), body.mode, body.collection)) is not None:

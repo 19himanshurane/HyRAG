@@ -207,7 +207,7 @@ def render_result(result, mode: str) -> None:
     usage = body.get("usage") or {}
     tokens = sum(v for k, v in usage.items() if k.endswith("tokens"))
     notes.append(f"{'cached' if body.get('cached') else f'{tokens:,} tokens'} · API {result.seconds:.1f} s · "
-                 f"request {body.get('request_id', '')}")
+                 f"{body.get('code', '')} · request {body.get('request_id', '')}")
     st.caption("  \n".join(notes))
 
 

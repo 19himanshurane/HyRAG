@@ -207,19 +207,19 @@ def test_two_uploads_are_answered_separately(uploading):
         assert {p["source"] for p in body["retrieved"]} == {"parking.pdf"} and "printers.pdf" not in str(body)
 
 
-def test_the_relevance_gate_is_skipped_only_when_the_writer_sees_the_whole_document(uploading):
+def test_uploads_have_no_relevance_gate_and_the_built_in_documents_keep_theirs(uploading):
     unrelated = "Which certifications does the author hold?"  # the fake reranker scores every passage very low
     long_doc = "\n\n".join(f"# Rule {i}\n\n" + f"Company bicycles are parked overnight in cage {i}. " * 12
                            for i in range(8)).encode()
     with client(uploading) as c:
-        short = send(c).json()
-        body = c.post("/v1/ask", json={"question": unrelated, "upload_id": short["upload_id"]}).json()
-        assert short["chunks"] <= 5 and body["code"] != "not_found.no_relevant_documents"
-        assert len(uploading.writer.calls) == 1  # the writer was asked and decides for itself
-        long = send(c, "rules.md", long_doc).json()
-        body = c.post("/v1/ask", json={"question": unrelated, "upload_id": long["upload_id"]}).json()
-        assert long["chunks"] > 5 and body["code"] == "not_found.no_relevant_documents"
-        assert len(uploading.writer.calls) == 1  # gated as usual: the model was not asked
+        for n, (name, data) in enumerate([("parking.pdf", None), ("rules.md", long_doc)], start=1):
+            held = send(c, name, data).json()
+            body = c.post("/v1/ask", json={"question": unrelated, "upload_id": held["upload_id"]}).json()
+            assert body["code"] != "not_found.no_relevant_documents"
+            assert len(uploading.writer.calls) == n  # the writer was asked and decides for itself
+        assert held["chunks"] > 5  # also when the writer sees only part of the document
+        body = c.post("/v1/ask", json={"question": unrelated}).json()
+        assert body["code"] == "not_found.no_relevant_documents" and len(uploading.writer.calls) == 2
 
 
 def test_uploads_are_off_unless_configured(services):  # noqa: F811
