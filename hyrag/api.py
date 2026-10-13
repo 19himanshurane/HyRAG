@@ -9,6 +9,9 @@ Endpoints:
 - GET  /v1/collections the document collections (one company's documents each) and their size.
 - GET  /v1/documents   indexed documents with chunk counts (optionally one collection's).
 - POST /v1/ingest      upload files to index into a collection (needs the admin key). Same name = a new version.
+- POST /v1/uploads     a visitor's own document, held in memory for a while and answered from on its own: pass
+                       the returned `upload_id` to /v1/ask. DELETE /v1/uploads/{id} removes it early and
+                       GET /v1/uploads/limits says what is accepted. Off unless HYRAG_VISITOR_UPLOADS=1.
 - GET  /health         liveness: the process is up.
 - GET  /ready          readiness: keys, index and reranker model are usable (503 with the reasons if not).
 
@@ -24,6 +27,9 @@ Configuration (environment):
   HYRAG_MAX_UPLOAD_MB    per-file upload limit (default 20, never above the loader's 50)
   HYRAG_CHROMA_URL       a Chroma server (e.g. http://chroma:8000); unset = embedded store in HYRAG_DATA_DIR
   HYRAG_VISITOR_LIMIT_PER_HOUR, HYRAG_DAILY_LIMIT   question limits for a public deployment (0 = off)
+  HYRAG_VISITOR_UPLOADS  1 = visitors may upload a document of their own (see hyrag.uploads). Its limits:
+                         HYRAG_VISITOR_UPLOAD_MB (5), HYRAG_VISITOR_UPLOAD_PAGES (50),
+                         HYRAG_VISITOR_UPLOAD_MINUTES (60, how long one is kept), HYRAG_VISITOR_UPLOADS_PER_DAY (50)
 """
 import hmac
 import logging
@@ -41,11 +47,12 @@ from fastapi import Depends, FastAPI, File, Header, HTTPException, Query, Reques
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
-from hyrag.answer import AnswerCache, DEFAULT_BUDGET_SECONDS, Response, ask
+from hyrag.answer import AnswerCache, DEFAULT_BUDGET_SECONDS, RETRIEVAL_GATE, Response, ask
 from hyrag.index import COLLECTIONS, DEFAULT_COLLECTION, collection_of
 from hyrag.limits import AskLimiter
 from hyrag.loader import MAX_FILE_BYTES, SUPPORTED
-from hyrag.retrieval import MAX_QUERY_CHARS
+from hyrag.retrieval import MAX_QUERY_CHARS, HybridRetriever
+from hyrag.uploads import UPLOAD_TYPES, UploadPolicy, UploadRejected, UploadStore
 
 log = logging.getLogger(__name__)
 
@@ -64,6 +71,8 @@ class Settings:
     chroma_url: str = ""
     visitor_limit: int = 0  # questions per visitor per hour; 0 = no limit
     daily_limit: int = 0    # questions per day in total; 0 = no limit
+    visitor_uploads: bool = False  # production: build an UploadStore (tests pass one in Services instead)
+    upload_policy: UploadPolicy = UploadPolicy()
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -76,7 +85,13 @@ class Settings:
                    max_upload_bytes=min(int(mb * 1024 * 1024), MAX_FILE_BYTES),
                    chroma_url=os.environ.get("HYRAG_CHROMA_URL", ""),
                    visitor_limit=int(os.environ.get("HYRAG_VISITOR_LIMIT_PER_HOUR", "0")),
-                   daily_limit=int(os.environ.get("HYRAG_DAILY_LIMIT", "0")))
+                   daily_limit=int(os.environ.get("HYRAG_DAILY_LIMIT", "0")),
+                   visitor_uploads=os.environ.get("HYRAG_VISITOR_UPLOADS", "").strip().lower() in ("1", "true", "on"),
+                   upload_policy=UploadPolicy(
+                       max_bytes=int(float(os.environ.get("HYRAG_VISITOR_UPLOAD_MB", "5")) * 1024 * 1024),
+                       max_pages=int(os.environ.get("HYRAG_VISITOR_UPLOAD_PAGES", "50")),
+                       ttl_seconds=60 * float(os.environ.get("HYRAG_VISITOR_UPLOAD_MINUTES", "60")),
+                       per_day=int(os.environ.get("HYRAG_VISITOR_UPLOADS_PER_DAY", "50"))))
 
 
 @dataclass
@@ -87,6 +102,7 @@ class Services:
     judge: object
     pipeline: object | None = None       # None: ingestion unavailable
     cache: AnswerCache | None = None
+    uploads: UploadStore | None = None   # None: visitors can't upload documents of their own
     problems: list[str] = field(default_factory=list)  # why the service is not ready (empty = ready)
     closers: list = field(default_factory=list)
     ingest_lock: threading.Lock = field(default_factory=threading.Lock)  # one upload batch at a time
@@ -131,8 +147,13 @@ def build_services(settings: Settings) -> Services:
         scorer.score("warm up", ["load the model now, not on the first request"])
     retriever = HybridRetriever(index, reranker=scorer, rewriter=writer)
     pipeline = Pipeline(DocumentStore(settings.data_dir), index)
-    return Services(retriever, writer, judge, pipeline, AnswerCache(), problems,
-                    closers=[embedder.close, writer.close, judge.close])
+    closers = [embedder.close, writer.close, judge.close]
+    uploads = None
+    if settings.visitor_uploads:
+        upload_embedder = MistralEmbedder(cache_path=None)  # no cache: an upload's vectors must not reach the disk
+        uploads = UploadStore(upload_embedder, settings.upload_policy)
+        closers.append(upload_embedder.close)
+    return Services(retriever, writer, judge, pipeline, AnswerCache(), uploads, problems, closers=closers)
 
 
 # ----- request / response schemas (the OpenAPI contract) -----
@@ -144,6 +165,9 @@ class AskRequest(BaseModel):
     collection: Literal[*COLLECTIONS] | None = Field(
         None, description="Answer from one company's documents only (see GET /v1/collections). "
                           "Omitted: all documents, which can mix different companies' policies.")
+    upload_id: str | None = Field(
+        None, max_length=64, description="Answer from a document uploaded with POST /v1/uploads instead of the "
+                                         "indexed ones. Not together with `collection`.")
 
 
 class CollectionInfo(BaseModel):
@@ -176,6 +200,23 @@ class IngestResult(BaseModel):
     files: list[IngestedFile]
 
 
+class UploadLimits(BaseModel):
+    enabled: bool
+    max_mb: float = 0
+    max_pages: int = 0
+    minutes_kept: int = 0
+    types: list[str] = []
+
+
+class UploadInfo(BaseModel):
+    upload_id: str = Field(description="Pass it to /v1/ask. Anyone who has it can ask about the document.")
+    filename: str
+    pages: int | None = Field(description="PDFs only")
+    chunks: int
+    characters: int
+    expires_in_seconds: int
+
+
 # ----- the app -----
 
 ERROR_HTTP = {"error.quota_exhausted": 503, "error.timeout": 504}
@@ -199,8 +240,9 @@ def create_app(services: Services | None = None, settings: Settings | None = Non
                   description="Hybrid-search question answering over internal documents, with verified citations "
                               "and an honest 'not found'.")
     if settings.cors_origins:
-        app.add_middleware(CORSMiddleware, allow_origins=settings.cors_origins, allow_methods=["GET", "POST"],
-                           allow_headers=["Content-Type", "X-API-Key"])
+        app.add_middleware(CORSMiddleware, allow_origins=settings.cors_origins,
+                           allow_methods=["GET", "POST", "DELETE"],
+                           allow_headers=["Content-Type", "X-API-Key", "X-Visitor-Id"])
 
     limiter = AskLimiter(settings.visitor_limit, settings.daily_limit)
 
@@ -216,6 +258,9 @@ def create_app(services: Services | None = None, settings: Settings | None = Non
             raise HTTPException(403, "ingestion is disabled (HYRAG_ADMIN_KEY is not set)")
         if not hmac.compare_digest(x_api_key, settings.admin_key):
             raise HTTPException(401, "missing or wrong X-API-Key")
+
+    def visitor_of(request: Request, x_visitor_id: str) -> str:
+        return (x_visitor_id or (request.client.host if request.client else "") or "unknown")[:64]
 
     @app.get("/health", tags=["ops"])
     def health() -> dict:
@@ -238,11 +283,30 @@ def create_app(services: Services | None = None, settings: Settings | None = Non
         not_found, error) and `code` why; `confidence` has the score by dimension; `sources` are the cited
         passages by [n]; `retrieved` lists every passage the writer saw, with how each search ranked it.
 
-        With question limits configured, a 429 says which limit was hit and `Retry-After` when to come back."""
-        visitor = (x_visitor_id or (request.client.host if request.client else "") or "unknown")[:64]
+        With question limits configured, a 429 says which limit was hit and `Retry-After` when to come back.
+        With `upload_id`, the answer comes from that uploaded document alone; a 404 means it has expired."""
+        visitor = visitor_of(request, x_visitor_id)
+        retriever, cache, gate = services.retriever, services.cache, RETRIEVAL_GATE
+        if body.upload_id is not None:
+            if body.collection is not None:
+                raise HTTPException(422, "give a collection or an upload_id, not both")
+            upload = services.uploads.get(body.upload_id) if services.uploads else None
+            if upload is None:
+                raise HTTPException(404, "That uploaded document is no longer available: uploads are only kept "
+                                         "for a while. Upload it again to keep asking.")
+            # Same search settings, reranker and rewriter, over the upload's own index. No answer cache: a
+            # cached answer would keep the document's passages in memory after the upload is gone.
+            shared = services.retriever
+            retriever, cache = HybridRetriever(upload.index, shared.config, shared.reranker, shared.rewriter), None
+            if upload.index.count() <= shared.config.rerank_top_n:
+                # The writer sees the whole document, so search can't have missed the passage, and the gate
+                # would only add the reranker's mistakes: it scored a CV's "Languages: Go, Python, SQL" at
+                # relevance 0.09 for "Which programming languages does she know?". The writer still says so
+                # when the document has no answer (4 of 4 live), and the citation check still runs.
+                gate = 0.0
         blocked = limiter.check(visitor)
-        if blocked and services.cache is not None and services.cache.get(AnswerCache.key(
-                body.question, services.index.version(), body.mode, body.collection)) is not None:
+        if blocked and cache is not None and cache.get(AnswerCache.key(
+                body.question, retriever.index.version(), body.mode, body.collection)) is not None:
             blocked = None  # already answered and cached: serving it again costs nothing
         if blocked:
             which, wait = blocked
@@ -253,8 +317,8 @@ def create_app(services: Services | None = None, settings: Settings | None = Non
                       "This demo has used up its question budget for today. Please come back later.")
             raise HTTPException(429, detail, headers={"Retry-After": str(wait)})
         try:
-            result = ask(body.question, services.retriever, services.writer, services.judge,
-                         budget_seconds=settings.budget_seconds, cache=services.cache, mode=body.mode,
+            result = ask(body.question, retriever, services.writer, services.judge, gate=gate,
+                         budget_seconds=settings.budget_seconds, cache=cache, mode=body.mode,
                          collection=body.collection)
         except ValueError as e:  # blank or too long (after trimming): the caller's to fix
             raise HTTPException(422, str(e))
@@ -339,6 +403,46 @@ def create_app(services: Services | None = None, settings: Settings | None = Non
                                                       (doc.doc_id,)).fetchone()[0]
                     results.append(IngestedFile(filename=path.name, status="indexed", doc_id=doc.doc_id, chunks=n))
         return IngestResult(files=results)
+
+    @app.get("/v1/uploads/limits", response_model=UploadLimits, tags=["uploads"], dependencies=[Depends(require_key)])
+    def upload_limits(services: Services = Depends(svc)) -> UploadLimits:
+        """Whether visitors may upload a document of their own, and what is accepted."""
+        if services.uploads is None:
+            return UploadLimits(enabled=False)
+        p = services.uploads.policy
+        return UploadLimits(enabled=True, max_mb=round(p.max_bytes / (1024 * 1024), 2), max_pages=p.max_pages,
+                            minutes_kept=round(p.ttl_seconds / 60), types=list(UPLOAD_TYPES))
+
+    @app.post("/v1/uploads", response_model=UploadInfo, tags=["uploads"], dependencies=[Depends(require_key)],
+              responses={413: {"description": "larger than the limit"}, 415: {"description": "not an accepted type"},
+                         422: {"description": "unreadable, no text (a scan), or too many pages or passages"},
+                         429: {"description": "upload limit reached; see Retry-After"},
+                         503: {"description": "busy with another upload, or the embedding service is down"}})
+    def upload(request: Request, file: UploadFile = File(...),
+               x_visitor_id: str = Header("", alias="X-Visitor-Id"),
+               services: Services = Depends(svc)) -> UploadInfo:
+        """Take one document (.pdf .md .txt) to answer questions from: pass the returned `upload_id` to /v1/ask.
+        It is held in memory only, searched on its own, and dropped after a while (`expires_in_seconds`) or by
+        DELETE. Its text is sent to the embedding and chat models, like any indexed document's.
+        Every refusal says why in `detail`."""
+        store = services.uploads
+        if store is None:
+            raise HTTPException(403, "uploads are disabled (HYRAG_VISITOR_UPLOADS is not set)")
+        data = file.file.read(store.policy.max_bytes + 1)  # one byte over is enough to know it is too large
+        try:
+            held = store.add(visitor_of(request, x_visitor_id), file.filename or "", data)
+        except UploadRejected as e:
+            headers = {"Retry-After": str(e.retry_after)} if e.retry_after else None
+            raise HTTPException(e.status, str(e), headers=headers)
+        return UploadInfo(upload_id=held.upload_id, filename=held.filename, pages=held.pages,
+                          chunks=held.index.count(), characters=held.characters,
+                          expires_in_seconds=store.seconds_left(held))
+
+    @app.delete("/v1/uploads/{upload_id}", status_code=204, tags=["uploads"], dependencies=[Depends(require_key)])
+    def delete_upload(upload_id: str, services: Services = Depends(svc)) -> None:
+        """Drop an uploaded document now. Also a 204 if it had already expired: either way it is gone."""
+        if services.uploads is not None:
+            services.uploads.remove(upload_id)
 
     return app
 

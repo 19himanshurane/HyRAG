@@ -687,9 +687,13 @@ def _check_file_size(path: Path) -> None:
         raise ValueError(f"{path.name!r} is {size:,} bytes; the limit is {MAX_FILE_BYTES:,}")
 
 
+class NoTextError(ValueError):
+    """The file was read but holds no text, e.g. a scanned PDF whose pages are images."""
+
+
 def _make_document(filename: str, ext: str, sections: list[Section]) -> Document:
     if not sections:
-        raise ValueError(f"No text could be extracted from {filename!r}")
+        raise NoTextError(f"No text could be extracted from {filename!r}")
     return Document(doc_id=make_doc_id(filename), source=filename, file_type=ext, sections=sections)
 
 

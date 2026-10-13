@@ -1,6 +1,7 @@
 """HyRAG dashboard (Streamlit). Run:  HYRAG_API_URL=http://localhost:8000 streamlit run dashboard/app.py
 
 It only talks to the HTTP API (client.py), so it runs in its own container without the hyrag package.
+Where the API allows it, a visitor can upload a document of their own and ask about that instead.
 
 Streamlit reruns the whole script on every interaction, so: the question sits in a form and only Ask reruns the
 page, answers are kept in session_state so reruns never call the API, and the sidebar calls are cached. The
@@ -59,9 +60,69 @@ def api_collections() -> list[dict]:
         return []
 
 
+@st.cache_data(ttl=300, show_spinner=False)
+def api_upload_limits() -> dict:
+    try:
+        return get_client().upload_limits()
+    except ApiError:  # unreachable, or an API version without uploads
+        return {"enabled": False}
+
+
 COLLECTION_LABELS = {"posthog": "PostHog (real company handbook)",
                      "demo": "Demo set (fictional Nimbus + NIST, Kubernetes, PostgreSQL, GitLab)"}
 PREFERRED_COLLECTION = "posthog"
+UPLOAD = "__upload__"  # the "Answer from" choice that stands for the visitor's own document
+
+
+def held_upload() -> dict | None:
+    """The document this browser session uploaded, while the API still keeps it."""
+    held = st.session_state.get("upload")
+    if held and time.time() >= held["expires_at"]:
+        del st.session_state["upload"]
+        return None
+    return held
+
+
+def upload_section(limits: dict) -> None:
+    """The sidebar's upload box, or the uploaded document with a button to remove it. Runs before the
+    "Answer from" list is drawn, so a new upload can be selected there in the same pass."""
+    st.markdown("**Your own document**")
+    held = held_upload()
+    if held:
+        minutes = max(1, round((held["expires_at"] - time.time()) / 60))
+        st.caption(f"{held['filename']} · {held['chunks']} passages · kept for about {minutes} more min")
+        if st.button("Remove my document"):
+            get_client().delete_upload(held["upload_id"])
+            del st.session_state["upload"]
+            st.rerun()
+        return
+    # A new key after each upload gives an empty box again once the document is removed.
+    file = st.file_uploader("Upload a document to ask about", type=[t.lstrip(".") for t in limits["types"]],
+                            key=f"uploader-{st.session_state.get('uploads_done', 0)}")
+    st.caption(f"Text PDFs up to {limits['max_mb']:g} MB and {limits['max_pages']} pages. Scanned pages can't "
+               f"be read. Kept in memory for {limits['minutes_kept']} minutes and searchable only from this page.")
+    st.caption("Its text is sent to the AI model providers (Mistral and Groq) to be searched and answered, so "
+               "don't upload anything confidential. HyRAG's measured accuracy covers the built-in documents, "
+               "not uploads.")
+    if file is None:
+        return
+    failed = st.session_state.get("upload_failed")
+    if failed and failed[0] == file.file_id:  # already refused: say why again, don't send it again
+        st.error(failed[1])
+        return
+    try:
+        if file.size > limits["max_mb"] * 1024 * 1024:
+            raise ApiError(f"The file is larger than {limits['max_mb']:g} MB.")
+        with st.spinner("Reading and indexing your document…"):
+            info = get_client().upload(file.name, file.getvalue(), visitor_id())
+    except ApiError as e:
+        st.session_state["upload_failed"] = (file.file_id, str(e))
+        st.error(str(e))
+        return
+    st.session_state["upload"] = {**info, "expires_at": time.time() + info["expires_in_seconds"]}
+    st.session_state["uploads_done"] = st.session_state.get("uploads_done", 0) + 1
+    st.session_state["source"] = UPLOAD  # answer from it straight away
+    st.rerun()
 
 
 def visitor_id() -> str:
@@ -78,13 +139,15 @@ def visitor_id() -> str:
     return st.session_state.setdefault("visitor", uuid.uuid4().hex[:16])
 
 
-def ask_both(question: str, compare: bool, collection: str | None, visitor: str = "") -> dict:
-    """{mode: AskResult | ApiError}. With compare, hybrid and dense-only run in parallel (one wait, not two)."""
+def ask_both(question: str, compare: bool, collection: str | None, visitor: str = "",
+             upload_id: str | None = None) -> dict:
+    """{mode: AskResult | ApiError}. With compare, hybrid and dense-only run in parallel (one wait, not two).
+    upload_id: answer from the visitor's uploaded document instead of a collection."""
     modes = ["hybrid", "dense"] if compare else ["hybrid"]
 
     def one(mode):
         try:
-            return get_client().ask(question, mode, collection, visitor)
+            return get_client().ask(question, mode, collection, visitor, upload_id)
         except ApiError as e:
             return e
 
@@ -192,15 +255,24 @@ def main() -> None:
             st.error("API not ready")
             for problem in health.get("problems", []):
                 st.caption(problem)
-        # Whose documents to answer from: one company at a time, never a mix of their policies.
-        names = [c["name"] for c in api_collections()]
-        collection = None
+        # Whose documents to answer from: one company at a time, never a mix of their policies. The list is
+        # drawn here but filled in after the upload box below it has run.
+        picker = st.container()
+        limits = api_upload_limits()
+        if limits.get("enabled"):
+            upload_section(limits)
+        held = held_upload()
+        names = ([UPLOAD] if held else []) + [c["name"] for c in api_collections()]
+        labels = {**COLLECTION_LABELS, **({UPLOAD: f"Your document: {held['filename']}"} if held else {})}
+        source = None
         if names:
-            default = names.index(PREFERRED_COLLECTION) if PREFERRED_COLLECTION in names else 0
-            collection = st.selectbox("Company documents", names, index=default,
-                                      format_func=lambda n: COLLECTION_LABELS.get(n, n),
-                                      help="Answers come only from the chosen company's documents.")
-        docs = api_documents(collection)
+            if st.session_state.get("source") not in names:  # first visit, or the upload it named is gone
+                st.session_state["source"] = PREFERRED_COLLECTION if PREFERRED_COLLECTION in names else names[0]
+            source = picker.selectbox("Answer from", names, key="source", format_func=lambda n: labels.get(n, n),
+                                      help="Answers come only from the chosen documents.")
+        upload_id = held["upload_id"] if source == UPLOAD else None
+        collection = None if source == UPLOAD else source
+        docs = None if source == UPLOAD else api_documents(collection)
         if docs:
             with st.expander(f"{docs['total']} documents"):
                 for d in docs["documents"]:
@@ -225,17 +297,20 @@ def main() -> None:
         else:
             t0 = time.perf_counter()
             with st.spinner("Searching the documents and checking the answer…"):
-                st.session_state["results"] = ask_both(question.strip(), compare, collection, visitor_id())
+                st.session_state["results"] = ask_both(question.strip(), compare, collection, visitor_id(),
+                                                       upload_id)
             st.session_state["question"] = question.strip()
-            st.session_state["collection"] = collection
+            st.session_state["answered_from"] = labels.get(source, source)
+            if upload_id and any(isinstance(r, ApiError) and r.status == 404
+                                 for r in st.session_state["results"].values()):
+                st.session_state.pop("upload", None)  # the API no longer has it: stop offering it
             st.session_state["wait_seconds"] = time.perf_counter() - t0
 
     results = st.session_state.get("results")
     if results:
         st.markdown(f"### {st.session_state['question']}")
-        if st.session_state.get("collection"):
-            label = COLLECTION_LABELS.get(st.session_state["collection"], st.session_state["collection"])
-            st.caption(f"Answered from: {label}")
+        if st.session_state.get("answered_from"):
+            st.caption(f"Answered from: {st.session_state['answered_from']}")
         if len(results) == 2:
             left, right = st.columns(2)
             with left:

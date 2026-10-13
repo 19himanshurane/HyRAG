@@ -58,6 +58,11 @@ All of it is environment variables.
 | `HYRAG_STRATEGY` | `structure` | which chunking strategy's index to serve |
 | `HYRAG_VISITOR_LIMIT_PER_HOUR` | `0` (off) | questions one visitor may ask per hour |
 | `HYRAG_DAILY_LIMIT` | `0` (off) | questions per day in total, across all visitors |
+| `HYRAG_VISITOR_UPLOADS` | unset (off) | `1` lets a visitor upload a document of their own to ask about |
+| `HYRAG_VISITOR_UPLOAD_MB` | `5` | largest file a visitor may upload |
+| `HYRAG_VISITOR_UPLOAD_PAGES` | `50` | most pages in an uploaded PDF |
+| `HYRAG_VISITOR_UPLOAD_MINUTES` | `60` | how long an uploaded document is kept |
+| `HYRAG_VISITOR_UPLOADS_PER_DAY` | `50` | uploads per day in total, across all visitors |
 | `HYRAG_API_URL` | `http://localhost:8000` | dashboard only: where the API is |
 
 ## Adding documents
@@ -97,9 +102,47 @@ Every question spends the Groq and Mistral quota of whoever owns the keys, and t
 
 The dashboard identifies a visitor by a hash of their forwarded address when a proxy supplies one, and by a random id per browser session otherwise. No address is stored. The API takes that id on trust, so the per-visitor limit stops ordinary overuse and not someone who forges ids. The daily total is the one that can't be dodged. Both live in memory and reset when the process restarts.
 
+## A visitor's own document
+
+With `HYRAG_VISITOR_UPLOADS=1`, the dashboard shows an upload box. A visitor can upload one PDF, Markdown or text file and ask questions about it instead of the built-in documents. `/v1/ingest` is a different thing: it adds a document to the shared index for everyone and needs the admin key.
+
+```bash
+curl -X POST localhost:8000/v1/uploads -F "file=@handbook.pdf"          # returns an upload_id
+curl -X POST localhost:8000/v1/ask -H "Content-Type: application/json" \
+     -d '{"question": "How much notice do I give?", "upload_id": "..."}'
+curl -X DELETE localhost:8000/v1/uploads/<upload_id>                     # remove it early
+```
+
+An uploaded document never joins the shared index. It gets a small index of its own, held in memory, and the usual search, reranker, writer and citation check run against that. So no other visitor can search it, it doesn't appear in `/v1/documents`, and it is gone after 60 minutes, when it is deleted, or when the process restarts. Its vectors are computed without the on-disk embedding cache and its answers are not cached. Neither the file name nor the questions are logged.
+
+What does leave the machine is the text: every passage goes to Mistral to be embedded, and the passages retrieved for a question go to Groq. The dashboard says so next to the upload box. While a file over 1 MB is being received, the web framework also holds it in a temporary file, which is deleted when the request ends.
+
+The upload id is a random token and the only way to reach a document, so anyone who has it can ask about that document. The visitor id is only used for the limits.
+
+| Limit | Default | Why |
+|---|---|---|
+| File size | 5 MB | parsing time and memory |
+| PDF pages | 50 | about 90 ms of parsing a page |
+| Passages | 400 | what one upload costs to embed (32 passages a request) |
+| Uploads per visitor per hour | 5 | embedding quota |
+| Uploads per day, everyone | 50 | embedding quota |
+| Documents held at once | 20, and 3 per visitor | memory; the oldest is dropped to make room |
+
+A file that can't be used is refused with the reason: wrong type (415), too large (413), unreadable, no text, too many pages or passages (422), a limit reached (429 with `Retry-After`). One file is read at a time; a second one waits up to 20 seconds and is then told to retry (503). A refused file doesn't count against the limits.
+
+Measured on a laptop with the real models: a 48-page, 1 MB PDF (NIST SP 800-61r3) became 191 passages in 6 embedding requests and was ready in 15 to 41 seconds over three runs. A one-page CV was ready in under a second.
+
+What is not known or not good:
+
+- Answer quality on uploads has not been evaluated. The figures in [evaluation.md](evaluation.md) are for the built-in documents. On the NIST PDF, 2 of 4 answerable questions were answered and 2 were withheld by the citation check; the unanswerable one was refused. On the CV, 4 of 4 answerable questions were answered and 4 of 4 unanswerable ones refused. That is two documents and thirteen questions.
+- Scanned PDFs have no text and are refused. Tables and two-column pages can come out scrambled.
+- For a document of five passages or fewer the relevance gate is skipped, because the writer sees the whole document and the reranker scores terse text badly: it gave a CV's "Languages: Go, Python, SQL" a relevance of 0.09 for "Which programming languages does she know?". An unanswerable question about such a document therefore costs one model call, about 900 tokens, where the gate would have cost none.
+- A deliberately malformed PDF could still use a lot of memory or time while it is parsed. The size and page limits bound ordinary files, not hostile ones, and parsing runs in the API's own process.
+- The time on Streamlit Community Cloud has not been measured.
+
 ## One process: Streamlit Community Cloud
 
-Some hosts run a single process and no containers. `deploy/streamlit_app.py` is the entry point for those. On a cold start it indexes the documents, starts the API in a background thread, and then serves the normal dashboard against it on localhost. It sets the limits above to 10 questions per visitor per hour and 100 a day unless the environment says otherwise.
+Some hosts run a single process and no containers. `deploy/streamlit_app.py` is the entry point for those. On a cold start it indexes the documents, starts the API in a background thread, and then serves the normal dashboard against it on localhost. It sets the limits above to 10 questions per visitor per hour and 100 a day unless the environment says otherwise, and turns on visitor uploads.
 
 ```bash
 streamlit run deploy/streamlit_app.py      # locally, with the two keys in .env
@@ -139,6 +182,8 @@ The dashboard has no sign-in. If the API requires a key, the dashboard holds it 
 
 The API keys are plain environment variables, visible to anyone who can run `docker inspect`. In production they belong in a secrets manager.
 
-Only one API process can run, because the answer cache and the upload lock are in memory.
+Only one API process can run, because the answer cache, the upload lock and visitors' uploaded documents are in memory.
+
+If visitor uploads are on, read the section on them above first: uploaded text is sent to the model providers, and parsing a hostile file is not sandboxed.
 
 A public demo would be showing PostHog's handbook. Its license allows that. The page should say that HyRAG is not affiliated with PostHog.

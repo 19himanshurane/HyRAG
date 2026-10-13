@@ -1,0 +1,11 @@
+# Read by Streamlit when it is started from the repository root, which is how Streamlit Community Cloud runs
+# deploy/streamlit_app.py.
+
+[server]
+# The file watcher inspects every imported module after each run. With transformers loaded that means importing
+# about a hundred optional vision modules, each failing on the missing torchvision and logging a traceback.
+# A hosted copy never edits its own source, so there is nothing to watch.
+fileWatcherType = "none"
+# MB. Matches the API's limit for a visitor's document (HYRAG_VISITOR_UPLOAD_MB), so a larger file is refused
+# in the browser before it is sent. Streamlit's own default is 200.
+maxUploadSize = 5

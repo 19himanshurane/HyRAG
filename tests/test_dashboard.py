@@ -12,8 +12,12 @@ import uvicorn
 from streamlit.testing.v1 import AppTest
 
 from hyrag.api import Settings, create_app
+from hyrag.uploads import UploadPolicy, UploadStore
 
+from .conftest import make_pdf
 from .test_api import services  # noqa: F401  (the fixture: real index + fake models)
+from .test_index import CountingEmbedder
+from .test_uploads import BIKES, Clock, parking_pdf
 
 APP = str(Path(__file__).resolve().parents[1] / "dashboard" / "app.py")  # AppTest resolves relative paths against this file
 
@@ -48,6 +52,16 @@ def api(services, monkeypatch):  # noqa: F811
 @pytest.fixture
 def limited_api(services, monkeypatch):  # noqa: F811
     yield from _serve(services, monkeypatch, Settings(visitor_limit=1))
+
+
+@pytest.fixture
+def uploads_api(services, monkeypatch):  # noqa: F811
+    services.clock = Clock()
+    services.uploads = UploadStore(CountingEmbedder(), UploadPolicy(max_bytes=64 * 1024), clock=services.clock)
+    services.sent = []  # every file that reached the API
+    add = services.uploads.add
+    services.uploads.add = lambda visitor, name, data: (services.sent.append(name), add(visitor, name, data))[1]
+    yield from _serve(services, monkeypatch, Settings())
 
 
 def page() -> AppTest:
@@ -125,3 +139,64 @@ def test_api_down_is_explained_not_a_crash(monkeypatch):
     assert not at.exception
     assert any("API not ready" in e.value for e in at.sidebar.error)
     assert any("unreachable" in e.value for e in at.error)
+
+
+# ----- a visitor's own document -----
+
+def upload(at: AppTest, name: str = "parking.pdf", data: bytes | None = None) -> AppTest:
+    at.file_uploader[0].upload(name, data if data is not None else parking_pdf(), "application/pdf")
+    return at.run()
+
+
+def test_no_upload_box_when_the_api_has_uploads_off(api):
+    at = page().run()
+    assert not at.exception and len(at.file_uploader) == 0
+    assert at.selectbox[0].label == "Answer from" and at.selectbox[0].value == "demo"
+
+
+def test_uploading_a_document_and_asking_about_it(uploads_api):
+    at = page().run()
+    assert "don't upload anything confidential" in all_text(at) and "64 KB" not in all_text(at)
+    at = upload(at)
+    assert not at.exception and len(at.file_uploader) == 0  # the box gives way to the document
+    assert at.selectbox[0].value == "__upload__"            # and answers now come from it
+    assert "parking.pdf" in all_text(at) and "kept for about 60 more min" in all_text(at)
+    at = ask(at, BIKES)
+    text = all_text(at)
+    assert "Answered from the documents" in text and "Answered from: Your document: parking.pdf" in text
+    assert any(h.value.startswith("[1] parking.pdf") for h in at.subheader)
+    assert uploads_api.uploads.count() == 1 and uploads_api.sent == ["parking.pdf"]  # reruns never upload again
+
+
+def test_the_built_in_documents_stay_one_click_away(uploads_api):
+    at = upload(page().run())
+    at.selectbox[0].select("demo").run()
+    at = ask(at, BIKES)
+    assert "Not found in the documents" in all_text(at)  # the shared documents don't have the visitor's file
+
+
+def test_removing_the_document_brings_the_box_back(uploads_api):
+    at = upload(page().run())
+    at.sidebar.button[0].click().run()  # "Remove my document"
+    assert not at.exception and uploads_api.uploads.count() == 0
+    assert len(at.file_uploader) == 1 and at.file_uploader[0].value is None
+    assert at.selectbox[0].value == "demo"
+
+
+def test_a_refused_file_says_why_and_is_not_sent_again(uploads_api):
+    at = upload(page().run(), "scan.pdf", make_pdf([[]]))
+    assert not at.exception and any("scanned PDF" in e.value for e in at.sidebar.error)
+    at.run()
+    at.run()
+    assert uploads_api.sent == ["scan.pdf"] and any("scanned PDF" in e.value for e in at.sidebar.error)
+    at = upload(at, "big.pdf", b"x" * (64 * 1024 + 1))  # over the limit: stopped before it is sent
+    assert any("larger than" in e.value for e in at.sidebar.error) and uploads_api.sent == ["scan.pdf"]
+
+
+def test_an_expired_document_is_explained_and_no_longer_offered(uploads_api):
+    at = upload(page().run())
+    uploads_api.clock.now += 3601  # the API has dropped it; this page doesn't know yet
+    at = ask(at, BIKES)
+    assert not at.exception and any("Upload it again" in e.value for e in at.error)
+    at.run()
+    assert at.selectbox[0].value == "demo" and len(at.file_uploader) == 1

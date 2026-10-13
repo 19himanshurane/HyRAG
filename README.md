@@ -2,6 +2,8 @@
 
 HyRAG answers questions about a company's internal documents and shows where each part of the answer came from. Every claim carries a numbered citation, a second model checks that the cited passage really supports it, and when the documents don't contain the answer HyRAG says so instead of guessing.
 
+**Live demo:** https://nyi9d6senzsbvbr98x5pn9.streamlit.app/ (free hosting: it sleeps when idle and takes about three minutes to wake; 10 questions per visitor per hour)
+
 I built it to learn how a retrieval-augmented generation (RAG) system works end to end, and to find out what it takes to make one you can trust.
 
 ## How a question is answered
@@ -22,6 +24,8 @@ The main collection is [PostHog's company handbook](https://posthog.com/handbook
 A second collection holds public technical documents (two NIST security standards, Kubernetes and PostgreSQL pages, four GitLab handbook pages) and four files for a small fictional company. It covers the awkward cases: PDFs, tables of error codes, near-duplicate text.
 
 Each collection is searched on its own, so one company's policy never ends up in an answer about another's. Sources and licenses are in [corpus/README.md](corpus/README.md). HyRAG is not affiliated with PostHog.
+
+You can also upload a document of your own (a text PDF up to 5 MB and 50 pages, or a Markdown or text file) and ask about that. It is held in memory for an hour, searched on its own, and never added to the collections above. This is off by default; [docs/deployment.md](docs/deployment.md#a-visitors-own-document) explains how it works and what its limits are.
 
 ## What has been measured
 
@@ -67,7 +71,7 @@ python -m pytest -q
 
 On Linux, install PyTorch from https://download.pytorch.org/whl/cpu first, or pip fetches the CUDA build, which is several gigabytes. The reranker needs about 590 MB of RAM.
 
-[docs/deployment.md](docs/deployment.md) covers configuration, what each container does, what happens when one of them fails, question limits for a public copy, and hosting it as a single process on Streamlit Community Cloud.
+[docs/deployment.md](docs/deployment.md) covers configuration, what each container does, what happens when one of them fails, question limits for a public copy, visitor uploads, and hosting it as a single process on Streamlit Community Cloud.
 
 ## What's in the repository
 
@@ -88,8 +92,9 @@ On Linux, install PyTorch from https://download.pytorch.org/whl/cpu first, or pi
 - It answers one question at a time. There is no conversation memory, so a follow-up like "and if that doesn't work?" is not understood.
 - The free model tier caps it at roughly 115 fully checked questions a day.
 - Two-column and scanned PDFs are not supported.
+- Answer quality on uploaded documents has not been evaluated. Every number above is for the built-in documents.
 - The reranker was trained on MS MARCO, whose terms are non-commercial. Check that before any commercial use.
-- Retrieved passages are sent to Groq and Mistral. That is fine for public documents; a company would need to check its own data policy.
+- Retrieved passages are sent to Groq and Mistral, and so is the text of an uploaded document. That is fine for public documents; a company would need to check its own data policy.
 - One API process only. The answer cache lives in memory.
 
 [docs/decisions.md](docs/decisions.md) explains the main design choices and the measurement behind each. The original build notes, kept as they were written, are in [docs/history/](docs/history/).

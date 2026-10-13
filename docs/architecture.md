@@ -42,6 +42,12 @@ Near-duplicate chunks are detected by comparing text and skipped, so the same bo
 
 A collection is one company's documents. A document belongs to the collection named by its first folder (`posthog/...`), and everything else belongs to `demo`. A search inside a collection removes other collections' chunks before the top results are chosen, so they cannot crowd out the right ones.
 
+### A visitor's own document
+
+`hyrag/uploads.py` handles a file that a visitor uploads to ask about. It is parsed and chunked the same way, but it does not go into the index above. In the shared index it would be searchable by everyone, every upload would rebuild the keyword index and the vector matrix for all 7,628 chunks, and the duplicate check could skip one of its passages because another file holds the same text.
+
+So each upload gets an `UploadIndex`: its chunks, their vectors and a BM25 index, in memory only. It has the same search methods as the main index, which lets the retriever, the reranker and everything after them run on it unchanged. [deployment.md](deployment.md#a-visitors-own-document) has the limits and what was measured.
+
 ## Answering a question
 
 `hyrag/answer.py` has one entry point, `ask()`.
@@ -93,7 +99,7 @@ Each question has a 60-second budget shared by all of its network calls. Outages
 
 ## Around the core
 
-`hyrag/api.py` is a FastAPI service: `POST /v1/ask`, `GET /v1/collections`, `GET /v1/documents`, `POST /v1/ingest` (needs an admin key), plus `/health` and `/ready`. Every answer the pipeline gives, including "not found", is HTTP 200. Only `error` becomes a 5xx.
+`hyrag/api.py` is a FastAPI service: `POST /v1/ask`, `GET /v1/collections`, `GET /v1/documents`, `POST /v1/ingest` (needs an admin key), `POST /v1/uploads` for a visitor's own document (off by default), plus `/health` and `/ready`. Every answer the pipeline gives, including "not found", is HTTP 200. Only `error` becomes a 5xx.
 
 `dashboard/` is a Streamlit page that calls the API over HTTP and nothing else. It shows the answer with clickable citations, the retrieved passages, the confidence breakdown, and a side-by-side comparison with meaning search alone. It strips images and outside links from model text before showing it, since a planted instruction could otherwise make the browser fetch an attacker's URL.
 

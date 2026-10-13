@@ -5,6 +5,7 @@ Run locally:  streamlit run deploy/streamlit_app.py     (needs MISTRAL_API_KEY a
 On a cold start it indexes the documents and starts the HTTP API in a background thread, once per process.
 After that every visitor's page is the normal dashboard (dashboard/app.py) talking to that API on localhost.
 The index is built from deploy/embeddings.sqlite, so no embedding requests are needed to start.
+Visitors may also upload one document of their own to ask about; it is held in memory, never in the index.
 """
 import os
 import runpy
@@ -65,6 +66,7 @@ def backend() -> str:
         shutil.copy(ROOT / "deploy" / "embeddings.sqlite", data / "embeddings.sqlite")
     os.environ.setdefault("HYRAG_VISITOR_LIMIT_PER_HOUR", QUESTIONS_PER_VISITOR_PER_HOUR)
     os.environ.setdefault("HYRAG_DAILY_LIMIT", QUESTIONS_PER_DAY)
+    os.environ.setdefault("HYRAG_VISITOR_UPLOADS", "1")  # a visitor's own document; limits in hyrag/uploads.py
 
     from hyrag import seed
     from hyrag.rerank import download, is_downloaded

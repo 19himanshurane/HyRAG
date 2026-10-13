@@ -9,6 +9,8 @@ import httpx
 # decides when a question has taken too long (and says so in a structured response).
 ASK_TIMEOUT_SECONDS = 75.0
 SIDE_TIMEOUT_SECONDS = 10.0
+# Reading a 50-page PDF and embedding its passages takes 10-30 s, and it can first wait 20 s for another upload.
+UPLOAD_TIMEOUT_SECONDS = 120.0
 
 
 class ApiError(Exception):
@@ -55,11 +57,46 @@ class HyragClient:
     def collections(self) -> list[dict]:
         return self._get("/v1/collections")
 
+    def upload_limits(self) -> dict:
+        return self._get("/v1/uploads/limits")
+
+    def upload(self, filename: str, data: bytes, visitor: str = "") -> dict:
+        """Hand the API a document to answer from. Returns its upload_id, size and how long it is kept; raises
+        ApiError with the API's own explanation if the file is refused."""
+        headers = {"X-Visitor-Id": visitor} if visitor else {}
+        try:
+            r = self.http.post("/v1/uploads", files={"file": (filename, data)}, headers=headers,
+                               timeout=UPLOAD_TIMEOUT_SECONDS)
+        except httpx.TimeoutException as e:
+            raise ApiError(f"The document wasn't indexed within {UPLOAD_TIMEOUT_SECONDS:.0f} s.") from e
+        except httpx.HTTPError as e:
+            raise ApiError(f"The HyRAG API at {self.base_url} is unreachable ({type(e).__name__}).") from e
+        if r.status_code == 401:
+            raise ApiError("The API rejected the key (401): check HYRAG_API_KEY.", 401)
+        try:
+            body = r.json()
+        except ValueError as e:
+            raise ApiError(f"Unexpected response from /v1/uploads: HTTP {r.status_code}", r.status_code) from e
+        if r.status_code != 200:
+            detail = body.get("detail") if isinstance(body, dict) else None
+            raise ApiError(detail if isinstance(detail, str) else f"The upload failed (HTTP {r.status_code}).",
+                           r.status_code)
+        return body
+
+    def delete_upload(self, upload_id: str) -> None:
+        """Best effort: an upload that can't be deleted now still expires on its own."""
+        try:
+            self.http.delete(f"/v1/uploads/{upload_id}", timeout=SIDE_TIMEOUT_SECONDS)
+        except httpx.HTTPError:
+            pass
+
     def ask(self, question: str, mode: str = "hybrid", collection: str | None = None,
-            visitor: str = "") -> AskResult:
-        """visitor: an opaque id for the person asking, so the API can apply its per-visitor question limit."""
+            visitor: str = "", upload_id: str | None = None) -> AskResult:
+        """visitor: an opaque id for the person asking, so the API can apply its per-visitor question limit.
+        upload_id: answer from that uploaded document instead of a collection."""
         t0 = time.perf_counter()
-        body = {"question": question, "mode": mode, **({"collection": collection} if collection else {})}
+        body = {"question": question, "mode": mode,
+                **({"upload_id": upload_id} if upload_id else {"collection": collection} if collection else {})}
         headers = {"X-Visitor-Id": visitor} if visitor else {}
         try:
             r = self.http.post("/v1/ask", json=body, headers=headers, timeout=ASK_TIMEOUT_SECONDS)
@@ -77,6 +114,9 @@ class HyragClient:
         if r.status_code == 429:  # the API's question limit, with its own explanation
             detail = r.json().get("detail")
             raise ApiError(detail if isinstance(detail, str) else "Too many questions for now. Try again later.", 429)
+        if r.status_code == 404 and upload_id:  # the upload expired or was pushed out
+            detail = r.json().get("detail")
+            raise ApiError(detail if isinstance(detail, str) else "That uploaded document is no longer available.", 404)
         try:
             body = r.json()
         except ValueError as e:
